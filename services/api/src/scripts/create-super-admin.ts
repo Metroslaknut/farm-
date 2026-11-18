@@ -20,7 +20,9 @@ async function main(): Promise<void> {
   const env = loadApiEnv();
   const email = arg('email')?.trim().toLowerCase();
   const displayName = arg('name') ?? 'Super Admin';
-  const rawPhone = arg('phone')?.trim().replace(/[\s()-]/g, '');
+  const rawPhone = arg('phone')
+    ?.trim()
+    .replace(/[\s()-]/g, '');
   const phone = rawPhone
     ? /^0\d{9}$/.test(rawPhone)
       ? `+66${rawPhone.slice(1)}`

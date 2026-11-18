@@ -1,6 +1,6 @@
 {
   "generatedBy": "services/api/test/acceptance/journey.test.ts",
-  "when": "2026-11-09T16:09:50.057Z",
+  "when": "2026-11-18T13:53:14.517Z",
   "scenarios": [
     {
       "scenario": "1",
@@ -11,8 +11,8 @@
         "new account has no permissions"
       ],
       "ids": {
-        "farmerId": "6af1f04c627dcda736f02d10",
-        "buyerId": "6af1f04c627dcda736f02d17"
+        "farmerId": "6afdadc8f284a432ed0baa27",
+        "buyerId": "6afdadc8f284a432ed0baa2e"
       }
     },
     {
@@ -25,7 +25,7 @@
         "self-approval refused"
       ],
       "ids": {
-        "identityRegistration": "6af1f04d627dcda736f02d25"
+        "identityRegistration": "6afdadc8f284a432ed0baa3c"
       }
     },
     {
@@ -36,7 +36,7 @@
         "farm list shows own farms only"
       ],
       "ids": {
-        "farmId": "6af1f04d627dcda736f02d39"
+        "farmId": "6afdadc8f284a432ed0baa50"
       }
     },
     {
@@ -47,7 +47,7 @@
         "duplicate code on the same farm refused (409)"
       ],
       "ids": {
-        "animalId": "6af1f04d627dcda736f02d3f"
+        "animalId": "6afdadc8f284a432ed0baa56"
       }
     },
     {
@@ -57,7 +57,7 @@
         "2 weighings, 1 feeding log, 1 health record and 1 expense stored and listed"
       ],
       "ids": {
-        "animalId": "6af1f04d627dcda736f02d3f"
+        "animalId": "6afdadc8f284a432ed0baa56"
       }
     },
     {
@@ -68,7 +68,7 @@
         "owner accepted it; another farm cannot read it"
       ],
       "ids": {
-        "assessmentId": "6af1f04d627dcda736f02d4c"
+        "assessmentId": "6afdadc9f284a432ed0baa63"
       }
     },
     {
@@ -79,7 +79,7 @@
         "reaction and comment stored"
       ],
       "ids": {
-        "postId": "6af1f04d627dcda736f02d51"
+        "postId": "6afdadc9f284a432ed0baa68"
       }
     },
     {
@@ -91,7 +91,7 @@
         "anonymous upload refused"
       ],
       "ids": {
-        "videoId": "6af1f04d627dcda736f02d55"
+        "videoId": "6afdadc9f284a432ed0baa6c"
       }
     },
     {
@@ -102,7 +102,7 @@
         "submit → moderator approval (a seller cannot approve) → active and visible"
       ],
       "ids": {
-        "listingId": "6af1f04d627dcda736f02d59"
+        "listingId": "6afdadc9f284a432ed0baa70"
       }
     },
     {
@@ -116,7 +116,7 @@
         "seller notified"
       ],
       "ids": {
-        "negotiationId": "6af1f04d627dcda736f02d62"
+        "negotiationId": "6afdadc9f284a432ed0baa79"
       }
     },
     {
@@ -127,7 +127,7 @@
         "flagged as an estimate"
       ],
       "ids": {
-        "quoteId": "6af1f04d627dcda736f02d6d"
+        "quoteId": "6afdadc9f284a432ed0baa84"
       }
     },
     {
@@ -139,8 +139,8 @@
         "delivery address encrypted at rest"
       ],
       "ids": {
-        "orderId": "6af1f04d627dcda736f02d6f",
-        "orderNo": "FP-261109-2EC8D97C"
+        "orderId": "6afdadc9f284a432ed0baa86",
+        "orderNo": "FP-261118-EF4A1660"
       }
     },
     {
@@ -154,7 +154,7 @@
         "seller wallet 42,750 ฿ pending"
       ],
       "ids": {
-        "paymentId": "6af1f04d627dcda736f02d73"
+        "paymentId": "6afdadc9f284a432ed0baa8a"
       }
     },
     {
@@ -166,7 +166,7 @@
         "earnings moved from pending to available once (42,750 ฿)"
       ],
       "ids": {
-        "orderId": "6af1f04d627dcda736f02d6f"
+        "orderId": "6afdadc9f284a432ed0baa86"
       }
     },
     {
@@ -179,7 +179,7 @@
         "order REFUNDED, payment refunded, ledger reversed (sums to 0), animal back on sale"
       ],
       "ids": {
-        "refundId": "6af1f04d627dcda736f02daf"
+        "refundId": "6afdadc9f284a432ed0baac6"
       }
     },
     {
@@ -192,7 +192,7 @@
         "stock 20 → 17, cart emptied"
       ],
       "ids": {
-        "orderId": "6af1f04d627dcda736f02dbe"
+        "orderId": "6afdadc9f284a432ed0baad5"
       }
     },
     {
@@ -204,8 +204,8 @@
         "owner access unchanged"
       ],
       "ids": {
-        "farmId": "6af1f04d627dcda736f02d39",
-        "otherFarmId": "6af1f04d627dcda736f02d3c"
+        "farmId": "6afdadc8f284a432ed0baa50",
+        "otherFarmId": "6afdadc8f284a432ed0baa53"
       }
     },
     {

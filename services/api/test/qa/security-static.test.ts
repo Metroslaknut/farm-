@@ -82,10 +82,11 @@ describe('injection: every URL the API accepts from a user must be https', () =>
     const queryCode = grep(
       sourceOf('services/api/src'),
       /\$where|\$function|\$accumulator|mapReduce|\.eval\(/,
-    ).filter((line) => !/record-core\.ts:\d+: \(doc as any\)\.\$where = \{ revision: readRevision \}/.test(line));
-    expect(
-      queryCode,
-    ).toEqual([]);
+    ).filter(
+      (line) =>
+        !/record-core\.ts:\d+: \(doc as any\)\.\$where = \{ revision: readRevision \}/.test(line),
+    );
+    expect(queryCode).toEqual([]);
   });
   it('the API never spawns processes or evaluates code', () => {
     const hits = grep(

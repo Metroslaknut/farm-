@@ -56,7 +56,12 @@ function collectErrorCodes(): Map<string, string> {
     /\berror:\s*'([A-Z][A-Z0-9_]{2,})'/g,
   ];
   const codes = new Map<string, string>();
-  for (const file of [...tsFiles(API_SRC), ...tsFiles(CLIENT_SRC)]) {
+  // The mockup seed data (scripts/mockup) uses `code: 'F01'` etc. as farm/shop record codes, not API error codes.
+  const MOCKUP_SEED = join(API_SRC, 'scripts/mockup') + '/';
+  const sources = [...tsFiles(API_SRC), ...tsFiles(CLIENT_SRC)].filter(
+    (file) => !file.startsWith(MOCKUP_SEED),
+  );
+  for (const file of sources) {
     const source = readFileSync(file, 'utf8');
     for (const call of source.matchAll(HELPER)) {
       const args = callArguments(source, call.index + call[0].length - 1);

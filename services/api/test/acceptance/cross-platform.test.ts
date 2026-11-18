@@ -109,8 +109,8 @@ describe('one client, one set of rules (Web and Mobile)', () => {
     expect(offenders).toEqual([]);
     // both construct their client from the shared package
     for (const f of ['apps/web/src/api.ts', 'apps/mobile/src/api/client.ts'])
-      expect(readFileSync(join(root, f), 'utf8')).toContain(
-        "createApiClient } from '@farmplus/api-client'",
+      expect(readFileSync(join(root, f), 'utf8')).toMatch(
+        /import \{[^}]*\bcreateApiClient\b[^}]*\} from '@farmplus\/api-client'/,
       );
   });
 

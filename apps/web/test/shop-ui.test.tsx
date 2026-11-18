@@ -97,33 +97,46 @@ describe('shop browse', () => {
       </MemoryRouter>,
     );
     expect(await screen.findByText('Dairy feed 25 kg')).toBeTruthy();
-    const opts = within(screen.getByLabelText('Category'))
-      .getAllByRole('option')
-      .map((o) => o.textContent);
-    expect(opts).toEqual(['All categories', 'Animal feed']); // medicines are closed: not offered
+    // Categories are sidebar checkboxes; medicines are closed for sale, so they are not offered.
+    const catSection = screen
+      .getByRole('heading', { name: 'Product categories' })
+      .closest('section')!;
+    expect(
+      within(catSection)
+        .getAllByRole('checkbox')
+        .map((c) => c.closest('label')?.textContent),
+    ).toEqual(['Animal feed']);
     expect(screen.getByText('Sale')).toBeTruthy();
     expect(screen.getByText('Out of stock')).toBeTruthy();
-    expect(screen.getByText(/Cart \(3\)/)).toBeTruthy();
+    // The price range is applied with the sidebar "Filter" button; invalid input never reaches the API.
+    const lowest = screen.getByRole('textbox', { name: 'Lowest price (฿)' });
+    const highest = screen.getByRole('textbox', { name: 'Highest price (฿)' });
     const before = calls('GET', '/shop/products').length;
-    await userEvent.type(screen.getByLabelText('Lowest price (฿)'), 'abc');
-    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+    await userEvent.type(lowest, 'abc');
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }));
     expect(await screen.findByText(/Enter prices as numbers/)).toBeTruthy();
     expect(calls('GET', '/shop/products')).toHaveLength(before);
-    await userEvent.clear(screen.getByLabelText('Lowest price (฿)'));
-    await userEvent.type(screen.getByLabelText('Lowest price (฿)'), '500');
-    await userEvent.type(screen.getByLabelText('Highest price (฿)'), '100');
-    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+    await userEvent.clear(lowest);
+    await userEvent.type(lowest, '500');
+    await userEvent.type(highest, '100');
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }));
     expect(await screen.findByText(/lowest price is above the highest/)).toBeTruthy();
-    await userEvent.clear(screen.getByLabelText('Highest price (฿)'));
-    await userEvent.type(screen.getByLabelText('Highest price (฿)'), '900.50');
-    await userEvent.type(screen.getByLabelText('Search'), 'feed');
-    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+    expect(calls('GET', '/shop/products')).toHaveLength(before);
+    await userEvent.clear(highest);
+    await userEvent.type(highest, '900.50');
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }));
+    // The search box applies on Enter and keeps the price range.
+    await userEvent.type(screen.getByRole('textbox', { name: 'Search' }), 'feed{Enter}');
     await waitFor(() =>
       expect(calls('GET', '/shop/products').at(-1)![2].query).toMatchObject({
         q: 'feed',
         minPriceMinor: 50_000,
         maxPriceMinor: 90_050,
       }),
+    );
+    await userEvent.click(within(catSection).getByRole('checkbox', { name: 'Animal feed' }));
+    await waitFor(() =>
+      expect(calls('GET', '/shop/products').at(-1)![2].query).toMatchObject({ category: 'feed' }),
     );
   });
 });
@@ -629,7 +642,7 @@ describe('admin: products', () => {
 describe('shop in Thai', () => {
   beforeEach(() => setLocale('th'));
 
-  it('shows the browse page in Thai (sort options, badges, cart) and switches to English without a reload', async () => {
+  it('shows the browse page in Thai (filters, sort options, badges) and switches to English without a reload', async () => {
     request.mockImplementation(async (_m: string, path: string) => {
       if (path === '/shop/categories') return { categories };
       if (path === '/shop/cart') return { cart: { itemCount: 3 } };
@@ -649,8 +662,7 @@ describe('shop in Thai', () => {
       </MemoryRouter>,
     );
     expect(await screen.findByText('Dairy feed 25 kg')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'ร้านค้า' })).toBeTruthy();
-    expect(screen.getByText('ตะกร้า (3)')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'หมวดหมู่สินค้า' })).toBeTruthy();
     expect(screen.getByText('สินค้าหมด')).toBeTruthy();
     expect(screen.getByText('ลดราคา')).toBeTruthy();
     const sorts = within(screen.getByLabelText('เรียงตาม'))
@@ -663,13 +675,12 @@ describe('shop in Thai', () => {
       'คะแนนสูงสุด',
       'ขายดีที่สุด',
     ]);
-    await userEvent.type(screen.getByLabelText('ราคาต่ำสุด (฿)'), 'abc');
-    await userEvent.click(screen.getByRole('button', { name: 'ค้นหา' }));
+    await userEvent.type(screen.getByRole('textbox', { name: 'ราคาต่ำสุด (฿)' }), 'abc');
+    await userEvent.click(screen.getByRole('button', { name: 'กรอง' }));
     expect(await screen.findByText('กรอกราคาเป็นตัวเลข เช่น 500 หรือ 500.50')).toBeTruthy();
 
     act(() => setLocale('en'));
-    expect(screen.getByRole('heading', { name: 'Shop' })).toBeTruthy();
-    expect(screen.getByText('Cart (3)')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Product categories' })).toBeTruthy();
     expect(screen.getByText(/Enter prices as numbers/)).toBeTruthy(); // the shown error follows too
     expect(screen.getByRole('option', { name: 'Price: low to high' })).toBeTruthy();
   });

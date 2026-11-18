@@ -3,6 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 1. Project Overview
+
 - This is a Full Stack Application.
 - Frontend: React / TypeScript.
 - Backend: Node.js / Express.
@@ -10,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Follow the existing project architecture.
 
 ## 2. Core Development Rules
+
 - Analyze before modifying code.
 - Preserve existing UI and UX.
 - Do not change existing layout, CSS, colors,
@@ -20,6 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Maintain backward compatibility.
 
 ## 3. Context & Token Optimization
+
 - Never scan the entire repository unnecessarily.
 - Exclude node_modules, dist, build, coverage,
   .git and generated files.
@@ -30,6 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Use targeted tests instead of running all tests.
 
 ## 4. Development Workflow
+
 1. Understand the requirement.
 2. Analyze the existing implementation.
 3. Identify affected files.
@@ -40,6 +44,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 8. Review the changes and report results.
 
 ## 5. Database Rules
+
 - Inspect existing schemas before changing them.
 - Do not delete existing data.
 - Do not rename database fields without approval.
@@ -48,6 +53,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Protect sensitive information.
 
 ## 6. Code Quality
+
 - Use TypeScript where applicable.
 - Follow existing naming conventions.
 - Keep components modular.
@@ -56,6 +62,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Follow existing lint and formatting rules.
 
 ## 7. Testing
+
 - Run relevant unit and integration tests.
 - Test affected API endpoints.
 - Check for regressions.
@@ -63,7 +70,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Do not claim tests passed without execution.
 
 ## 8. Final Report
+
 After completing each task, report:
+
 - Summary of changes.
 - Files modified.
 - Important implementation details.
@@ -71,6 +80,7 @@ After completing each task, report:
 - Remaining issues or limitations.
 
 ## 9. Important Restrictions
+
 - Do not modify unrelated files.
 - Do not overwrite user changes.
 - Do not remove existing features.
