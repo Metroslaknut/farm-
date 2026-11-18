@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolveApiBaseUrl } from '../src/config/api-url';
+import { apiFileUrl } from '../src/lib/api-file';
 
 const base = { configured: undefined, platform: 'ios', hostUri: undefined, isDev: true } as const;
 const url = (over: Partial<Parameters<typeof resolveApiBaseUrl>[0]>) =>
@@ -62,5 +63,18 @@ describe('API base URL resolution', () => {
 
   it('rejects a malformed URL instead of crashing later', () => {
     expect(url({ configured: 'not a url' })).toMatchObject({ ok: false });
+  });
+});
+
+describe('files served by the API', () => {
+  it('prefixes a device-uploaded photo path with the API host; leaves absolute URLs alone', () => {
+    const key = 'a'.repeat(48);
+    expect(apiFileUrl(`/api/v1/animal-photos/${key}`, 'https://api.example.com/')).toBe(
+      `https://api.example.com/api/v1/animal-photos/${key}`,
+    );
+    expect(apiFileUrl('https://cdn.example.com/a.jpg', 'https://api.example.com')).toBe(
+      'https://cdn.example.com/a.jpg',
+    );
+    expect(apiFileUrl('/api/v1/animal-photos/x', null)).toBe('/api/v1/animal-photos/x');
   });
 });

@@ -5,8 +5,10 @@ import { useState } from 'react';
 import { Image, Linking, Pressable, View } from 'react-native';
 import { api } from '@/api/client';
 import { RequireAuth } from '@/auth/RequireAuth';
+import { appConfig } from '@/config/env';
 import { Button, Card, Screen, StateView, StatusBadge, Text } from '@/components/ui';
 import { useAsync } from '@/hooks/useAsync';
+import { apiFileUrl } from '@/lib/api-file';
 import { confirmAction } from '@/lib/confirm';
 import { useT } from '@/i18n';
 import { ageText, ANIMAL_TONE, originLabel, sexLabel, statusLabel } from '@/lib/farm-ui';
@@ -150,7 +152,7 @@ function AnimalDetails() {
           m.kind === 'photo' ? (
             <Image
               key={m.id}
-              source={{ uri: m.url }}
+              source={{ uri: apiFileUrl(m.url, appConfig.apiBaseUrl) }}
               accessibilityLabel={m.caption ?? t('detail.photoOf', { code: a.animalCode })}
               style={{
                 width: '100%',
@@ -165,7 +167,7 @@ function AnimalDetails() {
               key={m.id}
               accessibilityRole="link"
               accessibilityLabel={t('detail.openDocument', { caption: m.caption ?? '' })}
-              onPress={() => void Linking.openURL(m.url)}
+              onPress={() => void Linking.openURL(apiFileUrl(m.url, appConfig.apiBaseUrl))}
               style={{ minHeight: theme.minTouch, justifyContent: 'center' }}
             >
               <Text color={theme.colors.primary}>📄 {m.caption ?? m.url}</Text>
