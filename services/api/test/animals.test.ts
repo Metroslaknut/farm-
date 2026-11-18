@@ -1083,6 +1083,19 @@ describe('photos uploaded from a device', () => {
     expect((await api().get(V('/animal-photos/not-a-key'))).status).toBe(404);
   });
 
+  it('serving photos without a token is rate limited per client', async () => {
+    const limited = await startHarness({ RATE_LIMIT_ENABLED: 'true' });
+    try {
+      const get = () => request(limited.app).get(V(`/animal-photos/${'b'.repeat(48)}`));
+      for (let i = 0; i < 600; i++) expect((await get()).status).toBe(404);
+      const res = await get();
+      expect(res.status).toBe(429);
+      expect(res.body.error.code).toBe('RATE_LIMITED');
+    } finally {
+      await limited.stop();
+    }
+  });
+
   it('animal summaries carry the Thai type name when one is configured', async () => {
     await AnimalType.updateOne({ _id: buffalo }, { nameTh: 'ควาย' });
     const a = (await create({ animalCode: 'TH-1', animalTypeId: buffalo, sex: 'male' })).body

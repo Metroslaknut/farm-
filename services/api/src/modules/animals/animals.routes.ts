@@ -67,10 +67,11 @@ export function animalsRouter(ctx: AppContext): Router {
 /**
  * `/api/v1/animal-photos/:key` — serves a photo uploaded from a device. Public like a CDN link: an <img> tag cannot
  * send a token, so the 192-bit random key in the URL is the capability (it is only ever shown to farm members).
+ * Rate limited per client IP because it reads from the database without authentication.
  */
-export function animalPhotosRouter(): Router {
+export function animalPhotosRouter(ctx: AppContext): Router {
   const router = Router();
-  router.get('/:key', async (req, res) => {
+  router.get('/:key', rateLimits(ctx.env).photoRead, async (req, res) => {
     const photo = await readPhoto(String(req.params['key']));
     if (!photo) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found' } });

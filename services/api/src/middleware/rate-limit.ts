@@ -39,6 +39,11 @@ export const rateLimits = (env: ApiEnv) => ({
   playback: limiter(env, { windowMs: 60 * MINUTE, limit: 1200 }),
   // processing-status polls from the upload screens: one every 3 s for their whole polling window
   videoRefresh: limiter(env, { windowMs: 15 * MINUTE, limit: 300 }),
+  /**
+   * Public device-uploaded animal photos (served from the database without a token). Generous because pages show many
+   * photos and several users can share one IP (mobile carrier NAT); browsers cache each photo for a day.
+   */
+  photoRead: limiter(env, { windowMs: 15 * MINUTE, limit: 600 }),
   live: limiter(env, { windowMs: 60 * MINUTE, limit: 20 }),
   /** Marketplace (Part 11). */
   listing: limiter(env, { windowMs: 60 * MINUTE, limit: 40 }),

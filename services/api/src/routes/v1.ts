@@ -45,7 +45,7 @@ export function v1Router(ctx: AppContext, auth: AuthService): Router {
   router.use('/registrations', registrationsRouter(ctx));
   router.use('/farms', farmsRouter(ctx));
   router.use('/animals', animalsRouter(ctx));
-  router.use('/animal-photos', animalPhotosRouter());
+  router.use('/animal-photos', animalPhotosRouter(ctx));
   router.use('/animal-types', animalTypesRouter(ctx));
   router.use('/growth-standards', growthStandardsRouter(ctx));
   router.use('/posts', postsRouter(ctx));
