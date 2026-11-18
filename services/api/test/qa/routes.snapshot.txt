@@ -43,6 +43,7 @@ GET /api/v1/admin/settings
 GET /api/v1/admin/users
 GET /api/v1/admin/users/:id
 GET /api/v1/analytics/definitions
+GET /api/v1/animal-photos/:key
 GET /api/v1/animal-types
 GET /api/v1/animals/:animalId
 GET /api/v1/audit-logs
@@ -205,6 +206,7 @@ POST /api/v1/farms/:farmId/animals
 POST /api/v1/farms/:farmId/animals/:animalId/archive
 POST /api/v1/farms/:farmId/animals/:animalId/assessments
 POST /api/v1/farms/:farmId/animals/:animalId/media
+POST /api/v1/farms/:farmId/animals/:animalId/photos
 POST /api/v1/farms/:farmId/animals/:animalId/restore
 POST /api/v1/farms/:farmId/archive
 POST /api/v1/farms/:farmId/assessments/:id/recommendations/:recId/dismiss
