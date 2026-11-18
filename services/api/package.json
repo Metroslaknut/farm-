@@ -1,0 +1,49 @@
+{
+  "name": "@farmplus/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsup",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "admin:create": "tsx src/scripts/create-super-admin.ts",
+    "media:cleanup": "tsx src/scripts/cleanup-media.ts",
+    "db": "tsx src/scripts/db.ts",
+    "db:prod": "node dist/scripts/db.js",
+    "env:check": "tsx src/scripts/env-check.ts",
+    "seed:mockup": "tsx src/scripts/seed-mockup.ts",
+    "seed:mockup:images": "tsx src/scripts/mockup/resolve-images.ts"
+  },
+  "dependencies": {
+    "@farmplus/config": "workspace:*",
+    "@farmplus/shared-types": "workspace:*",
+    "@farmplus/shared-utils": "workspace:*",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jose": "^6.2.12",
+    "mongoose": "^9.11.1",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@farmplus/api-client": "workspace:*",
+    "@farmplus/validation": "workspace:*",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.2",
+    "@types/supertest": "^7.2.1",
+    "mongodb-memory-server": "^11.3.0",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.3.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
+  }
+}

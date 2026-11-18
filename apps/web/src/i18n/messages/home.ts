@@ -1,0 +1,176 @@
+import { defineMessages } from '@farmplus/i18n';
+
+/** Texts for the "home" area (the storefront home page). Thai is the source; English must have the same keys. */
+export default defineMessages({
+  th: {
+    'slides.label': 'ข่าวสารและโปรโมชัน',
+    'slides.position': '{index} จาก {total}',
+    'slides.previous': 'สไลด์ก่อนหน้า',
+    'slides.next': 'สไลด์ถัดไป',
+    'slides.play': 'เล่นสไลด์อัตโนมัติ',
+    'slides.pause': 'หยุดสไลด์อัตโนมัติ',
+    'slides.goTo': 'ไปที่สไลด์ {index}: {name}',
+    'slides.shop.eyebrow': 'ร้านค้าเกษตร',
+    'slides.shop.title': 'อาหารสัตว์และอุปกรณ์ฟาร์ม ส่งตรงจากผู้ขาย',
+    'slides.shop.lead': 'ทุกสินค้าผ่านการตรวจก่อนขึ้นร้าน เห็นราคาและค่าส่งก่อนกดสั่ง',
+    'slides.shop.cta': 'ไปที่ร้านค้า',
+    'slides.market.eyebrow': 'ตลาดสัตว์',
+    'slides.market.title': 'ซื้อขายโค กระบือ แพะ พร้อมประวัติจากฟาร์ม',
+    'slides.market.lead': 'ยื่นข้อเสนอ ต่อรองราคา และติดตามการส่งมอบในที่เดียว',
+    'slides.market.cta': 'ดูสัตว์ประกาศขาย',
+    'slides.farms.eyebrow': 'สมุดฟาร์ม',
+    'slides.farms.title': 'บันทึกน้ำหนัก สุขภาพ และต้นทุน ให้ขายได้มั่นใจ',
+    'slides.farms.lead': 'ข้อมูลการเลี้ยงที่ครบถ้วนช่วยให้ผู้ซื้อตัดสินใจง่ายขึ้น',
+    'slides.farms.cta': 'เปิดสมุดฟาร์ม',
+
+    'promo.sell.eyebrow': 'สำหรับผู้เลี้ยง',
+    'promo.sell.title': 'ลงประกาศขายสัตว์',
+    'promo.sell.link': 'เริ่มลงประกาศ',
+    'promo.sale.eyebrow': 'ลดราคา',
+    'promo.sale.title': 'สินค้าโปรโมชันจากฟาร์ม',
+    'promo.sale.link': 'ดูสินค้าลดราคา',
+
+    'areas.shop': 'ร้านค้า',
+    'areas.market': 'ตลาดสัตว์',
+    'areas.farms': 'ฟาร์มของฉัน',
+    'areas.community': 'ชุมชน',
+    'areas.videos': 'วิดีโอ',
+    'areas.live': 'ไลฟ์',
+
+    'features.label': 'จุดเด่นของ FARM+',
+    'features.price.title': 'ราคาจากผู้ขายโดยตรง',
+    'features.price.text': 'เห็นราคาและค่าส่งชัดเจนก่อนสั่งซื้อ',
+    'features.payment.title': 'ชำระเงินผ่านระบบ',
+    'features.payment.text': 'ผู้ขายได้รับเงินหลังผู้ซื้อยืนยันรับของ',
+    'features.delivery.title': 'ติดตามการจัดส่ง',
+    'features.delivery.text': 'ดูสถานะคำสั่งซื้อได้ทุกขั้นตอน',
+    'features.chat.title': 'คุยกับผู้ขายได้',
+    'features.chat.text': 'สอบถามรายละเอียดผ่านข้อความในระบบ',
+
+    'signIn.title': 'เข้าสู่ระบบเพื่อดูสินค้าลดราคาและสัตว์ประกาศขาย',
+    'signIn.text': 'สมาชิกเห็นราคา ยื่นข้อเสนอ และสั่งซื้อได้ทันที',
+    'signIn.button': 'เข้าสู่ระบบ',
+
+    'about.title': 'แพลตฟอร์มเดียวสำหรับคนทำฟาร์ม',
+    'about.text':
+      'FARM+ รวมสมุดฟาร์ม ตลาดสัตว์ ร้านค้าเกษตร และชุมชนไว้ด้วยกัน ข้อมูลที่บันทึกในฟาร์มใช้ประกอบการขายได้ทันที',
+    'about.sellAnimals': 'ลงประกาศขายสัตว์',
+    'about.openShop': 'เปิดร้านขายสินค้า',
+
+    'cats.shopTitle': 'หมวดหมู่สินค้า',
+    'cats.browseTitle': 'เลือกดูตามหมวดหมู่',
+
+    'deals.title': 'สินค้าลดราคา',
+    'deals.more': 'ดูทั้งหมด',
+    'deals.empty': 'ยังไม่มีสินค้าลดราคาในตอนนี้',
+
+    'listings.title': 'สัตว์ประกาศขายล่าสุด',
+    'listings.more': 'ดูตลาดสัตว์',
+    'listings.empty': 'ยังไม่มีสัตว์ประกาศขาย',
+    'listings.negotiable': 'ต่อรองได้',
+    'listings.details': 'ดูรายละเอียด',
+
+    'best.title': 'สินค้าขายดี',
+    'best.all': 'ทั้งหมด',
+    'best.pickCategory': 'เลือกหมวดหมู่',
+    'best.empty': 'ยังไม่มีสินค้าในหมวดนี้',
+
+    'community.title': 'เรื่องเล่าจากชุมชน',
+    'community.more': 'ไปที่ชุมชน',
+    'community.empty': 'ยังไม่มีโพสต์ในชุมชน',
+    'community.readMore': 'อ่านต่อ',
+
+    loadFailed: 'โหลดข้อมูลไม่สำเร็จ: {error}',
+    loading: 'กำลังโหลด…',
+
+    'product.discount': 'ลด {percent}%',
+    'product.buy': 'เลือกซื้อ',
+    'product.outOfStock': 'สินค้าหมด',
+  },
+  en: {
+    'slides.label': 'News and promotions',
+    'slides.position': '{index} of {total}',
+    'slides.previous': 'Previous slide',
+    'slides.next': 'Next slide',
+    'slides.play': 'Play slideshow',
+    'slides.pause': 'Pause slideshow',
+    'slides.goTo': 'Go to slide {index}: {name}',
+    'slides.shop.eyebrow': 'Farm shop',
+    'slides.shop.title': 'Animal feed and farm equipment, straight from the sellers',
+    'slides.shop.lead':
+      'Every product is checked before it goes on sale. See the price and delivery before you order.',
+    'slides.shop.cta': 'Go to the shop',
+    'slides.market.eyebrow': 'Livestock market',
+    'slides.market.title': 'Buy and sell cattle, buffalo and goats with their farm records',
+    'slides.market.lead': 'Make offers, negotiate and track the handover in one place',
+    'slides.market.cta': 'See animals for sale',
+    'slides.farms.eyebrow': 'Farm book',
+    'slides.farms.title': 'Record weight, health and costs, and sell with confidence',
+    'slides.farms.lead': 'Complete rearing records make it easier for buyers to decide',
+    'slides.farms.cta': 'Open your farm book',
+
+    'promo.sell.eyebrow': 'For breeders',
+    'promo.sell.title': 'List animals for sale',
+    'promo.sell.link': 'Start a listing',
+    'promo.sale.eyebrow': 'On sale',
+    'promo.sale.title': 'Farm products on promotion',
+    'promo.sale.link': 'See discounted products',
+
+    'areas.shop': 'Shop',
+    'areas.market': 'Livestock market',
+    'areas.farms': 'My farms',
+    'areas.community': 'Community',
+    'areas.videos': 'Videos',
+    'areas.live': 'Live',
+
+    'features.label': 'Why FARM+',
+    'features.price.title': 'Prices straight from the seller',
+    'features.price.text': 'See the price and delivery cost clearly before you order',
+    'features.payment.title': 'Pay through FARM+',
+    'features.payment.text': 'Sellers are paid after the buyer confirms receipt',
+    'features.delivery.title': 'Track your delivery',
+    'features.delivery.text': 'Follow your order at every step',
+    'features.chat.title': 'Talk to the seller',
+    'features.chat.text': 'Ask about the details through in-app messages',
+
+    'signIn.title': 'Sign in to see discounted products and animals for sale',
+    'signIn.text': 'Members see prices, make offers and order straight away',
+    'signIn.button': 'Sign in',
+
+    'about.title': 'One platform for farmers',
+    'about.text':
+      'FARM+ brings the farm book, livestock market, farm shop and community together. What you record on your farm supports your sales right away.',
+    'about.sellAnimals': 'List animals for sale',
+    'about.openShop': 'Open a shop',
+
+    'cats.shopTitle': 'Product categories',
+    'cats.browseTitle': 'Browse by category',
+
+    'deals.title': 'Discounted products',
+    'deals.more': 'See all',
+    'deals.empty': 'No discounted products right now',
+
+    'listings.title': 'Latest animals for sale',
+    'listings.more': 'Go to the livestock market',
+    'listings.empty': 'No animals for sale yet',
+    'listings.negotiable': 'Negotiable',
+    'listings.details': 'View details',
+
+    'best.title': 'Best sellers',
+    'best.all': 'All',
+    'best.pickCategory': 'Choose a category',
+    'best.empty': 'No products in this category yet',
+
+    'community.title': 'Stories from the community',
+    'community.more': 'Go to the community',
+    'community.empty': 'No community posts yet',
+    'community.readMore': 'Read more',
+
+    loadFailed: 'Could not load: {error}',
+    loading: 'Loading…',
+
+    'product.discount': '{percent}% off',
+    'product.buy': 'Buy',
+    'product.outOfStock': 'Out of stock',
+  },
+});

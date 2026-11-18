@@ -1,0 +1,191 @@
+/*
+ * `/shop` browse page: filter sidebar + result bar + product grid.
+ * Colours and spacing come from the design-system tokens; collapses to one column on narrow screens.
+ */
+.shop-page {
+  width: 100%;
+  padding: var(--ds-space-5) clamp(16px, 2.5vw, 40px);
+}
+.shop-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: var(--ds-space-5);
+  align-items: start;
+}
+
+/* ---------- Sidebar ---------- */
+.shop-sidebar {
+  display: grid;
+  gap: var(--ds-space-4);
+}
+.shop-widget {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  overflow: hidden;
+}
+.shop-widget__title {
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  font-size: var(--ds-text-md);
+  font-weight: 600;
+  border-bottom: 1px solid var(--ds-border);
+}
+.shop-widget__body {
+  display: grid;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-4);
+}
+.shop-checklist {
+  gap: var(--ds-space-2);
+  justify-items: start;
+}
+
+/* Price range */
+.shop-price {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-space-2);
+}
+.shop-price__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-2);
+}
+.shop-price__label {
+  font-size: var(--ds-text-sm);
+  color: var(--ds-text-muted);
+}
+.shop-range {
+  --fill: 100%;
+  width: 100%;
+  height: 6px;
+  margin: 0;
+  appearance: none;
+  border-radius: var(--ds-radius-full);
+  background: linear-gradient(
+    to right,
+    var(--ds-primary) 0 var(--fill),
+    var(--ds-border) var(--fill) 100%
+  );
+  cursor: pointer;
+}
+.shop-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ds-surface);
+  border: 3px solid var(--ds-primary);
+}
+.shop-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ds-surface);
+  border: 3px solid var(--ds-primary);
+}
+.shop-range:focus-visible {
+  outline: 2px solid var(--ds-focus);
+  outline-offset: 4px;
+}
+
+/* ---------- Result bar ---------- */
+.shop-main {
+  display: grid;
+  gap: var(--ds-space-4);
+  min-width: 0;
+}
+.shop-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+}
+.shop-bar__count {
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-sm);
+  align-self: center;
+}
+.shop-bar__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--ds-space-3);
+}
+/* Fields sit on one baseline with the view toggle: drop the form spacing and give every control the same height. */
+.shop-bar__tools .ds-field {
+  margin-bottom: 0;
+}
+.shop-bar__tools .ds-input,
+.shop-bar__tools .ds-select {
+  height: var(--ds-control-h);
+}
+.shop-viewtoggle {
+  display: inline-flex;
+  gap: var(--ds-space-1);
+}
+.shop-viewtoggle button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--ds-control-h);
+  height: var(--ds-control-h);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface);
+  color: var(--ds-text-muted);
+  cursor: pointer;
+}
+.shop-viewtoggle button[aria-pressed='true'] {
+  background: var(--ds-primary);
+  border-color: var(--ds-primary);
+  color: var(--ds-on-primary);
+}
+.shop-viewtoggle button:focus-visible {
+  outline: 2px solid var(--ds-focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Results ---------- */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--ds-space-4);
+}
+.shop-grid--list {
+  grid-template-columns: 1fr;
+}
+.shop-grid--list > .ds-card {
+  grid-template-columns: 200px minmax(0, 1fr);
+  column-gap: var(--ds-space-4);
+  align-content: start;
+}
+.shop-grid--list > .ds-card > :first-child {
+  grid-row: span 6;
+}
+.shop-empty {
+  margin: 0;
+  padding: var(--ds-space-6);
+  text-align: center;
+  color: var(--ds-text-muted);
+}
+
+@media (max-width: 860px) {
+  .shop-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .shop-grid--list > .ds-card {
+    grid-template-columns: 1fr;
+  }
+  .shop-grid--list > .ds-card > :first-child {
+    grid-row: auto;
+  }
+}

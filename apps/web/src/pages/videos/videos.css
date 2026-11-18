@@ -1,0 +1,129 @@
+/* Vertical short-video feed + player. Uses the design-system tokens where they exist. */
+.vf-feed {
+  height: calc(100dvh - 9rem);
+  min-height: 24rem;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  border-radius: var(--ds-radius-lg, 12px);
+  background: #000;
+  scrollbar-width: none;
+}
+.vf-feed:focus-visible {
+  outline: 3px solid var(--ds-color-primary, #c8102e);
+  outline-offset: 2px;
+}
+.vf-slide {
+  position: relative;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+.vf-player,
+.vf-video {
+  width: 100%;
+  height: 100%;
+}
+.vf-player {
+  position: relative;
+}
+.vf-video {
+  object-fit: contain;
+  background: #000;
+  display: block;
+}
+.vf-tap {
+  all: unset;
+  position: absolute;
+  inset: 0 3.5rem 5rem 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.vf-play {
+  font-size: 4rem;
+  opacity: 0.85;
+  text-shadow: 0 2px 10px #000;
+}
+.vf-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 0.75rem;
+  text-align: center;
+  background: rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}
+.vf-error {
+  pointer-events: auto;
+  background: rgb(0 0 0 / 0.7);
+  padding: 1rem;
+}
+.vf-mute {
+  all: unset;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.5);
+  cursor: pointer;
+}
+.vf-mute:focus-visible,
+.vf-act:focus-visible {
+  outline: 3px solid #fff;
+}
+.vf-info {
+  position: absolute;
+  left: 0;
+  right: 4.5rem;
+  bottom: 0;
+  padding: 1rem;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.75));
+  pointer-events: none;
+}
+.vf-info a,
+.vf-info button {
+  pointer-events: auto;
+}
+.vf-info a {
+  color: #fff;
+}
+.vf-actions {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+.vf-act {
+  all: unset;
+  display: grid;
+  justify-items: center;
+  min-width: 3rem;
+  min-height: 3rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.5);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.vf-act[aria-pressed='true'] {
+  background: var(--ds-color-primary, #c8102e);
+}
+.vf-placeholder {
+  color: #aaa;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vf-feed {
+    scroll-behavior: auto;
+  }
+}

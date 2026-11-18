@@ -1,0 +1,104 @@
+/*
+ * FARM+ design tokens — the single source of truth for colour, type, space and elevation.
+ *
+ * Scoping: tokens live on `.ds-root` (set by the design-system layouts), NOT on :root/body, so pages built
+ * before the design system (the public home page, the admin backoffice) are not restyled by it.
+ *
+ * Theming: every colour is `light-dark(<light>, <dark>)`, resolved by the element's `color-scheme`:
+ *   - default (preference "system"): follows the OS  -> color-scheme: light dark
+ *   - <html data-theme="light|dark"> (user choice)   -> forced
+ * One declaration per token, so light and dark cannot drift apart. Contrast is enforced by
+ * test/design-tokens.test.ts (WCAG AA: 4.5:1 text, 3:1 UI/focus).
+ */
+.ds-root {
+  color-scheme: light dark;
+
+  /* Surfaces */
+  --ds-bg: light-dark(#f7f8f6, #101412);
+  --ds-surface: light-dark(#ffffff, #181d1a);
+  --ds-surface-2: light-dark(#eef1ec, #212823);
+  --ds-overlay: light-dark(rgb(16 24 20 / 0.45), rgb(0 0 0 / 0.65));
+
+  /* Text */
+  --ds-text: light-dark(#17201a, #e9eee9);
+  --ds-text-muted: light-dark(#4a5a4f, #a9b7ad);
+  --ds-link: light-dark(#17613a, #7fd7a3);
+
+  /* Borders: `border` is decorative (cards, dividers); `border-strong` identifies controls (3:1). */
+  --ds-border: light-dark(#d3dad2, #313b35);
+  --ds-border-strong: light-dark(#6b7a70, #7f8f84);
+
+  /* Actions */
+  --ds-primary: light-dark(#1b6b3f, #5cc489);
+  --ds-on-primary: light-dark(#ffffff, #07140c);
+  --ds-danger: light-dark(#b3261e, #f2766d);
+  --ds-on-danger: light-dark(#ffffff, #1a0503);
+  --ds-focus: light-dark(#0b57d0, #8ab4ff);
+
+  /* Status (background / foreground / border). Always paired with text, never colour alone. */
+  --ds-success-bg: light-dark(#dff3e6, #1d3a29);
+  --ds-success-fg: light-dark(#17572f, #9be0b6);
+  --ds-success-border: light-dark(#a9d9bb, #2f5c43);
+  --ds-warning-bg: light-dark(#fdf0cf, #3d3216);
+  --ds-warning-fg: light-dark(#6b4a00, #f0d58a);
+  --ds-warning-border: light-dark(#ecd28a, #6a5622);
+  --ds-danger-bg: light-dark(#fbe0dd, #44211f);
+  --ds-danger-fg: light-dark(#8c1d18, #f5a9a3);
+  --ds-danger-border: light-dark(#f0b4ae, #7a3834);
+  --ds-info-bg: light-dark(#dce9fb, #1b2f4d);
+  --ds-info-fg: light-dark(#123e78, #a8c8f5);
+  --ds-info-border: light-dark(#aac6ee, #34568a);
+
+  /* Elevation */
+  --ds-shadow-sm: 0 1px 2px light-dark(rgb(16 24 20 / 0.08), rgb(0 0 0 / 0.5));
+  --ds-shadow-md: 0 8px 24px light-dark(rgb(16 24 20 / 0.14), rgb(0 0 0 / 0.55));
+
+  /* Typography */
+  --ds-font-sans: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Thai', 'Sarabun', sans-serif;
+  --ds-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --ds-text-xs: 0.8125rem;
+  --ds-text-sm: 0.875rem;
+  --ds-text-md: 1rem;
+  --ds-text-lg: 1.125rem;
+  --ds-text-xl: 1.375rem;
+  --ds-text-2xl: 1.75rem;
+  --ds-text-3xl: 2.25rem;
+  --ds-leading: 1.55;
+
+  /* Spacing (4px grid), radii, sizing */
+  --ds-space-1: 0.25rem;
+  --ds-space-2: 0.5rem;
+  --ds-space-3: 0.75rem;
+  --ds-space-4: 1rem;
+  --ds-space-5: 1.5rem;
+  --ds-space-6: 2rem;
+  --ds-space-7: 3rem;
+  --ds-space-8: 4rem;
+  --ds-radius-sm: 6px;
+  --ds-radius-md: 10px;
+  --ds-radius-lg: 16px;
+  --ds-radius-full: 999px;
+  --ds-control-h: 2.5rem; /* min 40px; touch targets are raised to 44px on coarse pointers */
+  --ds-container: 72rem;
+  --ds-header-h: 3.75rem;
+
+  /* Layering (modals use the browser top layer and need no z-index) */
+  --ds-z-header: 20;
+  --ds-z-dropdown: 30;
+
+  /* Motion */
+  --ds-duration: 150ms;
+}
+
+:root[data-theme='light'] .ds-root {
+  color-scheme: light;
+}
+:root[data-theme='dark'] .ds-root {
+  color-scheme: dark;
+}
+
+@media (pointer: coarse) {
+  .ds-root {
+    --ds-control-h: 2.75rem;
+  }
+}

@@ -1,0 +1,43 @@
+name: Mobile build (EAS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS build profile (see apps/mobile/eas.json)
+        type: choice
+        options: [development, preview, production]
+        required: true
+      platform:
+        type: choice
+        options: [all, android, ios]
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # `production` builds need a reviewer's approval; the EXPO_TOKEN secret is only available to this environment.
+    environment: mobile-${{ inputs.profile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Quality gate (same checks as CI, mobile only)
+        run: |
+          pnpm --filter @farmplus/mobile typecheck
+          pnpm --filter @farmplus/mobile test
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }} # a scoped, revocable robot token; store/signing credentials stay inside EAS
+      - name: Build
+        working-directory: apps/mobile
+        run: eas build --non-interactive --no-wait --profile "${{ inputs.profile }}" --platform "${{ inputs.platform }}"

@@ -1,0 +1,145 @@
+# Render Blueprint for the FARM+ API (staging + production). See docs/ops/deploy-render-cloudflare.md.
+#
+# - The web app is NOT here: it is a static site on Cloudflare Pages, deployed by .github/workflows/release.yml.
+# - autoDeploy is off on purpose: a release must run the database step (indexes + migrations) BEFORE the new code,
+#   so deployments are triggered only by the Release workflow through each service's deploy hook.
+# - Values marked `sync: false` are secrets or per-environment values: Render asks for them when the Blueprint is
+#   created. They never live in this file. Templates: deploy/env/{staging,production}.env.example.
+# - The worker (services/worker) is a skeleton with no queue yet, so it is not deployed. Add a `type: worker` service
+#   when it has real work to do.
+
+envVarGroups:
+  - name: farmplus-api-common
+    envVars:
+      - key: NODE_VERSION # Render's Node runtime version
+        value: '22'
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT # Render routes traffic to port 10000 by default
+        value: '10000'
+      - key: TRUST_PROXY
+        value: '1'
+      - key: RATE_LIMIT_ENABLED
+        value: 'true'
+      - key: AUTH_REQUIRE_VERIFICATION
+        value: 'true'
+      - key: SHUTDOWN_DELAY_MS
+        value: '5000'
+      - key: ACCESS_TOKEN_TTL_SECONDS
+        value: '900'
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: '30'
+      - key: MFA_ISSUER
+        value: FARM+
+      - key: VIDEO_PROVIDER # the mock provider is refused in production and staging
+        value: cloudflare
+      - key: VIDEO_MAX_UPLOAD_MB
+        value: '200'
+      - key: VIDEO_MAX_DURATION_SECONDS
+        value: '120'
+      - key: SHIPPING_PROVIDER
+        value: none
+      - key: PAYMENT_PROVIDER # no real payment adapter ships yet
+        value: none
+      - key: AI_PROVIDER
+        value: none
+
+services:
+  - type: web
+    name: farmplus-api-staging
+    runtime: node
+    region: singapore # same region as the Atlas cluster (AWS ap-southeast-1)
+    plan: starter # an always-on instance: realtime sockets and the 10-minute housekeeping jobs need one
+    branch: main
+    autoDeploy: false
+    # NODE_ENV=development only for the install, so pnpm also installs the build tools (tsup, typescript).
+    buildCommand: >-
+      NODE_ENV=development npx -y pnpm@12.11.2 install --frozen-lockfile --filter "@farmplus/api..." &&
+      npx -y pnpm@12.11.2 --filter @farmplus/api build
+    # exec: node receives SIGTERM directly, so graceful shutdown works. GIT_SHA lets the Release workflow see which
+    # commit is live (GET /health → commit).
+    # Database release step (docs/ops/migrations.md): runs after the build and BEFORE the new code takes traffic; if it
+    # fails, the deploy stops and the old version keeps running. Creates missing indexes and runs pending migrations,
+    # never drops anything. Runs here (not in GitHub Actions) so Atlas only has to allow Render's outbound IPs.
+    preDeployCommand: >-
+      cd services/api &&
+      MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js indexes --apply --confirm-db "$FARMPLUS_DB_NAME" &&
+      MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js migrate --apply --confirm-db "$FARMPLUS_DB_NAME"
+    startCommand: cd services/api && GIT_SHA=$RENDER_GIT_COMMIT exec node dist/server.js
+    healthCheckPath: /ready # readiness (database reachable) gates traffic during a deploy
+    envVars:
+      - fromGroup: farmplus-api-common
+      - key: DEPLOY_ENV
+        value: staging
+      - key: FARMPLUS_DB_NAME # the database named in MONGODB_URI, e.g. farmplus_staging; the migration step must match it
+        sync: false
+      - key: MONGODB_URI_MIGRATIONS # same database, user farmplus_migrate; used only by preDeployCommand
+        sync: false
+      - key: CORS_ORIGINS # e.g. https://app.staging.example.com
+        sync: false
+      - key: MEDIA_ALLOWED_HOSTS # e.g. cdn.staging.example.com
+        sync: false
+      - key: MONGODB_URI # staging database, user farmplus_app (readWrite on that database only)
+        sync: false
+      - key: JWT_ACCESS_SECRET # openssl rand -base64 48
+        sync: false
+      - key: MFA_ENCRYPTION_KEY # openssl rand -base64 32
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_STREAM_API_TOKEN
+        sync: false
+      - key: CLOUDFLARE_STREAM_CUSTOMER_CODE
+        sync: false
+      - key: VIDEO_WEBHOOK_SECRET
+        sync: false
+
+  - type: web
+    name: farmplus-api
+    runtime: node
+    region: singapore
+    plan: starter
+    branch: main
+    autoDeploy: false
+    buildCommand: >-
+      NODE_ENV=development npx -y pnpm@12.11.2 install --frozen-lockfile --filter "@farmplus/api..." &&
+      npx -y pnpm@12.11.2 --filter @farmplus/api build
+    # Database release step (docs/ops/migrations.md): runs after the build and BEFORE the new code takes traffic; if it
+    # fails, the deploy stops and the old version keeps running. Creates missing indexes and runs pending migrations,
+    # never drops anything. Runs here (not in GitHub Actions) so Atlas only has to allow Render's outbound IPs.
+    preDeployCommand: >-
+      cd services/api &&
+      MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js indexes --apply --confirm-db "$FARMPLUS_DB_NAME" &&
+      MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js migrate --apply --confirm-db "$FARMPLUS_DB_NAME"
+    startCommand: cd services/api && GIT_SHA=$RENDER_GIT_COMMIT exec node dist/server.js
+    healthCheckPath: /ready
+    envVars:
+      - fromGroup: farmplus-api-common
+      - key: DEPLOY_ENV
+        value: production
+      - key: FARMPLUS_DB_NAME # the database named in MONGODB_URI, e.g. farmplus; the migration step must match it
+        sync: false
+      - key: MONGODB_URI_MIGRATIONS # same database, user farmplus_migrate; used only by preDeployCommand
+        sync: false
+      - key: CORS_ORIGINS # e.g. https://app.example.com
+        sync: false
+      - key: MEDIA_ALLOWED_HOSTS
+        sync: false
+      - key: MONGODB_URI # production database — different user and password from staging
+        sync: false
+      - key: JWT_ACCESS_SECRET # different value from staging
+        sync: false
+      - key: MFA_ENCRYPTION_KEY # different value from staging; losing it locks admins out of MFA
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_STREAM_API_TOKEN
+        sync: false
+      - key: CLOUDFLARE_STREAM_CUSTOMER_CODE
+        sync: false
+      - key: VIDEO_WEBHOOK_SECRET
+        sync: false

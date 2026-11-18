@@ -1,0 +1,59 @@
+{
+  "users.read": ["GET /api/v1/admin/analytics", "GET /api/v1/admin/users", "GET /api/v1/users"],
+  "users.update": [],
+  "users.suspend": [],
+  "registrations.review": ["GET /api/v1/admin/analytics", "GET /api/v1/admin/registrations"],
+  "registrations.approve": [],
+  "payments.read": [
+    "GET /api/v1/admin/analytics",
+    "GET /api/v1/admin/finance/audit-logs",
+    "GET /api/v1/admin/finance/payments",
+    "GET /api/v1/admin/finance/refunds",
+    "GET /api/v1/admin/finance/wallet-transactions",
+    "GET /api/v1/admin/finance/withdrawals"
+  ],
+  "payments.verify": [
+    "GET /api/v1/admin/finance/audit-logs/verify",
+    "POST /api/v1/admin/finance/reconcile"
+  ],
+  "payments.refund": [],
+  "withdrawals.approve": [],
+  "roles.read": [
+    "GET /api/v1/admin/permissions",
+    "GET /api/v1/admin/roles",
+    "GET /api/v1/permissions",
+    "GET /api/v1/roles",
+    "GET /api/v1/users/:id/roles"
+  ],
+  "roles.manage": [],
+  "permissions.manage": [],
+  "farms.read": ["GET /api/v1/admin/analytics"],
+  "farms.manage": [],
+  "listings.moderate": [
+    "GET /api/v1/admin/analytics",
+    "GET /api/v1/marketplace/moderation/listings",
+    "GET /api/v1/shop/moderation/products",
+    "POST /api/v1/marketplace/moderation/cleanup",
+    "POST /api/v1/shop/moderation/rescan"
+  ],
+  "commissions.manage": ["GET /api/v1/admin/finance/commission-rules"],
+  "reports.read": [
+    "GET /api/v1/admin/ai/usage",
+    "GET /api/v1/admin/analytics",
+    "GET /api/v1/admin/dashboard"
+  ],
+  "audit_logs.read": ["GET /api/v1/admin/audit-logs", "GET /api/v1/audit-logs"],
+  "settings.read": ["GET /api/v1/admin/settings"],
+  "settings.manage": [],
+  "animal_types.manage": [
+    "GET /api/v1/admin/ai/criteria",
+    "GET /api/v1/admin/ai/market-data",
+    "GET /api/v1/growth-standards"
+  ],
+  "content.moderate": [
+    "GET /api/v1/admin/analytics",
+    "GET /api/v1/admin/chat/reports",
+    "GET /api/v1/moderation/reports",
+    "POST /api/v1/moderation/media/cleanup"
+  ]
+}

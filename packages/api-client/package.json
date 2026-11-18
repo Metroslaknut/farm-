@@ -1,0 +1,24 @@
+{
+  "name": "@farmplus/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./realtime": "./src/realtime.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@farmplus/config": "workspace:*",
+    "@farmplus/shared-types": "workspace:*",
+    "@farmplus/shared-utils": "workspace:*",
+    "@farmplus/validation": "workspace:*",
+    "socket.io-client": "^4.8.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
+}

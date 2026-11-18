@@ -1,0 +1,155 @@
+/* Analytics dashboards (shared by the farm pages and the admin backoffice). Namespaced `an-`; colours fall back
+   from the public design-system tokens to the admin ones, so the same markup fits both areas. */
+.an-root,
+.an-filters {
+  --an-surface: var(--ds-surface, var(--adm-surface, #fff));
+  --an-border: var(--ds-border, var(--adm-border, #d3dad2));
+  --an-muted: var(--ds-text-muted, var(--adm-muted, #4a5a4f));
+  --an-primary: var(--ds-primary, var(--adm-primary, #1b6b3f));
+}
+.an-muted {
+  color: var(--an-muted);
+  font-size: 0.875rem;
+}
+.an-section {
+  margin: 1.5rem 0;
+}
+.an-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  margin: 0.75rem 0;
+}
+.an-stat {
+  background: var(--an-surface);
+  border: 1px solid var(--an-border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+}
+.an-stat dt {
+  color: var(--an-muted);
+  font-size: 0.8rem;
+}
+.an-stat dd {
+  margin: 0.2rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.an-series {
+  margin: 0.75rem 0;
+}
+.an-series figcaption {
+  font-size: 0.85rem;
+  color: var(--an-muted);
+}
+.an-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 5rem;
+  border-bottom: 1px solid var(--an-border);
+}
+.an-bars > div {
+  flex: 1;
+  min-height: 1px;
+  background: var(--an-primary);
+  border-radius: 2px 2px 0 0;
+}
+.an-table-wrap {
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+.an-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.an-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.25rem;
+}
+.an-table th,
+.an-table td {
+  border-bottom: 1px solid var(--an-border);
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+}
+.an-table td:not(:first-child) {
+  font-variant-numeric: tabular-nums;
+}
+.an-note {
+  font-size: 0.85rem;
+  color: var(--an-muted);
+  margin: 0.25rem 0;
+}
+.an-unavailable {
+  border: 1px dashed var(--an-border);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  color: var(--an-muted);
+}
+.an-alerts {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+.an-alert {
+  border-left: 4px solid var(--an-border);
+  padding: 0.4rem 0.75rem;
+  margin: 0.4rem 0;
+  background: var(--an-surface);
+}
+.an-alert--serious {
+  border-left-color: #b3261e;
+}
+.an-alert--caution {
+  border-left-color: #b7791f;
+}
+.an-details summary {
+  cursor: pointer;
+  color: var(--an-primary);
+}
+.an-def {
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+}
+.an-def dt {
+  font-weight: 600;
+}
+.an-def dd {
+  margin: 0.2rem 0 0 0;
+}
+.an-def p {
+  margin: 0.2rem 0;
+}
+.an-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin: 1rem 0;
+}
+.an-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+.an-filters input,
+.an-filters select {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--an-border);
+  border-radius: 6px;
+  background: var(--an-surface);
+  color: inherit;
+}
+.an-exports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 1rem 0;
+}

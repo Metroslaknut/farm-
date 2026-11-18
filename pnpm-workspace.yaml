@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - services/*
+  - packages/*
+  - e2e
+
+# pnpm blocks dependency install scripts by default; only allow what we need.
+allowBuilds:
+  esbuild: true
+  mongodb-memory-server: true

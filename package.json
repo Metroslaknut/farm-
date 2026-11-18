@@ -1,0 +1,38 @@
+{
+  "name": "farm-plus",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FARM+ platform monorepo",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @farmplus/web dev",
+    "dev:mobile": "pnpm --filter @farmplus/mobile start",
+    "dev:api": "pnpm --filter @farmplus/api dev",
+    "dev:worker": "pnpm --filter @farmplus/worker dev",
+    "seed:mockup": "pnpm --filter @farmplus/api seed:mockup",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r --if-present test",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "qa:audit": "node scripts/qa/audit-policy.mjs",
+    "e2e": "pnpm --filter @farmplus/e2e e2e",
+    "load": "node e2e/load/load-test.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1"
+  }
+}

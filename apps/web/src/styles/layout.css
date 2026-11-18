@@ -1,0 +1,197 @@
+/* Public layout: skip link, responsive header, container, footer. */
+.ds-skip {
+  position: absolute;
+  left: var(--ds-space-3);
+  top: var(--ds-space-3);
+  z-index: 100;
+  padding: var(--ds-space-2) var(--ds-space-4);
+  background: var(--ds-primary);
+  color: var(--ds-on-primary);
+  border-radius: var(--ds-radius-md);
+  transform: translateY(-200%);
+}
+.ds-skip:focus {
+  transform: none;
+}
+.ds-container {
+  width: 100%;
+  max-width: var(--ds-container);
+  margin-inline: auto;
+  padding-inline: var(--ds-space-4);
+}
+.ds-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--ds-z-header);
+  background: var(--ds-surface);
+  border-bottom: 1px solid var(--ds-border);
+}
+.ds-header__bar {
+  display: flex;
+  flex-wrap: wrap; /* mobile: the open menu panel drops onto its own full-width row */
+  align-items: center;
+  gap: var(--ds-space-3);
+  min-height: var(--ds-header-h);
+}
+.ds-brand {
+  font-weight: 800;
+  font-size: var(--ds-text-lg);
+  color: var(--ds-text);
+  text-decoration: none;
+}
+.ds-header__spacer {
+  flex: 1;
+}
+.ds-nav__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ds-nav__link {
+  display: flex;
+  align-items: center;
+  min-height: var(--ds-control-h);
+  padding: 0 var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  color: var(--ds-text);
+  text-decoration: none;
+  font-weight: 600;
+}
+.ds-nav__link:hover {
+  background: var(--ds-surface-2);
+}
+.ds-nav__link[aria-current='page'] {
+  background: var(--ds-primary);
+  color: var(--ds-on-primary);
+}
+/* Mobile first: the menu is a collapsible panel under the bar. */
+.ds-header__menu-btn {
+  display: inline-flex;
+}
+.ds-header__menu-btn {
+  white-space: nowrap;
+}
+.ds-header__panel {
+  display: none;
+  flex: 1 0 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ds-space-3);
+  padding-bottom: var(--ds-space-3);
+}
+.ds-header__panel[data-open='true'] {
+  display: flex;
+}
+.ds-header__panel nav {
+  width: 100%;
+}
+.ds-main {
+  flex: 1;
+  padding-block: var(--ds-space-5);
+}
+.ds-footer {
+  border-top: 1px solid var(--ds-border);
+  background: var(--ds-surface);
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-sm);
+  padding-block: var(--ds-space-5);
+}
+
+/* Theme toggle (segmented radio group) */
+.ds-theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--ds-border-strong);
+  border-radius: var(--ds-radius-md);
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+.ds-theme-toggle label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 var(--ds-space-3);
+  font-size: var(--ds-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+.ds-theme-toggle input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+.ds-theme-toggle label:has(input:checked) {
+  background: var(--ds-primary);
+  color: var(--ds-on-primary);
+}
+.ds-theme-toggle label:has(input:focus-visible) {
+  outline: 3px solid var(--ds-focus);
+  outline-offset: -3px;
+}
+
+/* Tablet and up (>= 768px): horizontal navigation, no menu button. */
+@media (min-width: 768px) {
+  .ds-container {
+    padding-inline: var(--ds-space-5);
+  }
+  .ds-header__menu-btn,
+  .ds-header__spacer {
+    display: none;
+  }
+  .ds-header__panel,
+  .ds-header__panel[data-open] {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0;
+  }
+  .ds-nav__list {
+    flex-direction: row;
+  }
+  .ds-main {
+    padding-block: var(--ds-space-6);
+  }
+}
+
+/* Desktop (>= 1024px) */
+@media (min-width: 1024px) {
+  .ds-container {
+    padding-inline: var(--ds-space-6);
+  }
+}
+
+/* Layout helpers used by pages */
+.ds-grid {
+  display: grid;
+  gap: var(--ds-space-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+.ds-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3);
+  align-items: center;
+}
+.ds-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+}
+@media (min-width: 640px) {
+  .ds-grid--2,
+  .ds-grid--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .ds-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

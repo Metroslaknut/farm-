@@ -1,0 +1,89 @@
+# FARM+ application security audit and remediation
+
+**Assessment date:** 2026-10-14 (Asia/Bangkok)  
+**Scope:** Local source, project tests, and isolated `mongodb-memory-server` tests. No deployed system, Atlas account, payment provider, or production environment was accessed.  
+**Approach:** Risk based review aligned to OWASP Top 10 and OWASP API Security Top 10. No destructive, load, or external production probes were run.
+
+## Executive summary
+
+This is a source and isolated-test review, not a penetration test or security certification. Existing audit tests exercise route authentication, permission matrices, ownership checks, hostile inputs, session revocation, media and finance behavior. The selected static suite passed after correcting a false-positive pattern in the scanner. Database-backed checks were attempted using the isolated in-memory MongoDB fixture; see the exact run record below for the outcome. No independently reproduced unauthorized access or financial exploit is asserted here.
+
+Production readiness is **not established**. The repository itself records that there is no production payment adapter, no staging deployment/Atlas control verification, and no file malware scanning or quarantine. Atlas access controls, backups/PITR, CI execution, real mobile-device behavior, provider sandboxes, and deployment headers remain outside evidence available in this workspace.
+
+## Architecture reviewed
+
+| Layer | Implemented architecture and evidence |
+| --- | --- |
+| Web | React/Vite in `apps/web`; calls the shared API client. Access tokens are memory held and refresh tokens use `sessionStorage` (`apps/web/src/auth/tokens.ts`). |
+| Mobile | Expo/React Native with Expo Router in `apps/mobile`; persistent refresh token uses Expo SecureStore with a memory-only fallback (`apps/mobile/src/auth/token-storage.ts`). No device E2E was run in this audit. |
+| API | Express 5 in `services/api`, `/api/v1`, Zod validation, Mongoose models/services, central error handling. |
+| Database | MongoDB via Mongoose. Tests use `mongodb-memory-server`; Atlas credentials and Atlas-side policy are not available for verification. |
+| Authentication | Access JWT plus server-side session and refresh-token rotation. Middleware checks session/account state; session and permission suites are in `services/api/test`. |
+| Authorization | RBAC/permission middleware and farm-scoped ownership checks. Admin routes are mounted separately; privileged admin access requires MFA according to the existing test suite. |
+| Payments | `PAYMENT_PROVIDER=none` or `mock` is supported by configuration; mock is prohibited in production. No real provider adapter or official provider sandbox credentials were present. Finance tests therefore do not establish provider integration security. |
+| Admin | `/api/v1/admin` modules for users, registration review, roles, permissions, settings, audit and reports; `/api/v1/admin/finance` for finance administration. Existing code does not expose manual payment approval/rejection as a production provider flow. |
+| Subscriptions | A user `subscriptionStatus` field/display exists, but no subscription lifecycle module/route/renewal processing was identified. It is not represented as an implemented business workflow. |
+| Media | Cloudflare Stream adapter supports direct upload and signed playback; development/test mock accepts bytes. No malware/content scanning or quarantine implementation was found. Video-provider callbacks use signature authentication in code. |
+| Infrastructure | Example environment configuration, Dockerfiles, and GitHub workflow files exist. They were inspected as source only; no Docker image, CI deployment, Atlas configuration, or cloud controls were executed. |
+
+## Findings register
+
+Severity reflects confirmed design gaps or evidence limits; no finding below should be read as proof of a successful exploit. `Informational` means an observation or unverified control boundary without a demonstrated vulnerability.
+
+| ID | Severity | Affected component | Evidence and preconditions | Impact | Remediation | Regression test | Verification result | Residual risk |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| SEC-01 | Medium (conditional) | Registration documents and media handling | `docs/qa/risks-and-limitations.md` R2 and `docs/qa/security-audit.md` describe no malware scanner/file-content validation. Media APIs enforce configured MIME/size constraints, but this is not content inspection. Risk requires a user able to submit a malicious file that is later opened by staff or another user. | Malicious or malformed documents/media may reach reviewers or other users; MIME allowlisting alone does not establish file safety. | Keep risky document types quarantined until scanned; validate file signatures server-side, limit accepted formats, and record scan status before preview/download. | Add isolated upload tests for signature/MIME mismatch, quarantine state, and unauthorized download once scanning is implemented. | **Confirmed design gap; no exploit reproduced.** Existing media regression suite outcome is recorded below. | Provider-side processing, actual CDN privacy, and real uploaded content were not tested. |
+| SEC-02 | High if payments are enabled; currently readiness blocker | Finance/payment integration | `packages/config/src/server.ts` supports `none` and `mock`; risk register R3 states no real provider. No official sandbox credentials/configuration were available. | Provider-specific signature, amount/currency mapping, retries, settlement, refund and idempotency behavior remain unvalidated. Enabling real-money operation without an adapter and sandbox pass would expose financial and reconciliation risk. | Keep real payment operations disabled until a provider adapter is implemented and passes official sandbox tests for valid/invalid signatures, mismatch, duplicate events, refunds, and reconciliation. | Extend finance provider contract tests and execute them against the chosen provider's official sandbox in a non-production environment. | **Not run / blocked:** no real provider adapter or sandbox credentials. Mock-only behavior is not evidence of provider compatibility. | This assessment cannot verify credentials, provider-side idempotency or settlement behavior. |
+| SEC-03 | Medium (conditional) | Web refresh-token storage | `apps/web/src/auth/tokens.ts` stores the refresh token in `sessionStorage`; `docs/qa/risks-and-limitations.md` L2 records the trade-off. Any same-origin script execution can read it. No XSS was demonstrated in this audit. | A separate script-injection flaw could expose a refresh token for the lifetime of its session, though rotation/reuse detection and CSP reduce exposure. | Consider a server-managed `HttpOnly`, `Secure`, `SameSite` cookie/BFF design with matching CSRF controls; otherwise continue strict output encoding/CSP and short token lifetime/rotation. | Add browser checks for token storage, rotation/reuse revocation, logout and account suspension invalidation, and XSS regression cases. | **Confirmed storage choice; vulnerability not demonstrated.** Static client sink test passed; browser E2E was not rerun here. | CSP and browser behavior require deployment-level verification. |
+| SEC-04 | Informational | Atlas, deployment, CI/CD, backup and monitoring | Project risk register R5/T7 states no staging deployment, Atlas restore drill, alerts, and no execution of Docker/GitHub workflows. No account/config available to verify allowlists, database roles, backups, TLS termination, secret manager or logs. | Misconfiguration or recovery gaps could expose or lose production data; current evidence cannot establish these controls. | Before launch, verify least-privilege Atlas users/network access, TLS, PITR and restore drill, secret injection/rotation, alerting/log redaction, CI permissions, and deployed headers against a staging environment. | Add deployment verification evidence and a scheduled restore/secret-rotation exercise; avoid treating source-only config checks as cloud validation. | **Not verified.** No external infrastructure was touched. | High: source review cannot establish actual cloud settings or operational response. |
+| SEC-05 | Low/Medium when horizontally scaled | API rate limiting and realtime | `docs/qa/risks-and-limitations.md` documents in-memory per-instance rate limiting and a single-instance realtime adapter. This is an operational boundary, not a demonstrated bypass in a single instance. | Limits and events are not globally coordinated across replicas; scaling could weaken abuse controls or realtime consistency. | Use a shared rate-limit store and supported realtime adapter before scaling to multiple API instances; verify proxy trust and per-route limits in staging. | Add multi-instance integration coverage once shared infrastructure is configured. | **Code/documented limitation; multi-instance behavior not run.** | Low at one instance; material when scaled without shared coordination. |
+| SEC-06 | Informational | Dependency audit / mobile build tooling | `docs/qa/audit-waivers.json` tracks two mobile build-tooling advisories with expiry 2027-01-31 (per existing risk register). The configured audit script queries the package registry. | Waived development/build tooling vulnerabilities may affect build integrity if exploitable in the build environment; they are not established as runtime vulnerabilities. | Reassess the waivers at every release and remove them when patched; use a controlled registry connection for a fresh audit. | CI dependency-policy gate and waiver-expiry test. | **Registry audit not completed here:** the audit command required package-manager/network resolution and was interrupted; no fresh advisory result is claimed. | Advisory status can change; the stored waiver file is not a live vulnerability feed. |
+
+## Workflow coverage matrix
+
+“Existing automated suite” refers to project tests already in the repository; this audit does not claim every workflow below was exercised end-to-end. Full UI → API → MongoDB Atlas flows were not run because Atlas/staging access was unavailable. Subscription lifecycle is omitted as an implemented workflow because none was identified.
+
+| Implemented workflow | Relevant controls and evidence | End-to-end in this audit? |
+| --- | --- | --- |
+| Registration, login, verification and password reset | Auth suite; registration-review/admin suite; route and authorization matrices; session revocation checks. | No; selected isolated API suites only. |
+| Role/permission management and admin access | Permission matrix, role escalation tests, admin MFA tests, negative route matrix. | No. |
+| Subscription/payment | No subscription lifecycle found. Finance mock supports local tests; no real provider adapter found. | No; provider test blocked. |
+| Admin finance review | Finance admin endpoints and permission checks exist; no manual provider payment approval flow identified. | No. |
+| Farm and livestock management | Farm-scoped routes and object ownership checks; records have server-derived revision compare-and-set. | No Atlas/UI end-to-end. |
+| Product listing/marketplace | Marketplace/order modules and ownership/finance feature tests exist. | No Atlas/UI end-to-end. |
+| Buyer/seller interaction | Offer/negotiation and conversation permissions are present in feature and authorization tests. | No Atlas/UI end-to-end. |
+| Orders and transaction status | Order/finance tests, idempotency/ownership behavior and state rules in API suites. | No real provider or Atlas end-to-end. |
+| Notifications | Notification APIs and ownership checks exist in project tests. | No. |
+| Admin dashboard/reporting | Admin report routes/permission matrix; date/source consistency not independently reconciled in this audit. | No. |
+
+## Test and evidence record
+
+All commands below were run from the repository workspace. No real provider, Atlas database, deployed site, or production credentials were used.
+
+| Command | Result |
+| --- | --- |
+| `cd services/api && ./node_modules/.bin/vitest run test/qa/security-static.test.ts --reporter=dot` | **PASS:** 1 file, 13 tests passed after narrowing the static scanner's exception to the fixed Mongoose revision compare-and-set predicate. |
+| `cd services/api && ./node_modules/.bin/vitest run test/qa/security-static.test.ts test/qa/security-dynamic.test.ts test/qa/authz-matrix.test.ts test/qa/permission-matrix.test.ts test/qa/fuzz.test.ts test/regressions/auth.test.ts test/regressions/media.test.ts test/finance.test.ts test/deploy-config.test.ts --reporter=dot` (sandboxed attempt) | **PARTIAL/blocked:** MongoMemoryServer could not bind loopback (`listen EPERM`, `0.0.0.0`); DB-backed tests did not execute. Static suite found the false positive subsequently fixed. The run reported 25 passed, 117 skipped, 7 failed suite setups and one static failure. |
+| `cd services/api && ./node_modules/.bin/vitest run test/qa/security-dynamic.test.ts test/qa/authz-matrix.test.ts test/qa/permission-matrix.test.ts test/qa/fuzz.test.ts test/regressions/auth.test.ts test/regressions/media.test.ts test/finance.test.ts test/deploy-config.test.ts --reporter=dot` (with local loopback permission) | **PASS:** 8 files, 130 tests passed; duration 182.60 seconds. MongoMemoryServer used local loopback only. No Atlas or payment provider was contacted. |
+| `node scripts/qa/audit-policy.mjs` | **NOT RUN to completion:** policy invokes `pnpm audit` and may resolve pinned pnpm via `npx`; the command was stopped while waiting on package-manager/network resolution. No advisory count is asserted. |
+
+The project previously reported **1,021/1,021 API tests** and **10/10 browser tests** in the prior QA workflow. These are historical results and were not rerun as part of this security audit. They do not prove Atlas persistence or provider behavior.
+
+## Security control review
+
+- **Identity/authorization:** Existing route matrices cover authentication, platform permission combinations, tenant ownership, self-elevation prevention, session revocation and admin MFA. Dynamic verification is limited to the runnable local suites; no production identity provider or mobile device was used.
+- **Mongo/API:** Strict validation, field allowlists, bounded query patterns and generic error handling are exercised by `qa/fuzz`, static checks and feature tests. The static scan previously flagged Mongoose's fixed internal `doc.$where = { revision: readRevision }` concurrency predicate as injection. The scanner was corrected to allow only that exact internal line; its 13-test suite then passed. This is a test precision correction, not a product vulnerability fix.
+- **Web/mobile:** Access/refresh storage behavior is as described in the architecture table. API auth uses Authorization headers rather than cookie sessions, so browser CSRF controls are not the primary boundary. CORS, TLS and headers are represented in source/config tests; deployed behavior remains unverified. No mobile bundle-secret or deep-link device assessment was run.
+- **Uploads/media:** API validates media type/size for the development upload route and provider signed uploads have limited lifetimes/scopes in the adapter. No malware scanner/quarantine exists. MIME checks do not validate file signatures. Provider callbacks are authenticated in code but not against a live provider.
+- **Payments:** Mock-only testing is available. No live or sandbox provider calls were made. Webhook HMAC/idempotency behavior in the code/tests does not prove provider integration.
+- **Infrastructure/dependencies:** `.env.example`, Dockerfiles and CI definitions were source-reviewed. No real secret values were inspected. Atlas restrictions, backup encryption/restore, monitoring, TLS deployment, CI run permissions and external dependency advisories remain unverified.
+
+## Prioritized remediation plan
+
+1. **Before enabling real-money payments:** implement a provider adapter and run the complete official sandbox matrix, including signatures, amount/currency/order mismatch, duplicate callbacks, concurrent operation, refunds/payout approval and reconciliation. Keep production provider configuration disabled until evidence is recorded.
+2. **Before accepting risky user documents:** implement quarantine, signature/content validation and malware scanning; gate staff/user preview and download on a clean scan result.
+3. **Before public launch:** run an independent staging security review covering API IDOR/BOLA, admin MFA, realtime, mobile deep links/token storage, upload privacy and recovery. Do not use this report as certification.
+4. **Before production data is stored:** verify Atlas network restrictions and least-privilege roles, TLS, PITR, a successful restore drill, secret management/rotation, redacted logs and operational alerts.
+5. **Before multiple API replicas:** move rate limiting and realtime coordination to shared infrastructure and exercise the multi-instance authorization/session behavior.
+6. **Ongoing:** re-evaluate dependency waivers and run fresh dependency policy, full API, browser, mobile-device and staging workflows on release; record exact tool versions and results.
+

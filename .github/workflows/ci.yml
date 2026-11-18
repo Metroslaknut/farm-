@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Least privilege: CI only reads the repository. No job receives production credentials; none is needed to lint,
+# type-check, test or build.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Types, lint, format, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4 # version comes from "packageManager" in package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Cache the MongoDB binary used by the test suite
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-memory-server-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
+      - name: Type check
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Formatting
+        run: pnpm format:check
+      - name: Tests (API, web, mobile)
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+        env:
+          # The web build needs to know the API origin to generate its CSP; any https URL proves the build works.
+          VITE_API_BASE_URL: https://api.ci.invalid
+          WEB_REQUIRE_API_BASE: 'true'
+      - name: Production configuration validates (never uses real values)
+        run: pnpm --filter @farmplus/api test -- test/env.test.ts test/deploy-config.test.ts
+
+  e2e:
+    name: End-to-end tests (real browser, real API, in-memory MongoDB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-memory-server-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @farmplus/e2e exec playwright install --with-deps chromium
+      - run: pnpm --filter @farmplus/e2e e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-traces
+          path: e2e/test-results/
+          retention-days: 7
+
+  secrets-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # scan history too: a secret removed in a later commit is still leaked
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-audit:
+    name: 'Dependency audit policy (runtime: moderate+, tooling: high+ unless waived)'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/qa/audit-policy.mjs

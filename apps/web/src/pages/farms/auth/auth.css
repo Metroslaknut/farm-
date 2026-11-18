@@ -1,0 +1,276 @@
+/* Registration, verification and social sign-in (Thai storefront look: store tokens from site.css). */
+
+.auth-page {
+  display: grid;
+  gap: 24px;
+  max-width: 62rem;
+  margin: 8px auto 24px;
+  font-family: var(--store-font);
+}
+.auth-page--narrow {
+  max-width: 30rem;
+}
+@media (min-width: 900px) {
+  .auth-page:not(.auth-page--narrow) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 28rem);
+    align-items: stretch;
+  }
+  .auth-panel {
+    order: -1;
+  }
+}
+
+.auth-card {
+  min-width: 0;
+  padding: 32px;
+  border: 1px solid var(--store-line);
+  border-radius: var(--store-radius);
+  background: var(--store-paper);
+  color: var(--store-ink);
+}
+.auth-card h1 {
+  margin: 0 0 6px;
+  color: var(--store-ink);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+p.auth-card__lead {
+  margin: 0 0 20px;
+  color: var(--store-body);
+}
+.auth-card__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--store-accent) 16%, transparent);
+  color: var(--store-green);
+}
+.auth-card .ds-btn--primary {
+  background: var(--store-green);
+  border-color: var(--store-green);
+  color: var(--store-on-green);
+}
+.auth-card .ds-btn--primary:hover:not(:disabled) {
+  background: var(--store-green-hover);
+  border-color: var(--store-green-hover);
+}
+.auth-card .ds-alert {
+  margin-block: 12px 0;
+}
+.auth-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+p.auth-footnote {
+  margin: 20px 0 0;
+  color: var(--store-body);
+  text-align: center;
+}
+.auth-footnote a,
+.auth-link {
+  color: var(--store-green);
+  font-weight: 600;
+}
+.auth-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--store-green);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.auth-linkbtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Email / phone switch */
+.auth-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--store-radius);
+  background: var(--store-soft);
+}
+.auth-switch legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.auth-switch label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border-radius: calc(var(--store-radius) - 2px);
+  color: var(--store-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+.auth-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.auth-switch label:has(input:checked) {
+  background: var(--store-paper);
+  color: var(--store-ink);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+.auth-switch label:has(input:focus-visible) {
+  outline: 2px solid var(--ds-focus);
+  outline-offset: 2px;
+}
+
+/* Benefits panel (desktop: left of the form; phones: below it) */
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  padding: 36px;
+  border-radius: var(--store-radius);
+  background: var(--store-green);
+  color: var(--store-on-green);
+}
+.auth-panel h2 {
+  margin: 0;
+  color: inherit;
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+aside.auth-panel > p {
+  margin: 0;
+  opacity: 0.92;
+}
+.auth-panel ul {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.auth-panel li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.auth-panel li > span:first-child {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid color-mix(in srgb, var(--store-on-green) 45%, transparent);
+  border-radius: 50%;
+}
+.auth-panel li strong {
+  display: block;
+}
+.auth-panel li small {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+/* "หรือ" divider and the provider buttons */
+p.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  color: var(--store-body);
+  font-size: 0.875rem;
+}
+.auth-divider::before,
+.auth-divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--store-line);
+  content: '';
+}
+.auth-social {
+  display: grid;
+  gap: 10px;
+}
+.auth-social__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--store-radius);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.auth-social__btn:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+.auth-social__btn:focus-visible {
+  outline: 2px solid var(--ds-focus);
+  outline-offset: 2px;
+}
+.auth-social__logo {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+}
+/* Google: neutral light button (dark variant in dark mode), multicolour G, #1F1F1F label. */
+.auth-social__btn--google {
+  border-color: light-dark(#747775, #8e918f);
+  background: light-dark(#ffffff, #131314);
+  color: light-dark(#1f1f1f, #e3e3e3);
+}
+.auth-social__btn--google:hover:not(:disabled) {
+  background: light-dark(#f2f2f2, #1f1f20);
+}
+/* Facebook: brand blue with the white "f". */
+.auth-social__btn--facebook {
+  border-color: #1877f2;
+  background: #1877f2;
+  color: #ffffff;
+}
+.auth-social__btn--facebook:hover:not(:disabled) {
+  border-color: #166fe5;
+  background: #166fe5;
+}
+
+/* One-time code input */
+.auth-code {
+  font-size: 1.375rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+@media (max-width: 599px) {
+  .auth-card {
+    padding: 22px 18px;
+  }
+  .auth-card h1 {
+    font-size: 1.5rem;
+  }
+  .auth-panel {
+    padding: 24px 20px;
+  }
+}

@@ -1,0 +1,172 @@
+name: Release (web, API, worker)
+
+# Manual, per environment. The GitHub *Environment* ("staging" / "production") holds the variables and secrets for that
+# environment and, for production, requires a reviewer's approval before this workflow can use it. Secrets never live
+# in the repository. See docs/ops/deployment.md for the full release procedure and docs/ops/rollback-incident.md.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging, production]
+        required: true
+      ref:
+        description: Git ref (tag or commit SHA) to release. Production must be a tag that was already deployed to staging.
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.environment }} # one release per environment at a time
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+      full_sha: ${{ steps.sha.outputs.full_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - id: sha
+        run: |
+          echo "sha=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+          echo "full_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Gate on the same checks as CI
+        run: |
+          pnpm typecheck
+          pnpm lint
+          pnpm test
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_API_BASE_URL: ${{ vars.API_BASE_URL }} # public value, set per GitHub Environment
+          WEB_MEDIA_HOSTS: ${{ vars.WEB_MEDIA_HOSTS }}
+          WEB_REQUIRE_API_BASE: 'true'
+      - name: Package
+        run: |
+          mkdir -p out
+          tar -czf out/web-${{ steps.sha.outputs.sha }}.tgz -C apps/web dist
+          tar -czf out/api-${{ steps.sha.outputs.sha }}.tgz -C services/api dist package.json
+          tar -czf out/worker-${{ steps.sha.outputs.sha }}.tgz -C services/worker dist package.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.sha.outputs.sha }}
+          path: out/
+          retention-days: 30 # rollbacks use these exact artifacts; keep them as long as the rollback window
+
+  database:
+    name: Database release step (indexes + migrations)
+    needs: build
+    # On Render this step runs as the service's preDeployCommand (render.yaml), because GitHub-hosted runners have no
+    # fixed IP to allow in Atlas. Set DB_RELEASE_FROM_CI=true only for a runner whose egress IP Atlas allows.
+    if: vars.DB_RELEASE_FROM_CI == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.build.outputs.sha }}
+      - run: tar -xzf api-${{ needs.build.outputs.sha }}.tgz
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Use the migration job's own least-privilege credential (index/collection DDL on this database only),
+      # not the API's runtime credential. NODE_ENV=production enforces TLS/credential rules on the connection string.
+      - name: Dry run (shows what would change; changes nothing)
+        run: |
+          node dist/scripts/db.js indexes
+          node dist/scripts/db.js migrate
+        env:
+          NODE_ENV: production
+          DEPLOY_ENV: ${{ inputs.environment }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI_MIGRATIONS }}
+      - name: Apply (creates missing indexes, runs pending migrations — never drops anything)
+        run: |
+          DB_NAME="$(node -e "console.log(new URL(process.env.MONGODB_URI.replace('mongodb+srv','https').replace('mongodb','https')).pathname.slice(1))")"
+          node dist/scripts/db.js indexes --apply --confirm-db "$DB_NAME"
+          node dist/scripts/db.js migrate --apply --confirm-db "$DB_NAME"
+        env:
+          NODE_ENV: production
+          DEPLOY_ENV: ${{ inputs.environment }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI_MIGRATIONS }}
+
+  deploy:
+    name: Deploy
+    needs: [build, database]
+    # Runs when the database job succeeded, or was skipped because Render runs that step (see above).
+    if: ${{ !cancelled() && needs.build.result == 'success' && contains(fromJSON('["success","skipped"]'), needs.database.result) }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 30
+    # API on Render, web on Cloudflare Pages. Setup and the variables/secrets each GitHub Environment needs:
+    # docs/ops/deploy-render-cloudflare.md. The API goes first so the new web app never talks to an older API.
+    steps:
+      - name: Check this environment is wired
+        if: vars.DEPLOY_ENABLED != 'true'
+        run: |
+          echo "::error::Deployment is not configured for this environment. See docs/ops/deploy-render-cloudflare.md."
+          exit 1
+
+      - name: API — deploy this exact commit on Render
+        # The deploy hook URL contains a key: it is a secret. `ref` pins the deploy to the released commit.
+        run: curl -fsS -X POST "${RENDER_DEPLOY_HOOK_URL}&ref=${SHA}" > /dev/null
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          SHA: ${{ needs.build.outputs.full_sha }}
+
+      - name: API — wait until the new build is live
+        # Render builds from source, then swaps instances once /ready passes. /health reports the live commit.
+        run: |
+          for _ in $(seq 1 120); do
+            live="$(curl -fsS "${API_BASE_URL}/health" | jq -r '.commit // empty' || true)"
+            if [ "$live" = "$SHA" ]; then echo "API is live on $SHA"; exit 0; fi
+            sleep 10
+          done
+          echo "::error::The API did not report commit $SHA within 20 minutes. Check the deploy in the Render dashboard."
+          exit 1
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          SHA: ${{ needs.build.outputs.full_sha }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.build.outputs.sha }}
+      - run: tar -xzf web-${{ needs.build.outputs.sha }}.tgz # → dist/ (includes _headers and _redirects)
+
+      - name: Web — upload the built site to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CF_PAGES_PROJECT }} --branch=main --commit-hash=${{ needs.build.outputs.full_sha }}
+
+  verify:
+    name: Verify the deployed environment
+    needs: [build, deploy]
+    if: ${{ !cancelled() && needs.deploy.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Smoke test (read-only; TLS is always verified)
+        run: node scripts/ops/verify-deployment.mjs --api "${{ vars.API_BASE_URL }}" --web "${{ vars.WEB_BASE_URL }}" --origin "${{ vars.WEB_BASE_URL }}"

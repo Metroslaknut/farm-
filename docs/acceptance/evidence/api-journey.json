@@ -1,0 +1,235 @@
+{
+  "generatedBy": "services/api/test/acceptance/journey.test.ts",
+  "when": "2026-11-09T16:09:50.057Z",
+  "scenarios": [
+    {
+      "scenario": "1",
+      "title": "Register and verify",
+      "checks": [
+        "sign-in refused with ACCOUNT_NOT_VERIFIED before verification",
+        "verification link accepted once, refused on reuse",
+        "new account has no permissions"
+      ],
+      "ids": {
+        "farmerId": "6af1f04c627dcda736f02d10",
+        "buyerId": "6af1f04c627dcda736f02d17"
+      }
+    },
+    {
+      "scenario": "2",
+      "title": "Permissions via approved registrations",
+      "checks": [
+        "farm creation refused (403) before approval",
+        "identity, farm_owner and seller registrations approved by staff with reasons",
+        "roles appear on the account",
+        "self-approval refused"
+      ],
+      "ids": {
+        "identityRegistration": "6af1f04d627dcda736f02d25"
+      }
+    },
+    {
+      "scenario": "3",
+      "title": "Create a farm",
+      "checks": [
+        "farm created by an approved farm owner",
+        "farm list shows own farms only"
+      ],
+      "ids": {
+        "farmId": "6af1f04d627dcda736f02d39"
+      }
+    },
+    {
+      "scenario": "4",
+      "title": "Register an animal",
+      "checks": [
+        "animal created",
+        "duplicate code on the same farm refused (409)"
+      ],
+      "ids": {
+        "animalId": "6af1f04d627dcda736f02d3f"
+      }
+    },
+    {
+      "scenario": "5",
+      "title": "Growth, feeding, health, cost records",
+      "checks": [
+        "2 weighings, 1 feeding log, 1 health record and 1 expense stored and listed"
+      ],
+      "ids": {
+        "animalId": "6af1f04d627dcda736f02d3f"
+      }
+    },
+    {
+      "scenario": "6",
+      "title": "AI assessment",
+      "checks": [
+        "assessment generated with disclaimer; no score invented without validated criteria",
+        "owner accepted it; another farm cannot read it"
+      ],
+      "ids": {
+        "assessmentId": "6af1f04d627dcda736f02d4c"
+      }
+    },
+    {
+      "scenario": "7",
+      "title": "Community post",
+      "checks": [
+        "post published and visible in another user’s feed",
+        "reaction and comment stored"
+      ],
+      "ids": {
+        "postId": "6af1f04d627dcda736f02d51"
+      }
+    },
+    {
+      "scenario": "8",
+      "title": "Short video",
+      "checks": [
+        "upload ticket, provider upload and processing → ready",
+        "playback URL issued to another user, view recorded, video listed",
+        "anonymous upload refused"
+      ],
+      "ids": {
+        "videoId": "6af1f04d627dcda736f02d55"
+      }
+    },
+    {
+      "scenario": "9",
+      "title": "Listing",
+      "checks": [
+        "draft not visible to buyers",
+        "submit → moderator approval (a seller cannot approve) → active and visible"
+      ],
+      "ids": {
+        "listingId": "6af1f04d627dcda736f02d59"
+      }
+    },
+    {
+      "scenario": "10",
+      "title": "Negotiation",
+      "checks": [
+        "offer below the seller’s floor refused",
+        "counter-offer 45,000 ฿",
+        "stale accept refused (409), current accept succeeds",
+        "listing RESERVED",
+        "seller notified"
+      ],
+      "ids": {
+        "negotiationId": "6af1f04d627dcda736f02d62"
+      }
+    },
+    {
+      "scenario": "12",
+      "title": "Shipping calculation",
+      "checks": [
+        "Bangkok 2,500 ฿ and Chiang Mai 4,000 ฿ from the seller’s rates",
+        "flagged as an estimate"
+      ],
+      "ids": {
+        "quoteId": "6af1f04d627dcda736f02d6d"
+      }
+    },
+    {
+      "scenario": "11",
+      "title": "Order",
+      "checks": [
+        "totals 45,000 + 2,500 shipping = 47,500 ฿",
+        "one order per deal",
+        "delivery address encrypted at rest"
+      ],
+      "ids": {
+        "orderId": "6af1f04d627dcda736f02d6f",
+        "orderNo": "FP-261109-2EC8D97C"
+      }
+    },
+    {
+      "scenario": "13-15",
+      "title": "Payment, fee and proceeds",
+      "checks": [
+        "payment succeeded via the provider’s signed callback",
+        "fee 5 % of 45,000 = 2,250 ฿ (shipping not commissionable), frozen with its calculation on the order",
+        "journal: provider −47,500; seller pending +42,750; platform +2,250; carrier +2,500; sums to 0",
+        "a repeated callback created no second journal",
+        "seller wallet 42,750 ฿ pending"
+      ],
+      "ids": {
+        "paymentId": "6af1f04d627dcda736f02d73"
+      }
+    },
+    {
+      "scenario": "16",
+      "title": "Delivery tracking",
+      "checks": [
+        "PAID → PROCESSING → SHIPPED (tracking LE-ACCEPT-01) → out_for_delivery → DELIVERED",
+        "second confirmation refused",
+        "earnings moved from pending to available once (42,750 ฿)"
+      ],
+      "ids": {
+        "orderId": "6af1f04d627dcda736f02d6f"
+      }
+    },
+    {
+      "scenario": "17",
+      "title": "Refund",
+      "checks": [
+        "delivered order cannot be cancelled; a stranger cannot cancel",
+        "cancel after payment → full refund requested",
+        "buyer cannot approve; finance approval → one provider refund → callback completes it; duplicate callback harmless",
+        "order REFUNDED, payment refunded, ledger reversed (sums to 0), animal back on sale"
+      ],
+      "ids": {
+        "refundId": "6af1f04d627dcda736f02daf"
+      }
+    },
+    {
+      "scenario": "19",
+      "title": "Product purchase",
+      "checks": [
+        "product approved by a moderator before sale",
+        "cart total 6,000 ฿; a checkout on a stale price is refused (409)",
+        "same order/payment/ledger path: fee 5 % = 300 ฿, payout 5,700 ฿",
+        "stock 20 → 17, cart emptied"
+      ],
+      "ids": {
+        "orderId": "6af1f04d627dcda736f02dbe"
+      }
+    },
+    {
+      "scenario": "20",
+      "title": "Farm isolation",
+      "checks": [
+        "11 private farm routes × (another farm owner, an unrelated buyer) → 404",
+        "cannot write to another farm or read another party’s order",
+        "owner access unchanged"
+      ],
+      "ids": {
+        "farmId": "6af1f04d627dcda736f02d39",
+        "otherFarmId": "6af1f04d627dcda736f02d3c"
+      }
+    },
+    {
+      "scenario": "18",
+      "title": "Administrator audit history",
+      "checks": [
+        "registration, farm, animal and account events attributed to the actor",
+        "financial trail has payment and refund events and verifies",
+        "farmers cannot read either trail",
+        "no password/token/key in any audit row"
+      ],
+      "ids": {}
+    },
+    {
+      "scenario": "reconciliation",
+      "title": "Financial reconciliation",
+      "checks": [
+        "ledger sums to 0",
+        "every wallet equals its ledger lines",
+        "platform wallet 2,550 ฿ = fees of the two standing sales",
+        "seller proceeds 42,750 + 5,700 ฿",
+        "platform reconciliation reports no issues"
+      ],
+      "ids": {}
+    }
+  ]
+}
