@@ -6,3 +6,5 @@ coverage
 .turbo
 pnpm-lock.yaml
 apps/mobile/assets
+# Written by services/api/test/acceptance/journey.test.ts on every test run (JSON.stringify layout)
+docs/acceptance/evidence/

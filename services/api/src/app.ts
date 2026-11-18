@@ -23,6 +23,7 @@ import { notFoundHandler } from './middleware/not-found';
 import { requestContext } from './middleware/request-context';
 import { noStore, requireHttps } from './middleware/transport-security';
 import { healthRouter, readinessRouter } from './routes/health';
+import { createPhotoStorage, type PhotoStorage } from './modules/animals/photo-storage';
 import { v1Router } from './routes/v1';
 import { AuthService } from './services/auth.service';
 import { ConsoleNotifier, UnconfiguredNotifier, type Notifier } from './services/notifier';
@@ -38,6 +39,8 @@ export interface AppDeps {
   payments?: PaymentProvider | null;
   /** Override the AI provider (tests). */
   ai?: AiProvider | null;
+  /** Override the photo storage (tests). Defaults to the one configured by PHOTO_STORAGE. */
+  photos?: PhotoStorage | null;
 }
 
 export function createContext(env: ApiEnv, deps: AppDeps = {}): AppContext {
@@ -52,6 +55,7 @@ export function createContext(env: ApiEnv, deps: AppDeps = {}): AppContext {
     shipping: deps.shipping === undefined ? createShippingProvider(env) : deps.shipping,
     payments: deps.payments === undefined ? createPaymentProvider(env) : deps.payments,
     ai: deps.ai === undefined ? createAiProvider(env) : deps.ai,
+    photos: deps.photos === undefined ? createPhotoStorage(env) : deps.photos,
   };
 }
 

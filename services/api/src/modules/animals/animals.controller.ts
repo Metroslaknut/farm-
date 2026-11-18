@@ -80,7 +80,7 @@ export function animalsController(ctx: AppContext) {
       const { actor, access } = await farmContext(req);
       const bytes = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
       res.status(201).json({
-        animal: await animals.uploadPhoto(actor, access, animalId(req), bytes),
+        animal: await animals.uploadPhoto(actor, access, animalId(req), bytes, ctx.photos),
       });
     }) satisfies RequestHandler,
 
@@ -92,6 +92,7 @@ export function animalsController(ctx: AppContext) {
           access,
           animalId(req),
           parseObjectId(req.params['mediaId']),
+          ctx.photos,
         ),
       });
     }) satisfies RequestHandler,

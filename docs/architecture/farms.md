@@ -82,7 +82,28 @@ Sex cannot be changed if it contradicts recorded offspring. Unknown fields are r
 
 Files live in external object storage; the API stores only references: `POST /farms/:farmId/animals/:id/media {kind, url, mimeType?, caption?}`.
 `https` only, ≤ 20 per animal, duplicates rejected, photos must be `image/*`. `MEDIA_ALLOWED_HOSTS` restricts link hosts (exact or subdomain); in production
-media links are refused (`MEDIA_NOT_CONFIGURED`) until it is set. **Not built:** the upload itself (signed upload URLs) — it needs a storage provider decision.
+media links are refused (`MEDIA_NOT_CONFIGURED`) until it is set.
+
+**Photos uploaded from a device** come in through `POST /farms/:farmId/animals/:id/photos`:
+
+- The body is the image itself.
+- Access is checked first: `animals.write`, an active farm, and an animal that is not archived.
+- The upload is limited to 3 MB, and the type is sniffed from the bytes. Only JPEG, PNG and WebP are accepted.
+- The upload rate limit applies.
+
+Each photo gets a random 192-bit key. That key is the capability for reading the photo without a token, because an
+`<img>` tag cannot send one. An `AnimalPhoto` document records the owner and the metadata. Where the bytes live depends on
+`PHOTO_STORAGE`:
+
+- `database` (dev/test default): the bytes are stored in that document and served by
+  `GET /api/v1/animal-photos/<key>`, which is public and rate limited per IP.
+- `r2` (staging and production): the bytes go to Cloudflare R2 through `modules/animals/photo-storage.ts`, which signs
+  requests with SigV4 in `lib/sigv4.ts` and needs no SDK. The media URL is `R2_PUBLIC_BASE_URL/animal-photos/<key>`,
+  served by the bucket's custom domain.
+  - If the bucket refuses the upload, nothing is recorded, and the client gets `503 PHOTO_STORAGE_UNAVAILABLE`.
+  - Removing the media entry deletes the document and the object. A failed object delete is reported, not returned to
+    the client.
+  - Photos stored in the database before the switch keep being served and removed as before.
 
 ## Lists
 

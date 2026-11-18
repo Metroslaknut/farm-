@@ -1,4 +1,5 @@
 import type { Server } from 'node:http';
+import type { PhotoStorage } from '../src/modules/animals/photo-storage';
 import type { Express } from 'express';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
@@ -61,7 +62,7 @@ let shared: { mongo: MongoMemoryServer; refs: number } | undefined;
 
 export async function startHarness(
   overrides: Record<string, string> = {},
-  deps: { video?: (env: ApiEnv) => VideoProvider } = {},
+  deps: { video?: (env: ApiEnv) => VideoProvider; photos?: PhotoStorage | null } = {},
 ): Promise<TestHarness> {
   if (!shared) {
     const mongo = await MongoMemoryServer.create();
@@ -81,8 +82,8 @@ export async function startHarness(
   const ai = aiCreated instanceof MockAiProvider ? aiCreated : null;
   return {
     env,
-    app: createApp(env, { notifier, video, payments, ai }),
-    ctx: createContext(env, { notifier, video, payments, ai }),
+    app: createApp(env, { notifier, video, payments, ai, photos: deps.photos }),
+    ctx: createContext(env, { notifier, video, payments, ai, photos: deps.photos }),
     video,
     payments,
     ai,

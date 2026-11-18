@@ -10,6 +10,7 @@ health checks, least-privilege database users and the verification script.
 | Database step      | Render `preDeployCommand`, before new code takes traffic | `render.yaml`                                  |
 | Web app            | Cloudflare Pages (Direct Upload of `apps/web/dist`)      | `release.yml` → `wrangler pages deploy`        |
 | Database           | MongoDB Atlas, AWS **Singapore** (ap-southeast-1)        | —                                              |
+| Animal photos      | Cloudflare R2, public custom domain (`PHOTO_STORAGE=r2`) | API env `R2_*`, web `WEB_MEDIA_HOSTS`          |
 | Video              | Cloudflare Stream (required: `mock` is refused in prod)  | API env `CLOUDFLARE_*`, `VIDEO_WEBHOOK_SECRET` |
 | Worker             | Not deployed (skeleton, no queue yet)                    | —                                              |
 
@@ -23,18 +24,18 @@ Each environment (staging, production) has its own Render service, Pages project
 2. Create the Environments **staging** and **production** (Settings → Environments). On production, add required reviewers.
 3. Set these on **each** Environment:
 
-| Kind     | Name                     | Value                                                                            |
-| -------- | ------------------------ | -------------------------------------------------------------------------------- |
-| variable | `DEPLOY_ENABLED`         | `true`                                                                           |
-| variable | `API_BASE_URL`           | Public API origin, e.g. `https://api.example.com`. It is built into the web app. |
-| variable | `WEB_BASE_URL`           | Web origin, e.g. `https://app.example.com`                                       |
-| variable | `WEB_MEDIA_HOSTS`        | e.g. `https://*.cloudflarestream.com,https://cdn.example.com`                    |
-| variable | `CLOUDFLARE_ACCOUNT_ID`  | Cloudflare account id                                                            |
-| variable | `CF_PAGES_PROJECT`       | e.g. `farmplus-web-staging` / `farmplus-web`                                     |
-| secret   | `RENDER_DEPLOY_HOOK_URL` | The service's deploy hook (Render → service → Settings → Deploy Hook)            |
-| secret   | `CLOUDFLARE_API_TOKEN`   | API token with **Account → Cloudflare Pages → Edit** only                        |
+| Kind     | Name                     | Value                                                                                          |
+| -------- | ------------------------ | ---------------------------------------------------------------------------------------------- |
+| variable | `DEPLOY_ENABLED`         | `true`                                                                                         |
+| variable | `API_BASE_URL`           | Public API origin, e.g. `https://api.example.com`. It is built into the web app.               |
+| variable | `WEB_BASE_URL`           | Web origin, e.g. `https://app.example.com`                                                     |
+| variable | `WEB_MEDIA_HOSTS`        | e.g. `https://*.cloudflarestream.com,https://photos.example.com` (include the R2 photo domain) |
+| variable | `CLOUDFLARE_ACCOUNT_ID`  | Cloudflare account id                                                                          |
+| variable | `CF_PAGES_PROJECT`       | e.g. `farmplus-web-staging` / `farmplus-web`                                                   |
+| secret   | `RENDER_DEPLOY_HOOK_URL` | The service's deploy hook (Render → service → Settings → Deploy Hook)                          |
+| secret   | `CLOUDFLARE_API_TOKEN`   | API token with **Account → Cloudflare Pages → Edit** only                                      |
 
-`DB_RELEASE_FROM_CI` stays unset. The database step runs on Render (see §3).
+`DB_RELEASE_FROM_CI` stays unset. The database step runs on Render (see §4).
 
 ## 2. MongoDB Atlas
 
@@ -47,7 +48,30 @@ Each environment (staging, production) has its own Render service, Pages project
 3. Under **Network Access**, add only Render's outbound IPs (Render → service → Connect → Outbound). Never add `0.0.0.0/0`.
 4. Never copy production data into staging, and never seed mockup data into these databases.
 
-## 3. Render (API)
+## 3. Cloudflare R2 (animal photos)
+
+Photos uploaded from a device go through the API, which checks the size (3 MB) and the real image type. The API then
+writes them to R2, where they are served from the bucket's public domain under a random 192-bit key. Photos stored in
+MongoDB before the switch keep working from `/api/v1/animal-photos/<key>`.
+
+1. R2 → **Create bucket**: `farmplus-photos-staging` and `farmplus-photos`, with location hint **Asia-Pacific**.
+2. For each bucket, go to Settings → **Custom Domains** and add `photos.staging.example.com` / `photos.example.com`.
+   The domain must be on a zone in the same Cloudflare account. Leave the `r2.dev` public URL **disabled**.
+3. R2 → **Manage API tokens → Create API token**, one per environment:
+   - permission **Object Read & Write**;
+   - **only that environment's bucket**.
+
+   Put the Access Key ID and Secret Access Key into the Render service as `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`.
+
+4. Add the photo domain to `WEB_MEDIA_HOSTS` in the GitHub Environment (§1), so the web CSP allows the images.
+
+Notes:
+
+- The bucket is public by key: anyone holding a photo URL can open it. This is the same model as before; URLs are only
+  shown to farm members.
+- After a photo is deleted, the edge cache may keep serving it for up to a day (`Cache-Control: max-age=86400`).
+
+## 4. Render (API)
 
 1. Render → **New → Blueprint**, then select the repository. Render reads `render.yaml` and creates `farmplus-api-staging` and
    `farmplus-api`. To start without staging, delete that service from the file first.
@@ -78,7 +102,7 @@ How a deploy runs:
 
 `autoDeploy` is off, so a push to `main` deploys nothing. Releases go through the workflow.
 
-## 4. Cloudflare Pages (web)
+## 5. Cloudflare Pages (web)
 
 1. Pages → **Create → Direct Upload**. Create `farmplus-web-staging` and `farmplus-web` (the names you put in `CF_PAGES_PROJECT`).
    The production branch is `main`.
@@ -86,7 +110,7 @@ How a deploy runs:
    (SPA fallback) as they are, so they need no extra configuration.
 3. Put the same domain in the API's `CORS_ORIGINS`.
 
-## 5. Releasing
+## 6. Releasing
 
 Actions → **Release** → environment + tag. The workflow:
 
@@ -115,4 +139,8 @@ The configuration was written without Render, Cloudflare or GitHub accounts. On 
 - **`TRUST_PROXY=1`.** It gives the real client IP behind Render's proxy. Check that the rate limit keys on different
   clients, not on one proxy IP.
 - **Socket.IO.** Chat connects over `wss://` through Render and the Pages CSP.
+- **R2 photos.** Upload a photo to an animal on staging. Check that:
+  - the photo shows on the web and in the mobile app;
+  - the photo's URL is on the photo domain;
+  - deleting the photo removes the object from the bucket.
 - **Clean run.** `verify-deployment.mjs` passes in full.

@@ -169,6 +169,10 @@ export function productionWarnings(env: ApiEnv): string[] {
     w.push('AI_PROVIDER=none: assessments have no AI explanation (this is fine)');
   if (!env.GIT_SHA)
     w.push('GIT_SHA is not set: /health and logs cannot say which build is running');
+  if (env.PHOTO_STORAGE === 'database')
+    w.push(
+      'PHOTO_STORAGE=database: uploaded animal photos are stored in MongoDB (set PHOTO_STORAGE=r2 for object storage)',
+    );
   return w;
 }
 
@@ -208,6 +212,18 @@ const apiEnvObject = baseServerEnvSchema.extend({
         .map((host) => host.trim().toLowerCase())
         .filter(Boolean),
     ),
+  // Animal photos uploaded from a device. `database`: bytes in MongoDB, served by the API (development/test, small
+  // deployments). `r2`: Cloudflare R2, served from the bucket's public domain. Credentials are server-only.
+  PHOTO_STORAGE: z.enum(['database', 'r2']).default('database'),
+  R2_ACCOUNT_ID: z.string().min(1).optional(),
+  R2_ACCESS_KEY_ID: z.string().min(1).optional(),
+  R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  R2_BUCKET: z.string().min(1).optional(),
+  /** Public base URL of the bucket's custom domain, e.g. `https://photos.example.com` (no trailing slash). */
+  R2_PUBLIC_BASE_URL: z
+    .url()
+    .transform((value) => value.replace(/\/+$/, ''))
+    .optional(),
   // Video & live streaming (Part 10). Credentials are server-only.
   /** `mock` is an in-memory development/test stand-in and is refused in production. */
   VIDEO_PROVIDER: z.enum(['mock', 'cloudflare']).default('mock'),
@@ -355,6 +371,24 @@ export const apiEnvSchema = apiEnvObject
             message: 'required when VIDEO_PROVIDER=cloudflare',
           });
       }
+    }
+    if (env.PHOTO_STORAGE === 'r2') {
+      for (const key of [
+        'R2_ACCOUNT_ID',
+        'R2_ACCESS_KEY_ID',
+        'R2_SECRET_ACCESS_KEY',
+        'R2_BUCKET',
+        'R2_PUBLIC_BASE_URL',
+      ] as const) {
+        if (!env[key])
+          ctx.addIssue({ code: 'custom', path: [key], message: 'required when PHOTO_STORAGE=r2' });
+      }
+      if (env.NODE_ENV === 'production' && env.R2_PUBLIC_BASE_URL?.startsWith('http:'))
+        ctx.addIssue({
+          code: 'custom',
+          path: ['R2_PUBLIC_BASE_URL'],
+          message: 'must use https in production',
+        });
     }
     if (env.NODE_ENV === 'production' && env.CORS_ORIGINS.length === 0) {
       ctx.addIssue({

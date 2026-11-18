@@ -1,6 +1,8 @@
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { HttpError } from '../src/lib/errors';
 import { Animal, AnimalPhoto, AnimalType, AuditLog } from '../src/models';
+import type { PhotoStorage } from '../src/modules/animals/photo-storage';
 import {
   addFarmMember,
   createFarmer,
@@ -1081,6 +1083,96 @@ describe('photos uploaded from a device', () => {
   it('unknown or malformed keys are 404', async () => {
     expect((await api().get(V(`/animal-photos/${'a'.repeat(48)}`))).status).toBe(404);
     expect((await api().get(V('/animal-photos/not-a-key'))).status).toBe(404);
+  });
+
+  it('with object storage (PHOTO_STORAGE=r2): bytes go to the bucket, the URL is public, removal deletes the object', async () => {
+    const objects = new Map<string, { bytes: Buffer; mimeType: string }>();
+    const removed: string[] = [];
+    let failPut = false;
+    const base = 'https://photos.example.test/animal-photos/';
+    const photos: PhotoStorage = {
+      urlFor: (key) => `${base}${key}`,
+      keyOf: (url) => (url.startsWith(base) ? url.slice(base.length) : null),
+      put: async (key, bytes, mimeType) => {
+        if (failPut)
+          throw new HttpError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'Photo storage is unavailable');
+        objects.set(key, { bytes, mimeType });
+      },
+      remove: async (key) => {
+        removed.push(key);
+        objects.delete(key);
+      },
+    };
+    const r2 = await startHarness({}, { photos });
+    try {
+      const a = (await create({ animalCode: 'R2-1', animalTypeId: buffalo, sex: 'female' })).body
+        .animal;
+      const res = await request(r2.app)
+        .post(V(`${animals()}/${a.id}/photos`))
+        .set(owner.auth)
+        .set('content-type', 'image/png')
+        .send(png);
+      expect(res.status).toBe(201);
+      const media = res.body.animal.media.at(-1);
+      expect(media.url).toMatch(/^https:\/\/photos\.example\.test\/animal-photos\/[0-9a-f]{48}$/);
+      const key = media.url.slice(base.length);
+      expect(objects.get(key)).toMatchObject({ mimeType: 'image/png' });
+      const record = await AnimalPhoto.findOne({ key }).lean();
+      expect(record).toMatchObject({ storage: 'r2' });
+      expect(record?.data).toBeUndefined(); // the bytes are not in MongoDB
+      // The API does not serve bucket photos.
+      expect((await request(r2.app).get(V(`/animal-photos/${key}`))).status).toBe(404);
+
+      const del = await request(r2.app)
+        .delete(V(`${animals()}/${a.id}/media/${media.id}`))
+        .set(owner.auth);
+      expect(del.status).toBe(200);
+      expect(removed).toEqual([key]);
+      expect(await AnimalPhoto.countDocuments({ key })).toBe(0);
+
+      // The bucket refusing the upload records nothing and attaches nothing.
+      failPut = true;
+      const before = await AnimalPhoto.countDocuments({ animalId: a.id });
+      const refused = await request(r2.app)
+        .post(V(`${animals()}/${a.id}/photos`))
+        .set(owner.auth)
+        .set('content-type', 'image/png')
+        .send(png);
+      expect(refused.status).toBe(503);
+      expect(refused.body.error.code).toBe('PHOTO_STORAGE_UNAVAILABLE');
+      expect(await AnimalPhoto.countDocuments({ animalId: a.id })).toBe(before);
+      const detail = await request(r2.app)
+        .get(V(`${animals()}/${a.id}`))
+        .set(owner.auth);
+      expect(detail.body.animal.media).toHaveLength(0);
+    } finally {
+      await r2.stop();
+    }
+  });
+
+  it('photos stored in the database before the switch to object storage are still served and removable', async () => {
+    const a = (await create({ animalCode: 'LEGACY-1', animalTypeId: buffalo, sex: 'male' })).body
+      .animal;
+    const media = (await upload(a.id, png)).body.animal.media.at(-1);
+    const photos: PhotoStorage = {
+      urlFor: (key) => `https://photos.example.test/animal-photos/${key}`,
+      keyOf: () => null,
+      put: async () => undefined,
+      remove: async () => {
+        throw new Error('must not be called for a database-stored photo');
+      },
+    };
+    const r2 = await startHarness({}, { photos });
+    try {
+      expect((await request(r2.app).get(media.url)).status).toBe(200);
+      const del = await request(r2.app)
+        .delete(V(`${animals()}/${a.id}/media/${media.id}`))
+        .set(owner.auth);
+      expect(del.status).toBe(200);
+      expect((await request(r2.app).get(media.url)).status).toBe(404);
+    } finally {
+      await r2.stop();
+    }
   });
 
   it('serving photos without a token is rate limited per client', async () => {

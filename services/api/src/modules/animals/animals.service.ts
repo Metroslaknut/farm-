@@ -17,7 +17,9 @@ import {
   type AnimalDoc,
   type AnimalTypeDoc,
 } from '../../models';
+import { reportError } from '../../lib/error-reporter';
 import { recordAudit } from '../../services/audit.service';
+import type { PhotoStorage } from './photo-storage';
 import {
   assertFarmActive,
   loadFarmAccess,
@@ -586,6 +588,7 @@ export async function removeMedia(
   access: FarmAccess,
   animalId: Types.ObjectId,
   mediaId: Types.ObjectId,
+  photos: PhotoStorage | null = null,
 ): Promise<AnimalDetail> {
   requireFarmPermission(access, 'animals.write');
   assertFarmActive(access);
@@ -597,8 +600,21 @@ export async function removeMedia(
     (m) => String(m._id) !== String(mediaId),
   ) as typeof animal.media;
   await animal.save();
-  if (media.url.startsWith(PHOTO_PATH))
-    await AnimalPhoto.deleteOne({ key: media.url.slice(PHOTO_PATH.length), animalId: animal._id });
+  const key = media.url.startsWith(PHOTO_PATH)
+    ? media.url.slice(PHOTO_PATH.length)
+    : (photos?.keyOf(media.url) ?? null);
+  if (key) {
+    const stored = await AnimalPhoto.findOneAndDelete({ key, animalId: animal._id }).select(
+      'storage',
+    );
+    // The media entry is already gone; a failed object delete only leaves an unreachable-by-UI object, so report it.
+    if (stored?.storage === 'r2' && photos)
+      await photos
+        .remove(key)
+        .catch((error: unknown) =>
+          reportError(error, { source: 'job', route: 'animal-photo-remove' }),
+        );
+  }
   await auditAnimal(actor, 'animal.media_removed', animal, { kind: media.kind });
   return toDetail(animal);
 }
@@ -630,6 +646,7 @@ export async function uploadPhoto(
   access: FarmAccess,
   animalId: Types.ObjectId,
   bytes: Buffer,
+  photos: PhotoStorage | null = null,
 ): Promise<AnimalDetail> {
   requireFarmPermission(access, 'animals.write');
   assertFarmActive(access);
@@ -649,18 +666,29 @@ export async function uploadPhoto(
     throw conflict(`An animal can have at most ${MAX_MEDIA} files`, 'MEDIA_LIMIT');
 
   const key = randomBytes(24).toString('hex');
-  await AnimalPhoto.create({
-    key,
-    farmId: animal.farmId,
-    animalId: animal._id,
-    uploadedBy: actor.userId,
-    mimeType,
-    sizeBytes: bytes.length,
-    data: bytes,
-  });
+  // Object first: if the bucket refuses it nothing is recorded. If recording fails afterwards, the object is removed.
+  if (photos) await photos.put(key, bytes, mimeType);
+  const undoObject = async () => {
+    if (photos) await photos.remove(key).catch(() => undefined);
+  };
+  try {
+    await AnimalPhoto.create({
+      key,
+      farmId: animal.farmId,
+      animalId: animal._id,
+      uploadedBy: actor.userId,
+      mimeType,
+      sizeBytes: bytes.length,
+      storage: photos ? 'r2' : 'database',
+      ...(photos ? {} : { data: bytes }),
+    });
+  } catch (error) {
+    await undoObject();
+    throw error;
+  }
   animal.media.push({
     kind: 'photo',
-    url: `${PHOTO_PATH}${key}`,
+    url: photos ? photos.urlFor(key) : `${PHOTO_PATH}${key}`,
     mimeType,
     caption: null,
     uploadedBy: actor.userId as unknown as Types.ObjectId,
@@ -670,15 +698,16 @@ export async function uploadPhoto(
     await animal.save();
   } catch (error) {
     await AnimalPhoto.deleteOne({ key });
+    await undoObject();
     throw error;
   }
   await auditAnimal(actor, 'animal.media_added', animal, { kind: 'photo' });
   return toDetail(animal);
 }
 
-/** Bytes of an uploaded photo, looked up by its unguessable key. */
+/** Bytes of a database-stored photo, looked up by its unguessable key (R2 photos are served by the bucket). */
 export async function readPhoto(key: string): Promise<{ mimeType: string; data: Buffer } | null> {
   if (!/^[0-9a-f]{48}$/.test(key)) return null;
   const photo = await AnimalPhoto.findOne({ key }).select('mimeType data');
-  return photo ? { mimeType: photo.mimeType, data: photo.data } : null;
+  return photo?.data ? { mimeType: photo.mimeType, data: photo.data } : null;
 }

@@ -6,6 +6,7 @@ import type { PaymentProvider } from './modules/finance/provider';
 import type { ShippingProvider } from './modules/shipping/provider';
 import type { AiProvider } from './modules/ai/provider';
 import type { Notifier } from './services/notifier';
+import type { PhotoStorage } from './modules/animals/photo-storage';
 
 export interface AppContext {
   env: ApiEnv;
@@ -21,6 +22,8 @@ export interface AppContext {
   payments: PaymentProvider | null;
   /** AI provider (null = no AI explanation). The API key never leaves the adapter. */
   ai: AiProvider | null;
+  /** Object storage for device-uploaded animal photos (null = stored in MongoDB). Credentials stay inside the adapter. */
+  photos: PhotoStorage | null;
 }
 
 export interface RequestMeta {

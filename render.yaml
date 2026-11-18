@@ -35,6 +35,8 @@ envVarGroups:
         value: '30'
       - key: MFA_ISSUER
         value: FARM+
+      - key: PHOTO_STORAGE # device-uploaded animal photos go to Cloudflare R2 (served from R2_PUBLIC_BASE_URL)
+        value: r2
       - key: VIDEO_PROVIDER # the mock provider is refused in production and staging
         value: cloudflare
       - key: VIDEO_MAX_UPLOAD_MB
@@ -75,6 +77,16 @@ services:
       - fromGroup: farmplus-api-common
       - key: DEPLOY_ENV
         value: staging
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID # R2 API token scoped to this environment's bucket (Object Read & Write)
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET # e.g. farmplus-photos-staging
+        sync: false
+      - key: R2_PUBLIC_BASE_URL # e.g. https://photos.staging.example.com
+        sync: false
       - key: FARMPLUS_DB_NAME # the database named in MONGODB_URI, e.g. farmplus_staging; the migration step must match it
         sync: false
       - key: MONGODB_URI_MIGRATIONS # same database, user farmplus_migrate; used only by preDeployCommand
@@ -121,6 +133,16 @@ services:
       - fromGroup: farmplus-api-common
       - key: DEPLOY_ENV
         value: production
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID # R2 API token scoped to this environment's bucket (Object Read & Write)
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET # e.g. farmplus-photos
+        sync: false
+      - key: R2_PUBLIC_BASE_URL # e.g. https://photos.example.com
+        sync: false
       - key: FARMPLUS_DB_NAME # the database named in MONGODB_URI, e.g. farmplus; the migration step must match it
         sync: false
       - key: MONGODB_URI_MIGRATIONS # same database, user farmplus_migrate; used only by preDeployCommand
