@@ -1,4 +1,4 @@
-# Render Blueprint for the FARM+ API (staging + production). See docs/ops/deploy-render-cloudflare.md.
+# Render Blueprint for the FARM+ API (staging now; production commented out below). See docs/ops/deploy-render-cloudflare.md.
 #
 # - The web app is NOT here: it is a static site on Cloudflare Pages, deployed by .github/workflows/release.yml.
 # - autoDeploy is off on purpose: a release must run the database step (indexes + migrations) BEFORE the new code,
@@ -35,8 +35,6 @@ envVarGroups:
         value: '30'
       - key: MFA_ISSUER
         value: FARM+
-      - key: PHOTO_STORAGE # device-uploaded animal photos go to Cloudflare R2 (served from R2_PUBLIC_BASE_URL)
-        value: r2
       - key: VIDEO_PROVIDER # the mock provider is refused in production and staging
         value: cloudflare
       - key: VIDEO_MAX_UPLOAD_MB
@@ -77,16 +75,11 @@ services:
       - fromGroup: farmplus-api-common
       - key: DEPLOY_ENV
         value: staging
-      - key: R2_ACCOUNT_ID
-        sync: false
-      - key: R2_ACCESS_KEY_ID # R2 API token scoped to this environment's bucket (Object Read & Write)
-        sync: false
-      - key: R2_SECRET_ACCESS_KEY
-        sync: false
-      - key: R2_BUCKET # e.g. farmplus-photos-staging
-        sync: false
-      - key: R2_PUBLIC_BASE_URL # e.g. https://photos.staging.example.com
-        sync: false
+      # Photos stay in MongoDB until the project has a domain on Cloudflare (R2 custom domains need one). To switch:
+      # set PHOTO_STORAGE=r2 and add R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_BASE_URL.
+      # Photos uploaded before the switch keep working.
+      - key: PHOTO_STORAGE
+        value: database
       - key: FARMPLUS_DB_NAME # the database named in MONGODB_URI, e.g. farmplus_staging; the migration step must match it
         sync: false
       - key: MONGODB_URI_MIGRATIONS # same database, user farmplus_migrate; used only by preDeployCommand
@@ -110,58 +103,62 @@ services:
       - key: VIDEO_WEBHOOK_SECRET
         sync: false
 
-  - type: web
-    name: farmplus-api
-    runtime: node
-    region: singapore
-    plan: starter
-    branch: main
-    autoDeploy: false
-    buildCommand: >-
-      NODE_ENV=development npx -y pnpm@12.11.2 install --frozen-lockfile --filter "@farmplus/api..." &&
-      npx -y pnpm@12.11.2 --filter @farmplus/api build
-    # Database release step (docs/ops/migrations.md): runs after the build and BEFORE the new code takes traffic; if it
-    # fails, the deploy stops and the old version keeps running. Creates missing indexes and runs pending migrations,
-    # never drops anything. Runs here (not in GitHub Actions) so Atlas only has to allow Render's outbound IPs.
-    preDeployCommand: >-
-      cd services/api &&
-      MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js indexes --apply --confirm-db "$FARMPLUS_DB_NAME" &&
-      MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js migrate --apply --confirm-db "$FARMPLUS_DB_NAME"
-    startCommand: cd services/api && GIT_SHA=$RENDER_GIT_COMMIT exec node dist/server.js
-    healthCheckPath: /ready
-    envVars:
-      - fromGroup: farmplus-api-common
-      - key: DEPLOY_ENV
-        value: production
-      - key: R2_ACCOUNT_ID
-        sync: false
-      - key: R2_ACCESS_KEY_ID # R2 API token scoped to this environment's bucket (Object Read & Write)
-        sync: false
-      - key: R2_SECRET_ACCESS_KEY
-        sync: false
-      - key: R2_BUCKET # e.g. farmplus-photos
-        sync: false
-      - key: R2_PUBLIC_BASE_URL # e.g. https://photos.example.com
-        sync: false
-      - key: FARMPLUS_DB_NAME # the database named in MONGODB_URI, e.g. farmplus; the migration step must match it
-        sync: false
-      - key: MONGODB_URI_MIGRATIONS # same database, user farmplus_migrate; used only by preDeployCommand
-        sync: false
-      - key: CORS_ORIGINS # e.g. https://app.example.com
-        sync: false
-      - key: MEDIA_ALLOWED_HOSTS
-        sync: false
-      - key: MONGODB_URI # production database — different user and password from staging
-        sync: false
-      - key: JWT_ACCESS_SECRET # different value from staging
-        sync: false
-      - key: MFA_ENCRYPTION_KEY # different value from staging; losing it locks admins out of MFA
-        sync: false
-      - key: CLOUDFLARE_ACCOUNT_ID
-        sync: false
-      - key: CLOUDFLARE_STREAM_API_TOKEN
-        sync: false
-      - key: CLOUDFLARE_STREAM_CUSTOMER_CODE
-        sync: false
-      - key: VIDEO_WEBHOOK_SECRET
-        sync: false
+  # Production is created later, once the project has a domain (needed for R2 photos and the public URLs).
+  # To create it: uncomment this block, commit, then Render → the Blueprint → Manual Sync.
+  # - type: web
+  #   name: farmplus-api
+  #   runtime: node
+  #   region: singapore
+  #   plan: starter
+  #   branch: main
+  #   autoDeploy: false
+  #   buildCommand: >-
+  #     NODE_ENV=development npx -y pnpm@12.11.2 install --frozen-lockfile --filter "@farmplus/api..." &&
+  #     npx -y pnpm@12.11.2 --filter @farmplus/api build
+  #   # Database release step (docs/ops/migrations.md): runs after the build and BEFORE the new code takes traffic; if it
+  #   # fails, the deploy stops and the old version keeps running. Creates missing indexes and runs pending migrations,
+  #   # never drops anything. Runs here (not in GitHub Actions) so Atlas only has to allow Render's outbound IPs.
+  #   preDeployCommand: >-
+  #     cd services/api &&
+  #     MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js indexes --apply --confirm-db "$FARMPLUS_DB_NAME" &&
+  #     MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js migrate --apply --confirm-db "$FARMPLUS_DB_NAME"
+  #   startCommand: cd services/api && GIT_SHA=$RENDER_GIT_COMMIT exec node dist/server.js
+  #   healthCheckPath: /ready
+  #   envVars:
+  #     - fromGroup: farmplus-api-common
+  #     - key: DEPLOY_ENV
+  #       value: production
+  #     - key: PHOTO_STORAGE # device-uploaded animal photos go to Cloudflare R2 (served from R2_PUBLIC_BASE_URL)
+  #       value: r2
+  #     - key: R2_ACCOUNT_ID
+  #       sync: false
+  #     - key: R2_ACCESS_KEY_ID # R2 API token scoped to this environment's bucket (Object Read & Write)
+  #       sync: false
+  #     - key: R2_SECRET_ACCESS_KEY
+  #       sync: false
+  #     - key: R2_BUCKET # e.g. farmplus-photos
+  #       sync: false
+  #     - key: R2_PUBLIC_BASE_URL # e.g. https://photos.example.com
+  #       sync: false
+  #     - key: FARMPLUS_DB_NAME # the database named in MONGODB_URI, e.g. farmplus; the migration step must match it
+  #       sync: false
+  #     - key: MONGODB_URI_MIGRATIONS # same database, user farmplus_migrate; used only by preDeployCommand
+  #       sync: false
+  #     - key: CORS_ORIGINS # e.g. https://app.example.com
+  #       sync: false
+  #     - key: MEDIA_ALLOWED_HOSTS
+  #       sync: false
+  #     - key: MONGODB_URI # production database — different user and password from staging
+  #       sync: false
+  #     - key: JWT_ACCESS_SECRET # different value from staging
+  #       sync: false
+  #     - key: MFA_ENCRYPTION_KEY # different value from staging; losing it locks admins out of MFA
+  #       sync: false
+  #     - key: CLOUDFLARE_ACCOUNT_ID
+  #       sync: false
+  #     - key: CLOUDFLARE_STREAM_API_TOKEN
+  #       sync: false
+  #     - key: CLOUDFLARE_STREAM_CUSTOMER_CODE
+  #       sync: false
+  #     - key: VIDEO_WEBHOOK_SECRET
+  #       sync: false
