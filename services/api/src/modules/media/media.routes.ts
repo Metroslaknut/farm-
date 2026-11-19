@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 import {
   commentListQuerySchema,
   createCommentSchema,
@@ -12,6 +12,7 @@ import {
   videoViewSchema,
 } from '@farmplus/validation';
 import type { AppContext } from '../../context';
+import { HttpError } from '../../lib/errors';
 import { absoluteUrl, parse, requireActor } from '../../lib/http';
 import { parseObjectId } from '../../lib/object-id';
 import { authenticate } from '../../middleware/authenticate';
@@ -34,6 +35,20 @@ import {
 
 const id = (req: { params: Record<string, unknown> }) => parseObjectId(req.params['id']);
 
+/**
+ * VIDEO_PROVIDER=none: refuse to create videos or live streams before anything is recorded (a provider call would fail
+ * and leave a failed record behind). Everything else (lists, comments, existing records) keeps working.
+ */
+const requireVideoProvider =
+  (ctx: AppContext): RequestHandler =>
+  (_req, _res, next) => {
+    if (ctx.env.VIDEO_PROVIDER === 'none')
+      return next(
+        new HttpError(503, 'VIDEO_NOT_CONFIGURED', 'Video and live streaming are not enabled yet'),
+      );
+    next();
+  };
+
 /** `/api/v1/videos` — every route needs a signed-in, active user. */
 export function videosRouter(ctx: AppContext): Router {
   const router = Router();
@@ -47,7 +62,7 @@ export function videosRouter(ctx: AppContext): Router {
   router.get('/', async (req, res) => {
     res.json(await listVideos(requireActor(req), parse(videoFeedQuerySchema, req.query)));
   });
-  router.post('/uploads', limits.upload, async (req, res) => {
+  router.post('/uploads', requireVideoProvider(ctx), limits.upload, async (req, res) => {
     const ticket = await createUpload(
       requireActor(req),
       parse(createVideoUploadSchema, req.body),
@@ -131,7 +146,7 @@ export function liveRouter(ctx: AppContext): Router {
   router.get('/', async (req, res) => {
     res.json(await listLive(requireActor(req), parse(liveListQuerySchema, req.query)));
   });
-  router.post('/', limits.live, async (req, res) => {
+  router.post('/', requireVideoProvider(ctx), limits.live, async (req, res) => {
     res
       .status(201)
       .json(await createLive(requireActor(req), parse(createLiveSchema, req.body), ctx.video));

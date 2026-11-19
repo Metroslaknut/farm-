@@ -35,8 +35,6 @@ envVarGroups:
         value: '30'
       - key: MFA_ISSUER
         value: FARM+
-      - key: VIDEO_PROVIDER # the mock provider is refused in production and staging
-        value: cloudflare
       - key: VIDEO_MAX_UPLOAD_MB
         value: '200'
       - key: VIDEO_MAX_DURATION_SECONDS
@@ -94,14 +92,10 @@ services:
         sync: false
       - key: MFA_ENCRYPTION_KEY # openssl rand -base64 32
         sync: false
-      - key: CLOUDFLARE_ACCOUNT_ID
-        sync: false
-      - key: CLOUDFLARE_STREAM_API_TOKEN
-        sync: false
-      - key: CLOUDFLARE_STREAM_CUSTOMER_CODE
-        sync: false
-      - key: VIDEO_WEBHOOK_SECRET
-        sync: false
+      # Video and live are off until a Cloudflare Stream subscription exists. To switch on: set VIDEO_PROVIDER=cloudflare
+      # and add CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_STREAM_API_TOKEN, CLOUDFLARE_STREAM_CUSTOMER_CODE, VIDEO_WEBHOOK_SECRET.
+      - key: VIDEO_PROVIDER
+        value: none
 
   # Production is created later, once the project has a domain (needed for R2 photos and the public URLs).
   # To create it: uncomment this block, commit, then Render → the Blueprint → Manual Sync.
@@ -130,6 +124,8 @@ services:
   #       value: production
   #     - key: PHOTO_STORAGE # device-uploaded animal photos go to Cloudflare R2 (served from R2_PUBLIC_BASE_URL)
   #       value: r2
+  #     - key: VIDEO_PROVIDER # Cloudflare Stream; the mock provider is refused in production and staging
+  #       value: cloudflare
   #     - key: R2_ACCOUNT_ID
   #       sync: false
   #     - key: R2_ACCESS_KEY_ID # R2 API token scoped to this environment's bucket (Object Read & Write)

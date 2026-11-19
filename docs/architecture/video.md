@@ -9,10 +9,11 @@ Shared pure helpers (feed windowing, watch clock, upload checks): `packages/shar
 Everything provider-specific sits behind `VideoProvider` (`modules/media/provider/types.ts`): direct upload URLs, asset lookup/deletion, live inputs,
 short-lived signed playback, and webhook authentication. Selected by `VIDEO_PROVIDER`:
 
-| Value        | Use                                                                                                                                                                                                                        |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cloudflare` | **Cloudflare Stream** adapter (direct creator uploads, live inputs with RTMPS, token-signed HLS). Needs `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_STREAM_API_TOKEN`, `CLOUDFLARE_STREAM_CUSTOMER_CODE`, `VIDEO_WEBHOOK_SECRET`. |
-| `mock`       | In-memory development/test stand-in (stores uploads in RAM, serves them via signed URLs). **Refused in production** by the env schema. Not infrastructure.                                                                 |
+| Value        | Use                                                                                                                                                                                                                                                  |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloudflare` | **Cloudflare Stream** adapter (direct creator uploads, live inputs with RTMPS, token-signed HLS). Needs `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_STREAM_API_TOKEN`, `CLOUDFLARE_STREAM_CUSTOMER_CODE`, `VIDEO_WEBHOOK_SECRET`.                           |
+| `none`       | No streaming account yet: `POST /videos/uploads` and `POST /live` answer `503 VIDEO_NOT_CONFIGURED` before anything is recorded; lists, comments and existing records keep working; every webhook is rejected. Allowed in production (warning only). |
+| `mock`       | In-memory development/test stand-in (stores uploads in RAM, serves them via signed URLs). **Refused in production** by the env schema. Not infrastructure.                                                                                           |
 
 Credentials are read only in `createVideoProvider` (server). Clients receive one-time upload URLs and short-lived playback URLs, never tokens or keys; provider error
 bodies are never forwarded. Every asset is created with `requireSignedURLs`, so a playback URL is only obtained from FARM+ after its own authorisation check.

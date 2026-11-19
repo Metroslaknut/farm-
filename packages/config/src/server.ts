@@ -169,6 +169,8 @@ export function productionWarnings(env: ApiEnv): string[] {
     w.push('AI_PROVIDER=none: assessments have no AI explanation (this is fine)');
   if (!env.GIT_SHA)
     w.push('GIT_SHA is not set: /health and logs cannot say which build is running');
+  if (env.VIDEO_PROVIDER === 'none')
+    w.push('VIDEO_PROVIDER=none: video uploads and live streams are switched off');
   if (env.PHOTO_STORAGE === 'database')
     w.push(
       'PHOTO_STORAGE=database: uploaded animal photos are stored in MongoDB (set PHOTO_STORAGE=r2 for object storage)',
@@ -225,8 +227,11 @@ const apiEnvObject = baseServerEnvSchema.extend({
     .transform((value) => value.replace(/\/+$/, ''))
     .optional(),
   // Video & live streaming (Part 10). Credentials are server-only.
-  /** `mock` is an in-memory development/test stand-in and is refused in production. */
-  VIDEO_PROVIDER: z.enum(['mock', 'cloudflare']).default('mock'),
+  /**
+   * `mock` is an in-memory development/test stand-in and is refused in production. `none` switches video and live off
+   * (creating them answers 503 VIDEO_NOT_CONFIGURED) so a deployment can run before a streaming account exists.
+   */
+  VIDEO_PROVIDER: z.enum(['mock', 'cloudflare', 'none']).default('mock'),
   CLOUDFLARE_ACCOUNT_ID: z.string().min(1).optional(),
   CLOUDFLARE_STREAM_API_TOKEN: z.string().min(1).optional(),
   /** The `customer-<code>` part of your Stream playback hostname. */

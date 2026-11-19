@@ -3,16 +3,16 @@
 The concrete host wiring for [deployment.md](deployment.md). Everything in that document still applies: the release procedure,
 health checks, least-privilege database users and the verification script.
 
-| Part               | Where                                                    | Defined in                                     |
-| ------------------ | -------------------------------------------------------- | ---------------------------------------------- |
-| Code, CI, releases | GitHub, one monorepo                                     | `.github/workflows/ci.yml`, `release.yml`      |
-| API                | Render web service, Node runtime, region **Singapore**   | `render.yaml` (Blueprint)                      |
-| Database step      | Render `preDeployCommand`, before new code takes traffic | `render.yaml`                                  |
-| Web app            | Cloudflare Pages (Direct Upload of `apps/web/dist`)      | `release.yml` → `wrangler pages deploy`        |
-| Database           | MongoDB Atlas, AWS **Singapore** (ap-southeast-1)        | —                                              |
-| Animal photos      | Cloudflare R2, public custom domain (`PHOTO_STORAGE=r2`) | API env `R2_*`, web `WEB_MEDIA_HOSTS`          |
-| Video              | Cloudflare Stream (required: `mock` is refused in prod)  | API env `CLOUDFLARE_*`, `VIDEO_WEBHOOK_SECRET` |
-| Worker             | Not deployed (skeleton, no queue yet)                    | —                                              |
+| Part               | Where                                                                    | Defined in                                     |
+| ------------------ | ------------------------------------------------------------------------ | ---------------------------------------------- |
+| Code, CI, releases | GitHub, one monorepo                                                     | `.github/workflows/ci.yml`, `release.yml`      |
+| API                | Render web service, Node runtime, region **Singapore**                   | `render.yaml` (Blueprint)                      |
+| Database step      | Render `preDeployCommand`, before new code takes traffic                 | `render.yaml`                                  |
+| Web app            | Cloudflare Pages (Direct Upload of `apps/web/dist`)                      | `release.yml` → `wrangler pages deploy`        |
+| Database           | MongoDB Atlas, AWS **Singapore** (ap-southeast-1)                        | —                                              |
+| Animal photos      | Cloudflare R2, public custom domain (`PHOTO_STORAGE=r2`)                 | API env `R2_*`, web `WEB_MEDIA_HOSTS`          |
+| Video              | Cloudflare Stream, or `VIDEO_PROVIDER=none` (video off) until subscribed | API env `CLOUDFLARE_*`, `VIDEO_WEBHOOK_SECRET` |
+| Worker             | Not deployed (skeleton, no queue yet)                                    | —                                              |
 
 Each environment (staging, production) has its own Render service, Pages project, Atlas database and secrets.
 

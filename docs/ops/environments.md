@@ -25,7 +25,7 @@ When `NODE_ENV=production` the API **refuses to start** (and `env:check` / the r
 - `CORS_ORIGINS` is a list of exact `https://host[:port]` origins — no wildcards, no `http`, no paths, no localhost.
 - `JWT_ACCESS_SECRET` and `MFA_ENCRYPTION_KEY` are not placeholders (too few distinct characters / bytes).
 - `TRUST_PROXY` ≥ 1, `RATE_LIMIT_ENABLED` is not `false`, `AUTH_REQUIRE_VERIFICATION` is not `false`, `LOG_LEVEL` is not `debug`.
-- No provider is `mock`; `VIDEO_PROVIDER=cloudflare` has all its credentials.
+- No provider is `mock` (`VIDEO_PROVIDER=none` is allowed and only warns); `VIDEO_PROVIDER=cloudflare` has all its credentials.
 - `PHOTO_STORAGE=r2` has all five `R2_*` values and an `https` `R2_PUBLIC_BASE_URL`.
 
 Errors name the variable, never its value. `node services/api/dist/scripts/env-check.js` (or `pnpm --filter @farmplus/api env:check`) runs the same validation without starting anything and prints warnings for things that are valid but probably unintended (e.g. empty `MEDIA_ALLOWED_HOSTS`, no `GIT_SHA`).
@@ -65,7 +65,7 @@ Errors name the variable, never its value. `node services/api/dist/scripts/env-c
 | `OAUTH_FACEBOOK_APP_SECRET`       | with the id        | —                   | **yes** | Server-only. Also signs Graph API calls (`appsecret_proof`).                                                                                                                                                     |
 | `OAUTH_RETURN_URLS`               | for social sign-in | —                   | no      | Exact URLs a sign-in may return to, comma-separated: the web page `/farms/oauth-callback` and the mobile deep link `farmplus://oauth-callback`. https only in production.                                        |
 | `OAUTH_MOCK`                      | no                 | `false`             | no      | Development/test stand-in for Google/Facebook. Refused in production.                                                                                                                                            |
-| `VIDEO_PROVIDER`                  | production         | `mock`              | no      | `mock` (dev/test only) or `cloudflare`.                                                                                                                                                                          |
+| `VIDEO_PROVIDER`                  | production         | `mock`              | no      | `mock` (dev/test only), `cloudflare`, or `none` (video and live switched off: creating them answers `503 VIDEO_NOT_CONFIGURED`; for running before a Stream subscription exists).                                |
 | `CLOUDFLARE_ACCOUNT_ID`           | with cloudflare    | –                   | no      | Account id.                                                                                                                                                                                                      |
 | `CLOUDFLARE_STREAM_API_TOKEN`     | with cloudflare    | –                   | **yes** | Scope: Stream:Edit only.                                                                                                                                                                                         |
 | `CLOUDFLARE_STREAM_CUSTOMER_CODE` | with cloudflare    | –                   | no      | The `customer-<code>` part of the playback host.                                                                                                                                                                 |
