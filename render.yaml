@@ -57,15 +57,11 @@ services:
     # NODE_ENV=development only for the install, so pnpm also installs the build tools (tsup, typescript).
     buildCommand: >-
       NODE_ENV=development npx -y pnpm@12.11.2 install --frozen-lockfile --filter "@farmplus/api..." &&
-      npx -y pnpm@12.11.2 --filter @farmplus/api build &&
-      cd services/api &&
-      MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js indexes --apply --confirm-db "$FARMPLUS_DB_NAME" &&
-      MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js migrate --apply --confirm-db "$FARMPLUS_DB_NAME"
+      npx -y pnpm@12.11.2 --filter @farmplus/api build
     # exec: node receives SIGTERM directly, so graceful shutdown works. GIT_SHA lets the Release workflow see which
     # commit is live (GET /health → commit).
-    # Database release step (docs/ops/migrations.md): the free plan has no pre-deploy command, so indexes + migrations
-    # run at the end of the build. If they fail, the build fails and the old version keeps running. Never drops anything.
-    # On a paid plan, move them back to preDeployCommand.
+    # No database step on deploy: staging uses the existing database as it is (no index creation, no migrations).
+    # To run them by hand: node dist/scripts/db.js indexes|migrate --apply --confirm-db <db name> (docs/ops/migrations.md).
     startCommand: cd services/api && GIT_SHA=$RENDER_GIT_COMMIT exec node dist/server.js
     healthCheckPath: /ready # readiness (database reachable) gates traffic during a deploy
     envVars:
