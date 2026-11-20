@@ -51,22 +51,21 @@ services:
     name: farmplus-api-staging
     runtime: node
     region: singapore # same region as the Atlas cluster (AWS ap-southeast-1)
-    plan: starter # an always-on instance: realtime sockets and the 10-minute housekeeping jobs need one
+    plan: free # free while testing: sleeps after 15 min idle (realtime/housekeeping pause). Use starter for always-on
     branch: main
     autoDeploy: false
     # NODE_ENV=development only for the install, so pnpm also installs the build tools (tsup, typescript).
     buildCommand: >-
       NODE_ENV=development npx -y pnpm@12.11.2 install --frozen-lockfile --filter "@farmplus/api..." &&
-      npx -y pnpm@12.11.2 --filter @farmplus/api build
-    # exec: node receives SIGTERM directly, so graceful shutdown works. GIT_SHA lets the Release workflow see which
-    # commit is live (GET /health → commit).
-    # Database release step (docs/ops/migrations.md): runs after the build and BEFORE the new code takes traffic; if it
-    # fails, the deploy stops and the old version keeps running. Creates missing indexes and runs pending migrations,
-    # never drops anything. Runs here (not in GitHub Actions) so Atlas only has to allow Render's outbound IPs.
-    preDeployCommand: >-
+      npx -y pnpm@12.11.2 --filter @farmplus/api build &&
       cd services/api &&
       MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js indexes --apply --confirm-db "$FARMPLUS_DB_NAME" &&
       MONGODB_URI="$MONGODB_URI_MIGRATIONS" node dist/scripts/db.js migrate --apply --confirm-db "$FARMPLUS_DB_NAME"
+    # exec: node receives SIGTERM directly, so graceful shutdown works. GIT_SHA lets the Release workflow see which
+    # commit is live (GET /health → commit).
+    # Database release step (docs/ops/migrations.md): the free plan has no pre-deploy command, so indexes + migrations
+    # run at the end of the build. If they fail, the build fails and the old version keeps running. Never drops anything.
+    # On a paid plan, move them back to preDeployCommand.
     startCommand: cd services/api && GIT_SHA=$RENDER_GIT_COMMIT exec node dist/server.js
     healthCheckPath: /ready # readiness (database reachable) gates traffic during a deploy
     envVars:
