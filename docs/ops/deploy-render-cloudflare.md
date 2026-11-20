@@ -1,20 +1,20 @@
-# Deploying on Render + Cloudflare Pages + MongoDB Atlas
+# Deploying on Render + Cloudflare Workers + MongoDB Atlas
 
 The concrete host wiring for [deployment.md](deployment.md). Everything in that document still applies: the release procedure,
 health checks, least-privilege database users and the verification script.
 
-| Part               | Where                                                                    | Defined in                                     |
-| ------------------ | ------------------------------------------------------------------------ | ---------------------------------------------- |
-| Code, CI, releases | GitHub, one monorepo                                                     | `.github/workflows/ci.yml`, `release.yml`      |
-| API                | Render web service, Node runtime, region **Singapore**                   | `render.yaml` (Blueprint)                      |
-| Database step      | Render `preDeployCommand`, before new code takes traffic                 | `render.yaml`                                  |
-| Web app            | Cloudflare Pages (Direct Upload of `apps/web/dist`)                      | `release.yml` → `wrangler pages deploy`        |
-| Database           | MongoDB Atlas, AWS **Singapore** (ap-southeast-1)                        | —                                              |
-| Animal photos      | Cloudflare R2, public custom domain (`PHOTO_STORAGE=r2`)                 | API env `R2_*`, web `WEB_MEDIA_HOSTS`          |
-| Video              | Cloudflare Stream, or `VIDEO_PROVIDER=none` (video off) until subscribed | API env `CLOUDFLARE_*`, `VIDEO_WEBHOOK_SECRET` |
-| Worker             | Not deployed (skeleton, no queue yet)                                    | —                                              |
+| Part               | Where                                                                    | Defined in                                                         |
+| ------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Code, CI, releases | GitHub, one monorepo                                                     | `.github/workflows/ci.yml`, `release.yml`                          |
+| API                | Render web service, Node runtime, region **Singapore**                   | `render.yaml` (Blueprint)                                          |
+| Database step      | Render `preDeployCommand`, before new code takes traffic                 | `render.yaml`                                                      |
+| Web app            | Cloudflare Workers static assets (`apps/web/dist`)                       | `apps/web/wrangler.jsonc`, `release.yml` → `wrangler deploy --env` |
+| Database           | MongoDB Atlas, AWS **Singapore** (ap-southeast-1)                        | —                                                                  |
+| Animal photos      | Cloudflare R2, public custom domain (`PHOTO_STORAGE=r2`)                 | API env `R2_*`, web `WEB_MEDIA_HOSTS`                              |
+| Video              | Cloudflare Stream, or `VIDEO_PROVIDER=none` (video off) until subscribed | API env `CLOUDFLARE_*`, `VIDEO_WEBHOOK_SECRET`                     |
+| Worker             | Not deployed (skeleton, no queue yet)                                    | —                                                                  |
 
-Each environment (staging, production) has its own Render service, Pages project, Atlas database and secrets.
+Each environment (staging, production) has its own Render service, web Worker, Atlas database and secrets.
 
 ## 1. GitHub
 
@@ -31,9 +31,8 @@ Each environment (staging, production) has its own Render service, Pages project
 | variable | `WEB_BASE_URL`           | Web origin, e.g. `https://app.example.com`                                                     |
 | variable | `WEB_MEDIA_HOSTS`        | e.g. `https://*.cloudflarestream.com,https://photos.example.com` (include the R2 photo domain) |
 | variable | `CLOUDFLARE_ACCOUNT_ID`  | Cloudflare account id                                                                          |
-| variable | `CF_PAGES_PROJECT`       | e.g. `farmplus-web-staging` / `farmplus-web`                                                   |
 | secret   | `RENDER_DEPLOY_HOOK_URL` | The service's deploy hook (Render → service → Settings → Deploy Hook)                          |
-| secret   | `CLOUDFLARE_API_TOKEN`   | API token with **Account → Cloudflare Pages → Edit** only                                      |
+| secret   | `CLOUDFLARE_API_TOKEN`   | API token with **Account → Workers Scripts → Edit** only                                       |
 
 `DB_RELEASE_FROM_CI` stays unset. The database step runs on Render (see §4).
 
@@ -102,13 +101,26 @@ How a deploy runs:
 
 `autoDeploy` is off, so a push to `main` deploys nothing. Releases go through the workflow.
 
-## 5. Cloudflare Pages (web)
+## 5. Cloudflare Workers (web)
 
-1. Pages → **Create → Direct Upload**. Create `farmplus-web-staging` and `farmplus-web` (the names you put in `CF_PAGES_PROJECT`).
-   The production branch is `main`.
-2. Add custom domains (e.g. `app.example.com`). Pages applies `dist/_headers` (CSP, HSTS, caching) and `dist/_redirects`
-   (SPA fallback) as they are, so they need no extra configuration.
-3. Put the same domain in the API's `CORS_ORIGINS`.
+The web app is a **Workers static-assets** project, with no Worker script. It is not a Pages project: Cloudflare is
+folding Pages into Workers, and accounts in that migration can no longer create Pages projects.
+
+- **Config:** `apps/web/wrangler.jsonc` defines `farmplus-web-staging` and `farmplus-web`.
+- **Headers:** `dist/_headers` (CSP, HSTS, caching) applies as it did on Pages.
+- **SPA fallback:** it comes from `not_found_handling`. The release removes `dist/_redirects`.
+
+1. Nothing has to be created by hand. The first `wrangler deploy --env <env>` creates the Worker. To create it ahead of
+   time (so that you know its URL for `CORS_ORIGINS`), deploy any one-file folder:
+
+   ```bash
+   cd apps/web && npx wrangler deploy --env staging --assets <folder with an index.html>
+   ```
+
+   The URL is `https://farmplus-web-staging.<account-subdomain>.workers.dev`.
+
+2. Optional: add custom domains (Worker → Settings → Domains & Routes), e.g. `app.example.com`.
+3. Put the web URL in the API's `CORS_ORIGINS` and in the GitHub `WEB_BASE_URL`, exactly as the browser shows it.
 
 ## 6. Releasing
 
@@ -116,7 +128,7 @@ Actions → **Release** → environment + tag. The workflow:
 
 1. builds and tests once;
 2. triggers Render with `ref=<commit>` and waits until `GET /health` reports that commit;
-3. uploads the web build to Pages;
+3. deploys the web build to its Worker (`wrangler deploy --env <environment>`);
 4. runs `scripts/ops/verify-deployment.mjs`.
 
 Release to staging first, then the same tag to production (deployment.md, "Release procedure"). Before a production release
@@ -126,7 +138,7 @@ that contains a migration, take an Atlas on-demand snapshot.
 
 - API: Render → service → Deploys → **Rollback** to a previous deploy. Migrations are forward-only and backward compatible
   (expand → migrate → contract), so the previous code runs on the migrated database.
-- Web: Pages → Deployments → **Rollback**.
+- Web: Workers & Pages → the web Worker → Deployments → **Rollback**, or `npx wrangler rollback --env <env>` in `apps/web`.
 
 See [rollback-incident.md](rollback-incident.md).
 
@@ -138,7 +150,7 @@ The configuration was written without Render, Cloudflare or GitHub accounts. On 
   times out instead of passing silently.
 - **`TRUST_PROXY=1`.** It gives the real client IP behind Render's proxy. Check that the rate limit keys on different
   clients, not on one proxy IP.
-- **Socket.IO.** Chat connects over `wss://` through Render and the Pages CSP.
+- **Socket.IO.** Chat connects over `wss://` through Render and the web CSP.
 - **R2 photos.** Upload a photo to an animal on staging. Check that:
   - the photo shows on the web and in the mobile app;
   - the photo's URL is on the photo domain;

@@ -1,0 +1,19 @@
+// FARM+ web app on Cloudflare Workers (static assets only, no Worker script). Deployed by .github/workflows/release.yml:
+//   wrangler deploy --env <staging|production>   (run in apps/web after `pnpm build`, which writes dist/ and dist/_headers)
+// Cloudflare Pages is being folded into Workers; accounts in that migration can no longer create Pages projects, so the
+// site is a Workers static-assets project. `_headers` (CSP, HSTS, caching) applies as on Pages; the SPA fallback that
+// Pages took from `_redirects` is `not_found_handling` here (release.yml removes `_redirects` before deploying).
+{
+  "name": "farmplus-web",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+  },
+  "workers_dev": true,
+  "preview_urls": false,
+  "env": {
+    "staging": { "name": "farmplus-web-staging" },
+    "production": { "name": "farmplus-web" },
+  },
+}

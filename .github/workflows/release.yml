@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     timeout-minutes: 30
-    # API on Render, web on Cloudflare Pages. Setup and the variables/secrets each GitHub Environment needs:
+    # API on Render, web on Cloudflare Workers (static assets). Setup and the variables/secrets each GitHub Environment needs:
     # docs/ops/deploy-render-cloudflare.md. The API goes first so the new web app never talks to an older API.
     steps:
       - name: Check this environment is wired
@@ -143,17 +143,30 @@ jobs:
           API_BASE_URL: ${{ vars.API_BASE_URL }}
           SHA: ${{ needs.build.outputs.full_sha }}
 
+      # The web app is a Cloudflare Workers static-assets project (apps/web/wrangler.jsonc). Only that config file is
+      # checked out; the site itself is the artifact built above, never rebuilt here.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          sparse-checkout: apps/web/wrangler.jsonc
+          sparse-checkout-cone-mode: false
       - uses: actions/download-artifact@v4
         with:
           name: release-${{ needs.build.outputs.sha }}
-      - run: tar -xzf web-${{ needs.build.outputs.sha }}.tgz # → dist/ (includes _headers and _redirects)
+      - name: Unpack the web build next to its Worker config
+        run: |
+          tar -xzf web-${{ needs.build.outputs.sha }}.tgz -C apps/web # → apps/web/dist (with _headers)
+          # Workers serve the SPA fallback through `not_found_handling`; the Pages-style rewrite file is not needed.
+          rm -f apps/web/dist/_redirects
 
-      - name: Web — upload the built site to Cloudflare Pages
+      - name: Web — deploy the built site to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ vars.CF_PAGES_PROJECT }} --branch=main --commit-hash=${{ needs.build.outputs.full_sha }}
+          wranglerVersion: '4.165.0'
+          workingDirectory: apps/web
+          command: deploy --env ${{ inputs.environment }} --message "release ${{ needs.build.outputs.full_sha }}"
 
   verify:
     name: Verify the deployed environment

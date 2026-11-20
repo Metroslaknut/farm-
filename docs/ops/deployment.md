@@ -76,7 +76,7 @@ Rollback: [rollback-incident.md](rollback-incident.md).
 
 ### Wiring a host
 
-**Wired:** Render (API) + Cloudflare Pages (web) + Atlas: see [deploy-render-cloudflare.md](deploy-render-cloudflare.md).
+**Wired:** Render (API) + Cloudflare Workers static assets (web) + Atlas: see [deploy-render-cloudflare.md](deploy-render-cloudflare.md).
 
 `release.yml` ends with a deliberately failing placeholder step until you add your host's deploy action and set `DEPLOY_ENABLED=true`
 for the environment. Requirements for whatever you choose: run the API with the variables from `deploy/env/<env>.env.example` injected
