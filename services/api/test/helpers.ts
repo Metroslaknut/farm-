@@ -4,6 +4,7 @@ import type { Express } from 'express';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
 import { apiEnvSchema, parseEnv, type ApiEnv } from '@farmplus/config/server';
+import { thaiToday } from '@farmplus/validation';
 import { createApp, createContext } from '../src/app';
 import { connectDb, disconnectDb } from '../src/db/connect';
 import { hashPassword } from '../src/lib/password';
@@ -256,10 +257,10 @@ export async function addFarmMember(
 // ---------------------------------------------------------------------------
 // Part 08 helpers
 // ---------------------------------------------------------------------------
-export const daysAgo = (n: number): string =>
-  new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
-export const daysAhead = (n: number): string =>
-  new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+// Thai calendar dates, like the API's "not in the future" checks (thaiToday). UTC dates here made "tomorrow" equal to
+// the Thai "today" between 00:00 and 07:00 in Thailand, so date-validation tests failed during that window.
+export const daysAgo = (n: number): string => thaiToday(Date.now() - n * 86_400_000);
+export const daysAhead = (n: number): string => thaiToday(Date.now() + n * 86_400_000);
 
 export interface FarmSetup {
   owner: Session;
