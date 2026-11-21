@@ -18,6 +18,8 @@ export interface FarmAttrs {
   createdBy: Types.ObjectId;
   /** Counter used to issue the next generated animal code for this farm (atomic $inc). */
   animalSeq: number;
+  /** Counter behind breeding record codes (BR-00001…). */
+  breedingSeq?: number;
   archivedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -33,6 +35,7 @@ const farmSchema = new Schema<FarmAttrs>(
     animalTypeIds: { type: [{ type: Schema.Types.ObjectId, ref: 'AnimalType' }], default: [] },
     createdBy: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
     animalSeq: { type: Number, default: 0 },
+    breedingSeq: { type: Number, default: 0 },
     archivedAt: { type: Date, default: null },
   },
   { timestamps: true, collection: 'farms' },

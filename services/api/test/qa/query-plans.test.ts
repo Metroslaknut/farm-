@@ -5,6 +5,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   Animal,
   AuditLog,
+  BreedingRecord,
+  FarmInvitation,
+  FarmMember,
   Conversation,
   Listing,
   Message,
@@ -181,6 +184,56 @@ const HOT: [string, () => Promise<unknown>][] = [
   [
     'audit log: newest first',
     () => AuditLog.find({}).sort({ createdAt: -1 }).limit(21).explain('queryPlanner'),
+  ],
+  // Farm staff, breeding and pedigree (2026-11-21)
+  [
+    'farm invitations: a farm’s by status, newest first',
+    () =>
+      FarmInvitation.find({ farmId: id(), status: 'PENDING' })
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .explain('queryPlanner'),
+  ],
+  [
+    'farm invitations: mine, newest first',
+    () =>
+      FarmInvitation.find({ userId: id() })
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .explain('queryPlanner'),
+  ],
+  [
+    'farm invitations: revoke on membership end',
+    () =>
+      FarmInvitation.find({ farmId: id(), userId: id(), status: 'APPROVED' }).explain(
+        'queryPlanner',
+      ),
+  ],
+  [
+    'farm members: owners of a farm (notifications)',
+    () => FarmMember.find({ farmId: id(), role: 'owner' }).explain('queryPlanner'),
+  ],
+  [
+    'animals: by breed group (breed keys)',
+    () =>
+      Animal.find({ farmId: id(), archivedAt: null, breed: { $in: ['a', 'b'] } })
+        .limit(20)
+        .explain('queryPlanner'),
+  ],
+  [
+    'animals: offspring of an animal (lineage)',
+    () =>
+      Animal.find({ farmId: id(), $or: [{ sireId: id() }, { damId: id() }] }).explain(
+        'queryPlanner',
+      ),
+  ],
+  [
+    'breeding: an animal’s history (dam or sire)',
+    () =>
+      BreedingRecord.find({ farmId: id(), voided: false, $or: [{ damId: id() }, { sireId: id() }] })
+        .sort({ breedingDate: -1, _id: -1 })
+        .limit(20)
+        .explain('queryPlanner'),
   ],
 ];
 

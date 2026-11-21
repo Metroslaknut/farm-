@@ -81,7 +81,9 @@ export default function FarmOverviewPage() {
                 : t('overview.recordsHint')}
             </p>
             <div className="ds-row">
-              <NavButton to={`/farms/${farm.id}/breeding`}>{t('kind.breeding.plural')}</NavButton>
+              {can('breeding.read') && (
+                <NavButton to={`/farms/${farm.id}/breeding`}>{t('kind.breeding.plural')}</NavButton>
+              )}
               <NavButton to={`/farms/${farm.id}/health`}>{t('overview.health')}</NavButton>
               <NavButton to={`/farms/${farm.id}/weights`}>{t('kind.weights.plural')}</NavButton>
               <NavButton to={`/farms/${farm.id}/feeding`}>{t('kind.feeding.plural')}</NavButton>

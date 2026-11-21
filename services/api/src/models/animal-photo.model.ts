@@ -12,6 +12,8 @@ export interface AnimalPhotoAttrs {
   key: string;
   farmId: Types.ObjectId;
   animalId: Types.ObjectId;
+  /** Set when the photo was uploaded for a breeding record (it is then filed under the record's dam). */
+  breedingRecordId?: Types.ObjectId | null;
   uploadedBy: Types.ObjectId;
   mimeType: string;
   sizeBytes: number;
@@ -26,6 +28,7 @@ const schema = new Schema<AnimalPhotoAttrs>(
     key: { type: String, required: true, unique: true },
     farmId: { type: Schema.Types.ObjectId, required: true, index: true },
     animalId: { type: Schema.Types.ObjectId, required: true, index: true },
+    breedingRecordId: { type: Schema.Types.ObjectId, default: null },
     uploadedBy: { type: Schema.Types.ObjectId, required: true },
     mimeType: { type: String, required: true },
     sizeBytes: { type: Number, required: true },

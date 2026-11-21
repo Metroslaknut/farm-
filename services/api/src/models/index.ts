@@ -7,6 +7,7 @@ export { Registration, type RegistrationAttrs } from './registration.model';
 export { Setting } from './setting.model';
 export { Farm, type FarmAttrs, type FarmDoc } from './farm.model';
 export { FarmMember } from './farm-member.model';
+export { FarmInvitation, type FarmInvitationDoc } from './farm-invitation.model';
 export { AnimalType, type AnimalTypeDoc } from './animal-type.model';
 export { GrowthStandard, type GrowthStandardDoc } from './growth-standard.model';
 export { Animal, type AnimalAttrs, type AnimalDoc } from './animal.model';

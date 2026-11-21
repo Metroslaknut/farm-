@@ -46,6 +46,7 @@ const RESERVED = new Set([
   'settings',
   'new',
   'list',
+  'invitations',
 ]);
 
 const MOBILE = '(max-width: 1023px)';
@@ -78,15 +79,15 @@ function menu(farm: FarmDetail | undefined, canCreateFarm: boolean): Group[] {
           { key: 'myFarm.menu.lineage', to: `${f}/lineage` },
         ]),
       });
-    if (can.has('records.read'))
+    if (can.has('records.read') || can.has('breeding.read'))
       groups.push({
         key: 'shell.group.records',
         icon: 'clipboard',
         items: pick([
-          { key: 'kind.breeding.plural', to: `${f}/breeding` },
-          { key: 'overview.health', to: `${f}/health` },
-          { key: 'myFarm.menu.growth', to: `${f}/weights` },
-          { key: 'kind.feeding.plural', to: `${f}/feeding` },
+          can.has('breeding.read') && { key: 'kind.breeding.plural', to: `${f}/breeding` },
+          can.has('records.read') && { key: 'overview.health', to: `${f}/health` },
+          can.has('records.read') && { key: 'myFarm.menu.growth', to: `${f}/weights` },
+          can.has('records.read') && { key: 'kind.feeding.plural', to: `${f}/feeding` },
           can.has('expenses.read') && { key: 'kind.expenses.plural', to: `${f}/expenses` },
         ]),
       });
@@ -101,9 +102,13 @@ function menu(farm: FarmDetail | undefined, canCreateFarm: boolean): Group[] {
         ]),
       });
     groups.push({
-      key: 'shell.farmInfo',
+      key: 'shell.group.farm',
       icon: 'home',
-      items: [{ key: 'shell.farmInfo', to: `${f}/info` }],
+      items: pick([
+        { key: 'shell.farmInfo', to: `${f}/info` },
+        can.has('members.read') && { key: 'shell.staff', to: `${f}/staff` },
+        can.has('farm.update') && writable && { key: 'shell.farmSettings', to: `${f}/edit` },
+      ]),
     });
   }
   groups.push(
@@ -117,6 +122,7 @@ function menu(farm: FarmDetail | undefined, canCreateFarm: boolean): Group[] {
         { key: 'shell.profile', to: '/farms/profile' },
         { key: 'shell.settings', to: '/farms/settings' },
         { key: 'shell.allFarms', to: '/farms/list' },
+        { key: 'shell.invitations', to: '/farms/invitations' },
         ...(canCreateFarm ? [{ key: 'shell.newFarm' as const, to: '/farms/new' }] : []),
       ],
     },

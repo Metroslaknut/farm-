@@ -386,11 +386,17 @@ test('UI-I05 farm analytics: owner filters the dashboard by dates and downloads 
 
   // --- a farm VIEWER: sees the dashboard but has no Costs export, and the API refuses it --------------------------
   const viewer = await register(request, 'Farm Viewer');
-  const add = await request.post(`${api()}/api/v1/farms/${farmId}/members`, {
+  // Owners invite; the person accepts (nobody is added without consent).
+  const invite = await request.post(`${api()}/api/v1/farms/${farmId}/invitations`, {
     ...authed(owner),
     data: { email: viewer.email, role: 'viewer' },
   });
-  expect(add.status(), await add.text()).toBe(201);
+  expect(invite.status(), await invite.text()).toBe(201);
+  const accept = await request.post(
+    `${api()}/api/v1/farm-invitations/${(await invite.json()).invitation.id}/accept`,
+    authed(viewer),
+  );
+  expect(accept.status(), await accept.text()).toBe(200);
   const v = await newSession(browser);
   await signIn(v.page, viewer, `/farms/${farmId}/dashboard?from=${from}&to=${to}`);
   await expect(v.page.getByRole('heading', { name: 'Farm dashboard' })).toBeVisible();

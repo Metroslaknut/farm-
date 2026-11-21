@@ -27,6 +27,7 @@ import { useFarm } from './useFarmAccess';
 const DEFAULTS = {
   q: '',
   animalTypeId: '',
+  breedGroup: '',
   sex: '',
   status: '',
   archived: 'false',
@@ -52,6 +53,8 @@ export default function AnimalListPage() {
     [farmId, params],
   );
 
+  const groups =
+    types.data?.animalTypes.find((x) => x.id === params['animalTypeId'])?.breedGroups ?? [];
   const columns: TableColumn<AnimalSummary>[] = [
     {
       key: 'code',
@@ -117,7 +120,7 @@ export default function AnimalListPage() {
         <Select
           label={t('animals.col.type')}
           value={params['animalTypeId']}
-          onChange={(e) => setParams({ animalTypeId: e.target.value })}
+          onChange={(e) => setParams({ animalTypeId: e.target.value, breedGroup: '' })}
         >
           <option value="">{t('animals.allTypes')}</option>
           {types.data?.animalTypes.map((type) => (
@@ -126,6 +129,20 @@ export default function AnimalListPage() {
             </option>
           ))}
         </Select>
+        {groups.length > 0 && (
+          <Select
+            label={t('animalForm.breedGroup')}
+            value={params['breedGroup']}
+            onChange={(e) => setParams({ breedGroup: e.target.value })}
+          >
+            <option value="">{t('animalForm.allGroups')}</option>
+            {groups.map((g) => (
+              <option key={g.key} value={g.key}>
+                {typeName(g, locale)}
+              </option>
+            ))}
+          </Select>
+        )}
         <Select
           label={t('animals.col.sex')}
           value={params['sex']}
@@ -165,7 +182,14 @@ export default function AnimalListPage() {
           </Button>
           <Button
             onClick={() =>
-              setParams({ q: '', animalTypeId: '', sex: '', status: '', archived: 'false' })
+              setParams({
+                q: '',
+                animalTypeId: '',
+                breedGroup: '',
+                sex: '',
+                status: '',
+                archived: 'false',
+              })
             }
           >
             {t('common.reset')}

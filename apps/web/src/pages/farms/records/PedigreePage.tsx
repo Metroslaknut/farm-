@@ -2,15 +2,34 @@ import { Link, useParams } from 'react-router-dom';
 import type { LineageResponse, PedigreeAnimal, PedigreeNode } from '@farmplus/shared-types';
 import { api } from '../../../api';
 import { Alert, Badge, Card, Select, Table } from '../../../components/ui';
+import { useLocale } from '../../../i18n';
 import { useAsync } from '../../../lib/useAsync';
 import { useListParams } from '../../../lib/useListParams';
-import { STATUS_TONE, ageLabel, enumLabel, useFarmFormat, useFarmsT } from '../labels';
+import { NavButton } from '../NavButton';
+import {
+  STATUS_TONE,
+  ageLabel,
+  breedLabel,
+  enumLabel,
+  typeName,
+  useFarmFormat,
+  useFarmsT,
+  type FarmsT,
+} from '../labels';
+
+/** F0 (parent stock), F1, F2 … from recorded parents; "unknown" is never guessed. */
+export function generationLabel(t: FarmsT, f: number | null): string {
+  if (f === null) return t('pedigree.fUnknown');
+  return f === 0 ? t('pedigree.f0') : `F${f}`;
+}
 
 const GENERATIONS = ['1', '2', '3', '4', '5'];
 
 function AnimalBox({ farmId, a, root }: { farmId: string; a: PedigreeAnimal; root?: boolean }) {
   const t = useFarmsT();
   const { date } = useFarmFormat();
+  const [locale] = useLocale();
+  const breed = breedLabel(a, locale);
   return (
     <div
       style={{
@@ -26,11 +45,17 @@ function AnimalBox({ farmId, a, root }: { farmId: string; a: PedigreeAnimal; roo
         {a.name ? ` — ${a.name}` : ''}
       </Link>
       <div style={{ fontSize: 'var(--ds-text-sm)' }}>
-        {[enumLabel(t, 'sex', a.sex), a.breed, a.birthDate && date(a.birthDate)]
+        {[enumLabel(t, 'sex', a.sex), breed, a.birthDate && date(a.birthDate)]
           .filter(Boolean)
           .join(' · ')}
       </div>
+      {a.breedGroup && (
+        <div className="ds-field__hint" style={{ fontSize: 'var(--ds-text-sm)' }}>
+          {typeName(a.breedGroup, locale)}
+        </div>
+      )}
       <div className="ds-row" style={{ gap: 'var(--ds-space-1)' }}>
+        <Badge tone="info">{generationLabel(t, a.filialGeneration)}</Badge>
         <Badge tone={STATUS_TONE[a.currentStatus]}>{enumLabel(t, 'status', a.currentStatus)}</Badge>
         {a.archived && <Badge tone="warning">{t('common.archived')}</Badge>}
       </div>
@@ -129,8 +154,17 @@ export default function PedigreePage() {
       <p>
         <Link to={`/farms/${farmId}/animals/${animalId}`}>← {data.animal.animalCode}</Link>
       </p>
-      <h1>{t('pedigree.title', { code: data.animal.animalCode })}</h1>
+      <div className="ds-row" style={{ justifyContent: 'space-between' }}>
+        <h1>{t('pedigree.title', { code: data.animal.animalCode })}</h1>
+        <NavButton to={`/farms/${farmId}/breeding?animalId=${animalId}`}>
+          {t('pedigree.breedingHistory')}
+        </NavButton>
+      </div>
       <p className="ds-field__hint">{t('pedigree.note')}</p>
+      <p>
+        <Badge tone="info">{generationLabel(t, data.pedigree.animal.filialGeneration)}</Badge>{' '}
+        <small className="ds-field__hint">{t('pedigree.fNote')}</small>
+      </p>
       <Card title={t('pedigree.tree')} headingLevel={2}>
         <div className="ds-row" style={{ justifyContent: 'space-between' }}>
           <p>
@@ -182,6 +216,11 @@ export default function PedigreePage() {
               cell: (s) => t(`pedigree.relation.${s.relation}`),
             },
             { key: 'x', header: t('animals.col.sex'), cell: (s) => enumLabel(t, 'sex', s.sex) },
+            {
+              key: 'f',
+              header: t('pedigree.generation'),
+              cell: (s) => generationLabel(t, s.filialGeneration),
+            },
             { key: 'b', header: t('detail.birthDate'), cell: (s) => date(s.birthDate) },
           ]}
         />
@@ -202,6 +241,11 @@ export default function PedigreePage() {
               ),
             },
             { key: 'x', header: t('animals.col.sex'), cell: (o) => enumLabel(t, 'sex', o.sex) },
+            {
+              key: 'f',
+              header: t('pedigree.generation'),
+              cell: (o) => generationLabel(t, o.filialGeneration),
+            },
             {
               key: 'b',
               header: t('detail.birthDate'),

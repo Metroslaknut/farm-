@@ -55,6 +55,7 @@ GET /api/v1/auth/sessions
 GET /api/v1/conversations
 GET /api/v1/conversations/:id
 GET /api/v1/conversations/:id/messages
+GET /api/v1/farm-invitations
 GET /api/v1/farms
 GET /api/v1/farms/:farmId
 GET /api/v1/farms/:farmId/animals
@@ -76,6 +77,7 @@ GET /api/v1/farms/:farmId/feeding
 GET /api/v1/farms/:farmId/feeding/:id
 GET /api/v1/farms/:farmId/health
 GET /api/v1/farms/:farmId/health/:id
+GET /api/v1/farms/:farmId/invitations
 GET /api/v1/farms/:farmId/listings
 GET /api/v1/farms/:farmId/listings/:id
 GET /api/v1/farms/:farmId/listings/:id/events
@@ -145,7 +147,9 @@ PATCH /api/v1/admin/roles/:id
 PATCH /api/v1/admin/settings
 PATCH /api/v1/admin/users/:id/status
 PATCH /api/v1/animal-types/:id
+PATCH /api/v1/animal-types/:id/breed-groups/:key
 PATCH /api/v1/animal-types/:id/breeds/:breedKey
+PATCH /api/v1/animal-types/:id/rearing-types/:key
 PATCH /api/v1/comments/:id
 PATCH /api/v1/farms/:farmId
 PATCH /api/v1/farms/:farmId/animals/:animalId
@@ -177,7 +181,9 @@ POST /api/v1/admin/registrations/:id/review
 POST /api/v1/admin/registrations/:id/suspend
 POST /api/v1/admin/roles
 POST /api/v1/animal-types
+POST /api/v1/animal-types/:id/breed-groups
 POST /api/v1/animal-types/:id/breeds
+POST /api/v1/animal-types/:id/rearing-types
 POST /api/v1/auth/login
 POST /api/v1/auth/logout
 POST /api/v1/auth/logout-all
@@ -201,6 +207,10 @@ POST /api/v1/conversations/:id/block
 POST /api/v1/conversations/:id/messages
 POST /api/v1/conversations/:id/read
 POST /api/v1/conversations/:id/report
+POST /api/v1/farm-invitations/:invitationId/accept
+POST /api/v1/farm-invitations/:invitationId/cancel
+POST /api/v1/farm-invitations/:invitationId/decline
+POST /api/v1/farm-invitations/requests
 POST /api/v1/farms
 POST /api/v1/farms/:farmId/animals
 POST /api/v1/farms/:farmId/animals/:animalId/archive
@@ -214,10 +224,12 @@ POST /api/v1/farms/:farmId/assessments/:id/review
 POST /api/v1/farms/:farmId/breeding
 POST /api/v1/farms/:farmId/breeding/:id/attachments
 POST /api/v1/farms/:farmId/breeding/:id/attachments/:attachmentId/remove
+POST /api/v1/farms/:farmId/breeding/:id/clutch
 POST /api/v1/farms/:farmId/breeding/:id/corrections
 POST /api/v1/farms/:farmId/breeding/:id/delivery
 POST /api/v1/farms/:farmId/breeding/:id/failure
 POST /api/v1/farms/:farmId/breeding/:id/offspring
+POST /api/v1/farms/:farmId/breeding/:id/photos
 POST /api/v1/farms/:farmId/breeding/:id/pregnancy
 POST /api/v1/farms/:farmId/breeding/:id/void
 POST /api/v1/farms/:farmId/expenses
@@ -235,6 +247,10 @@ POST /api/v1/farms/:farmId/health/:id/attachments
 POST /api/v1/farms/:farmId/health/:id/attachments/:attachmentId/remove
 POST /api/v1/farms/:farmId/health/:id/corrections
 POST /api/v1/farms/:farmId/health/:id/void
+POST /api/v1/farms/:farmId/invitations
+POST /api/v1/farms/:farmId/invitations/:invitationId/approve
+POST /api/v1/farms/:farmId/invitations/:invitationId/cancel
+POST /api/v1/farms/:farmId/invitations/:invitationId/reject
 POST /api/v1/farms/:farmId/listings
 POST /api/v1/farms/:farmId/listings/:id/cancel
 POST /api/v1/farms/:farmId/listings/:id/pause
@@ -316,6 +332,7 @@ POST /api/v1/wallet/withdrawals/:id/cancel
 POST /api/v1/webhooks/payments
 POST /api/v1/webhooks/shipping
 POST /api/v1/webhooks/video
+PUT /api/v1/farms/:farmId/members/:memberId/permissions
 PUT /api/v1/notifications/preferences
 PUT /api/v1/roles/:key/permissions
 PUT /api/v1/shop/admin/categories/:key

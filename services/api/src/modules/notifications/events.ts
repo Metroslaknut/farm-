@@ -2,6 +2,7 @@ import type { Types } from 'mongoose';
 import { reportError } from '../../lib/error-reporter';
 import {
   FARM_ROLE_PERMISSIONS,
+  effectiveFarmPermissions,
   type FarmRole,
   type OrderActor,
   type OrderStatus,
@@ -19,10 +20,17 @@ const SELLER_ROLES = (Object.keys(FARM_ROLE_PERMISSIONS) as FarmRole[]).filter((
   FARM_ROLE_PERMISSIONS[r].includes('listings.manage'),
 );
 
-/** The seller side of a farm: members who may manage its listings and orders (owners and managers). */
+/**
+ * The seller side of a farm: members who may manage its listings and orders (owners and managers), honouring an
+ * owner's per-member narrowing (a manager whose `listings.manage` was switched off is not on the seller side).
+ */
 export async function sellerSideUserIds(farmId: Types.ObjectId | string): Promise<string[]> {
-  const rows = await FarmMember.find({ farmId, role: { $in: SELLER_ROLES } }).select('userId');
-  return rows.map((r) => String(r.userId));
+  const rows = await FarmMember.find({ farmId, role: { $in: SELLER_ROLES } }).select(
+    'userId role permissions',
+  );
+  return rows
+    .filter((r) => effectiveFarmPermissions(r.role, r.permissions).includes('listings.manage'))
+    .map((r) => String(r.userId));
 }
 
 /** Hooks run after the business change has succeeded and must never break it. */
@@ -253,6 +261,51 @@ export const memberRemoved = (userId: Types.ObjectId, farm: { name: string }, ac
     to: [userId],
     exclude: [actorId],
     type: 'farm.member_removed',
+    params: { farmName: farm.name },
+  });
+export const invitationReceived = (
+  userId: Types.ObjectId,
+  farm: { name: string },
+  role: string,
+  actorId: string,
+) =>
+  notify({
+    to: [userId],
+    exclude: [actorId],
+    type: 'farm.invitation_received',
+    params: { farmName: farm.name, role },
+  });
+/** The invitee answered: tell the farm's owner(s). */
+export const invitationAnswered = (
+  ownerIds: Types.ObjectId[],
+  farm: { id: string; name: string },
+  name: string,
+  accepted: boolean,
+  actorId: string,
+) =>
+  notify({
+    to: ownerIds,
+    exclude: [actorId],
+    type: accepted ? 'farm.invitation_accepted' : 'farm.invitation_declined',
+    params: { farmName: farm.name, name, farmId: farm.id },
+  });
+export const joinRequested = (
+  ownerIds: Types.ObjectId[],
+  farm: { id: string; name: string },
+  name: string,
+  actorId: string,
+) =>
+  notify({
+    to: ownerIds,
+    exclude: [actorId],
+    type: 'farm.join_requested',
+    params: { farmName: farm.name, name, farmId: farm.id },
+  });
+export const joinRejected = (userId: Types.ObjectId, farm: { name: string }, actorId: string) =>
+  notify({
+    to: [userId],
+    exclude: [actorId],
+    type: 'farm.join_rejected',
     params: { farmName: farm.name },
   });
 export const memberRoleChanged = (

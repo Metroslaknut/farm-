@@ -13,5 +13,17 @@ export function animalTypesRouter(ctx: AppContext): Router {
   router.patch('/:id', requirePermission('animal_types.manage'), c.update);
   router.post('/:id/breeds', requirePermission('animal_types.manage'), c.addBreed);
   router.patch('/:id/breeds/:breedKey', requirePermission('animal_types.manage'), c.updateBreed);
+  router.post('/:id/rearing-types', requirePermission('animal_types.manage'), c.addRearingType);
+  router.patch(
+    '/:id/rearing-types/:key',
+    requirePermission('animal_types.manage'),
+    c.updateRearingType,
+  );
+  router.post('/:id/breed-groups', requirePermission('animal_types.manage'), c.addBreedGroup);
+  router.patch(
+    '/:id/breed-groups/:key',
+    requirePermission('animal_types.manage'),
+    c.updateBreedGroup,
+  );
   return router;
 }

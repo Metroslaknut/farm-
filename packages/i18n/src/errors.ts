@@ -90,6 +90,14 @@ export const apiErrors = defineMessages({
     ALREADY_MEMBER: 'ผู้ใช้นี้เป็นสมาชิกของฟาร์มอยู่แล้ว',
     OWNER_IMMUTABLE: 'เปลี่ยนบทบาทหรือนำเจ้าของฟาร์มออกไม่ได้',
     MEMBERS_ONLY: 'เฉพาะสมาชิกของฟาร์มเท่านั้นที่ทำการประเมินได้',
+    USE_INVITATION: 'กรุณาส่งคำเชิญแทน ผู้ใช้ต้องยอมรับคำเชิญก่อนจึงจะเข้าถึงฟาร์มได้',
+    INVITATION_PENDING: 'มีคำเชิญหรือคำขอเข้าร่วมที่รอดำเนินการอยู่แล้ว',
+    INVITATION_NOT_PENDING: 'คำเชิญนี้ได้รับการตอบกลับไปแล้ว',
+    SELF_INVITE: 'คุณเชิญตัวเองไม่ได้',
+    PERMISSION_ESCALATION: 'กำหนดสิทธิ์เกินกว่าบทบาทนี้ไม่ได้',
+    SELF_PERMISSION_CHANGE: 'คุณแก้ไขสิทธิ์ของตัวเองไม่ได้',
+    REARING_TYPE_EXISTS: 'ชนิดสัตว์นี้มีประเภทการเลี้ยงที่ใช้รหัสนี้อยู่แล้ว',
+    BREED_GROUP_EXISTS: 'ชนิดสัตว์นี้มีกลุ่มสายพันธุ์ที่ใช้รหัสนี้อยู่แล้ว',
 
     // Animals, records and breeding
     ANIMAL_ARCHIVED:
@@ -301,6 +309,15 @@ export const apiErrors = defineMessages({
     ALREADY_MEMBER: 'This user is already a member of the farm.',
     OWNER_IMMUTABLE: 'The farm owner cannot be changed or removed.',
     MEMBERS_ONLY: 'Only members of the farm can run an assessment.',
+    USE_INVITATION:
+      'Send an invitation instead: the person must accept it before they can access the farm.',
+    INVITATION_PENDING: 'There is already an open invitation or join request.',
+    INVITATION_NOT_PENDING: 'This invitation has already been answered.',
+    SELF_INVITE: 'You cannot invite yourself.',
+    PERMISSION_ESCALATION: 'You cannot grant permissions above this role.',
+    SELF_PERMISSION_CHANGE: 'You cannot change your own permissions.',
+    REARING_TYPE_EXISTS: 'This animal type already has a rearing type with this key.',
+    BREED_GROUP_EXISTS: 'This animal type already has a breed group with this key.',
 
     ANIMAL_ARCHIVED:
       'This animal is archived and cannot be changed or used. Restore it to edit it.',
@@ -488,6 +505,13 @@ export const validationMessages: Record<string, string> = {
   'Invalid phone number': 'เบอร์โทรศัพท์ไม่ถูกต้อง',
   'Enter a valid phone number': 'กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง',
   'Provide exactly one of userId or email': 'กรุณาระบุผู้ใช้หรืออีเมลอย่างใดอย่างหนึ่ง',
+  'Provide an e-mail or a phone number': 'กรุณาระบุอีเมลหรือเบอร์โทรศัพท์อย่างใดอย่างหนึ่ง',
+  'Each component may appear only once': 'ส่วนประกอบสายเลือดแต่ละรายการระบุได้ครั้งเดียว',
+  'Each breed may appear only once': 'สายพันธุ์แต่ละรายการระบุได้ครั้งเดียว',
+  'Cannot be more than the eggs laid': 'ต้องไม่เกินจำนวนไข่',
+  'Cannot be more than the eggs set': 'ต้องไม่เกินจำนวนไข่เข้าฟัก',
+  'Enter at least one count': 'กรุณากรอกอย่างน้อยหนึ่งจำนวน',
+  'Do not repeat the main breed': 'ไม่ต้องระบุสายพันธุ์หลักซ้ำในสายพันธุ์ผสม',
   'Use letters, digits and . _ - / (max 40, no spaces)':
     'ใช้ตัวอักษร ตัวเลข และ . _ - / ได้ (ไม่เกิน 40 ตัว ไม่มีช่องว่าง)',
   'Choose an animal type': 'กรุณาเลือกชนิดสัตว์',

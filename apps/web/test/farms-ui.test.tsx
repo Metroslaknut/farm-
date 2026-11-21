@@ -138,7 +138,7 @@ describe('shared helpers used by every client', () => {
 });
 
 describe('FarmListPage', () => {
-  it('shows an explanatory empty state, then farms with roles', async () => {
+  it('shows an explanatory empty state, then farms I own and farms I help run apart', async () => {
     mockApi({ 'GET /farms': () => ({ items: [], page: 1, pageSize: 12, total: 0 }) });
     const { unmount } = renderAt('/farms', '/farms', <FarmListPage />);
     expect(
@@ -147,17 +147,27 @@ describe('FarmListPage', () => {
     unmount();
 
     mockApi({
-      'GET /farms': () => ({
-        items: [{ ...farm([]).farm, name: 'Somchai Farm', location: { province: 'Khon Kaen' } }],
+      'GET /farms': (opts) => ({
+        items:
+          opts?.query?.['relation'] === 'owned'
+            ? [{ ...farm([]).farm, name: 'Somchai Farm', location: { province: 'Khon Kaen' } }]
+            : [{ ...farm([]).farm, id: 'f2', name: 'Neighbour Farm', myRole: 'manager' }],
         page: 1,
         pageSize: 12,
         total: 1,
       }),
     });
     renderAt('/farms', '/farms', <FarmListPage />);
-    expect(await screen.findByRole('link', { name: 'Somchai Farm' })).toBeTruthy();
-    expect(screen.getByText('Owner')).toBeTruthy();
-    expect(screen.getByText('Khon Kaen')).toBeTruthy();
+    const owned = within(await screen.findByRole('region', { name: 'Farms I own' }));
+    expect(await owned.findByRole('link', { name: 'Somchai Farm' })).toBeTruthy();
+    expect(owned.getByText('Owner')).toBeTruthy();
+    expect(owned.getByText('Khon Kaen')).toBeTruthy();
+    const managed = within(screen.getByRole('region', { name: 'Farms I help run' }));
+    expect(await managed.findByRole('link', { name: 'Neighbour Farm' })).toBeTruthy();
+    expect(managed.getByText('Manager')).toBeTruthy();
+    expect(new Set(request.mock.calls.map((c) => c[2]?.query?.relation))).toEqual(
+      new Set(['managed', 'owned']),
+    );
   });
 
   it('surfaces API failures with a retry', async () => {
@@ -167,8 +177,9 @@ describe('FarmListPage', () => {
       },
     });
     renderAt('/farms', '/farms', <FarmListPage />);
-    expect((await screen.findByRole('alert')).textContent).toContain('Unable to reach');
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+    const alerts = await screen.findAllByRole('alert');
+    expect(alerts[0]!.textContent).toContain('Unable to reach');
+    expect(screen.getAllByRole('button', { name: 'Try again' }).length).toBe(2);
   });
 });
 
@@ -500,6 +511,8 @@ describe('farms in Thai', () => {
     renderAt('/farms', '/farms', <FarmListPage />);
     expect(await screen.findByText('ยังไม่มีฟาร์ม')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'ฟาร์มของฉัน' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'ฟาร์มที่ฉันเป็นเจ้าของ' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'ฟาร์มที่ฉันเป็นผู้ดูแล' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'สร้างฟาร์ม' })).toBeTruthy();
   });
 

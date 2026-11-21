@@ -1,6 +1,10 @@
 import type { RequestHandler } from 'express';
 import {
+  addBreedGroupSchema,
   addBreedSchema,
+  addRearingTypeSchema,
+  updateBreedGroupSchema,
+  updateRearingTypeSchema,
   animalTypeListQuerySchema,
   createAnimalTypeSchema,
   updateAnimalTypeSchema,
@@ -58,5 +62,47 @@ export const animalTypesController = {
       parse(updateBreedSchema, req.body),
     );
     res.json({ animalType });
+  }) satisfies RequestHandler,
+
+  addRearingType: (async (req, res) => {
+    res.status(201).json({
+      animalType: await types.addRearingType(
+        requireActor(req),
+        parseObjectId(req.params['id']),
+        parse(addRearingTypeSchema, req.body),
+      ),
+    });
+  }) satisfies RequestHandler,
+
+  updateRearingType: (async (req, res) => {
+    res.json({
+      animalType: await types.updateRearingType(
+        requireActor(req),
+        parseObjectId(req.params['id']),
+        String(req.params['key'] ?? ''),
+        parse(updateRearingTypeSchema, req.body),
+      ),
+    });
+  }) satisfies RequestHandler,
+
+  addBreedGroup: (async (req, res) => {
+    res.status(201).json({
+      animalType: await types.addBreedGroup(
+        requireActor(req),
+        parseObjectId(req.params['id']),
+        parse(addBreedGroupSchema, req.body),
+      ),
+    });
+  }) satisfies RequestHandler,
+
+  updateBreedGroup: (async (req, res) => {
+    res.json({
+      animalType: await types.updateBreedGroup(
+        requireActor(req),
+        parseObjectId(req.params['id']),
+        String(req.params['key'] ?? ''),
+        parse(updateBreedGroupSchema, req.body),
+      ),
+    });
   }) satisfies RequestHandler,
 };

@@ -5,7 +5,10 @@ import {
   ANIMAL_STATUSES,
   ANIMAL_TYPE_STATUSES,
   ASSIGNABLE_FARM_ROLES,
+  FARM_INVITATION_STATUSES,
+  FARM_PERMISSIONS,
   FARM_STATUSES,
+  REPRODUCTION_MODES,
   MEDIA_KINDS,
 } from '@farmplus/shared-types';
 import { listQuerySchema } from './auth';
@@ -82,6 +85,8 @@ export const farmListQuerySchema = listQuerySchema.extend({
   status: z.enum(FARM_STATUSES).optional(),
   /** `all` is for platform staff holding farms.read; everyone else always sees only their own farms. */
   scope: z.enum(['mine', 'all']).default('mine'),
+  /** With scope=mine: farms I own (`owned`) or help run as manager/worker/viewer (`managed`). */
+  relation: z.enum(['owned', 'managed']).optional(),
 });
 
 export const addMemberSchema = z
@@ -98,6 +103,49 @@ export const addMemberSchema = z
 
 export const updateMemberSchema = z.object({ role: z.enum(ASSIGNABLE_FARM_ROLES) }).strict();
 
+/**
+ * A member's permission set. `null` = back to the role's defaults. Unknown keys are rejected; keys above the role are
+ * rejected by the API (the role is the ceiling).
+ */
+const permissionList = z.array(z.enum(FARM_PERMISSIONS)).max(FARM_PERMISSIONS.length);
+export const updateMemberPermissionsSchema = z
+  .object({ permissions: z.union([permissionList, z.null()]) })
+  .strict();
+
+/** E.164 phone, as stored on accounts (`+66812345678`). */
+const e164 = z
+  .string()
+  .trim()
+  .regex(/^\+[1-9]\d{7,14}$/, 'Phone must be in E.164 format');
+
+/** Invite a person by exact e-mail or phone (never by partial name: accounts cannot be enumerated). */
+export const createFarmInvitationSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().pipe(z.email().max(254)).optional(),
+    phone: e164.optional(),
+    role: z.enum(ASSIGNABLE_FARM_ROLES),
+    permissions: permissionList.optional(),
+    message: optionalText(300),
+  })
+  .strict()
+  .refine((v) => Boolean(v.email) !== Boolean(v.phone), {
+    message: 'Provide an e-mail or a phone number',
+    path: ['email'],
+  });
+
+/** A user asks to join a farm; the owner picks the role when approving. */
+export const createJoinRequestSchema = z
+  .object({ farmId: objectId, message: optionalText(300) })
+  .strict();
+
+export const approveJoinRequestSchema = z
+  .object({ role: z.enum(ASSIGNABLE_FARM_ROLES), permissions: permissionList.optional() })
+  .strict();
+
+export const farmInvitationListQuerySchema = z.object({
+  status: z.enum(FARM_INVITATION_STATUSES).optional(),
+});
+
 // ---------------- animal types
 const keySchema = z
   .string()
@@ -113,6 +161,7 @@ export const createAnimalTypeSchema = z
     key: keySchema,
     name: text(80).min(1),
     nameTh: optionalText(80),
+    reproduction: z.enum(REPRODUCTION_MODES).optional(),
     gestationDays: gestationDays.optional(),
     minBreedingAgeDays: minBreedingAgeDays.optional(),
     maxWeightKg: maxWeightKg.optional(),
@@ -128,6 +177,7 @@ export const updateAnimalTypeSchema = z
     name: text(80).min(1).optional(),
     nameTh: z.union([text(80), z.null()]).optional(),
     status: z.enum(ANIMAL_TYPE_STATUSES).optional(),
+    reproduction: z.enum(REPRODUCTION_MODES).optional(),
     gestationDays: z.union([gestationDays, z.null()]).optional(),
     minBreedingAgeDays: z.union([minBreedingAgeDays, z.null()]).optional(),
     maxWeightKg: z.union([maxWeightKg, z.null()]).optional(),
@@ -135,14 +185,62 @@ export const updateAnimalTypeSchema = z
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update' });
 
+/**
+ * Lineage components a breed is made of (e.g. ["burmese", "thai"] for "Burmese + Thai"). A component is usually a
+ * breed-group key, but may name a line that has no group of its own (e.g. "pakoi", "brazil"). No repeats.
+ */
+const composition = z
+  .array(keySchema)
+  .min(1)
+  .max(6)
+  .refine((v) => new Set(v).size === v.length, 'Each component may appear only once');
+
 export const addBreedSchema = z
-  .object({ key: keySchema, name: text(80).min(1), nameTh: optionalText(80) })
+  .object({
+    key: keySchema,
+    name: text(80).min(1),
+    nameTh: optionalText(80),
+    groupKey: keySchema.optional(),
+    composition: composition.optional(),
+  })
   .strict();
 export const updateBreedSchema = z
   .object({
     name: text(80).min(1).optional(),
     nameTh: z.union([text(80), z.null()]).optional(),
     active: z.boolean().optional(),
+    groupKey: z.union([keySchema, z.null()]).optional(),
+    composition: z.union([composition, z.null()]).optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update' });
+
+/** Rearing types (e.g. fighting cock) and breed groups share one shape. */
+export const addRearingTypeSchema = z
+  .object({ key: keySchema, name: text(80).min(1), nameTh: optionalText(80) })
+  .strict();
+export const updateRearingTypeSchema = z
+  .object({
+    name: text(80).min(1).optional(),
+    nameTh: z.union([text(80), z.null()]).optional(),
+    active: z.boolean().optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update' });
+export const addBreedGroupSchema = z
+  .object({
+    key: keySchema,
+    name: text(80).min(1),
+    nameTh: optionalText(80),
+    rearingTypeKey: keySchema.optional(),
+  })
+  .strict();
+export const updateBreedGroupSchema = z
+  .object({
+    name: text(80).min(1).optional(),
+    nameTh: z.union([text(80), z.null()]).optional(),
+    active: z.boolean().optional(),
+    rearingTypeKey: z.union([keySchema, z.null()]).optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update' });
@@ -178,6 +276,12 @@ const animalFields = {
   damId: objectId,
   color: text(120).min(1),
   notes: text(2000),
+  rearingType: keySchema,
+  /** Further breeds in the animal's make-up, as stated by the farm (breed keys of the same type). */
+  crossBreeds: z
+    .array(keySchema)
+    .max(6)
+    .refine((v) => new Set(v).size === v.length, 'Each breed may appear only once'),
 };
 
 const datesConsistent = (v: {
@@ -206,6 +310,8 @@ export const createAnimalSchema = z
     damId: animalFields.damId.optional(),
     color: animalFields.color.optional(),
     notes: animalFields.notes.optional(),
+    rearingType: animalFields.rearingType.optional(),
+    crossBreeds: animalFields.crossBreeds.optional(),
   })
   .strict()
   .refine(datesConsistent, DATE_ORDER);
@@ -225,6 +331,8 @@ export const updateAnimalSchema = z
     damId: z.union([animalFields.damId, z.null()]).optional(),
     color: z.union([animalFields.color, z.null()]).optional(),
     notes: z.union([animalFields.notes, z.null()]).optional(),
+    rearingType: z.union([animalFields.rearingType, z.null()]).optional(),
+    crossBreeds: z.union([animalFields.crossBreeds, z.null()]).optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update' })
@@ -236,6 +344,9 @@ export const animalListQuerySchema = listQuerySchema.extend({
     .string()
     .regex(/^[a-z][a-z0-9_]{1,39}$/)
     .optional(),
+  /** All breeds of a breed group (resolved through the catalogue). Ignored when `breed` is given. */
+  breedGroup: keySchema.optional(),
+  rearingType: keySchema.optional(),
   sex: z.enum(ANIMAL_SEXES).optional(),
   status: z.enum(ANIMAL_STATUSES).optional(),
   /** Archived animals are hidden unless asked for. */

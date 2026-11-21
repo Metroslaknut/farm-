@@ -7,13 +7,16 @@ import {
   thaiToday,
   type FieldErrors,
 } from '@farmplus/validation';
+import { suggestOffspringBreed } from '@farmplus/shared-utils';
 import { api } from '../../../api';
+import { useLocale } from '../../../i18n';
+import { loadAnimalTypes } from '../../../lib/animalTypes';
 import { Alert, Button, Card, Select, TextField, Textarea } from '../../../components/ui';
 import { errorMessage } from '../../../lib/format';
 import { useAsync } from '../../../lib/useAsync';
-import { localizeErrors, useFarmFormat, useFarmsT } from '../labels';
+import { breedLabel, localizeErrors, typeName, useFarmFormat, useFarmsT } from '../labels';
 import { changesFrom, draftFromRecord, payloadFromDraft } from './formEngine';
-import type { Draft, Field, KindConfig } from './recordConfigs';
+import { CLUTCH_SECTION, type Draft, type Field, type KindConfig } from './recordConfigs';
 
 interface Props {
   config: KindConfig;
@@ -60,6 +63,18 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
       }),
     [farmId],
   );
+  const [locale] = useLocale();
+  const breeding = config.kind === 'breeding';
+  const types = useAsync(
+    async () => (breeding ? (await loadAnimalTypes()).animalTypes : []),
+    [breeding],
+  );
+  const findAnimal = (id: string | undefined) =>
+    id ? animals.data?.items.find((a) => a.id === id) : undefined;
+  const dam = findAnimal(draft['damId'] || record?.dam?.id);
+  const sire = findAnimal(draft['sireId']);
+  const damType = types.data?.find((x) => x.id === dam?.animalType.id);
+  const eggLaying = damType?.reproduction === 'egg' || record?.reproduction === 'egg';
   const animalId = draft['animalId'];
   const related = useAsync(
     async (signal) =>
@@ -98,6 +113,8 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
       body = { reason: reason.trim(), changes };
     } else {
       body = payloadFromDraft(config.fields, draft);
+      // Clutch counts belong to egg-laying species only (the section is hidden otherwise).
+      if (breeding && !eggLaying) delete body['clutch'];
       const parsed = config.schema.safeParse(body);
       if (!parsed.success) return setErrors(localizeErrors(fieldErrorsFromZod(parsed.error)));
     }
@@ -139,7 +156,12 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
                 .filter((a) => !f.animalSex || a.sex === f.animalSex)
                 .map((a) => ({
                   value: a.id,
-                  label: `${a.animalCode}${a.name ? ` — ${a.name}` : ''}`,
+                  label: [
+                    `${a.animalCode}${a.name ? ` — ${a.name}` : ''}`,
+                    breeding ? breedLabel(a, locale) : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(' · '),
                 }))
             : (related.data ?? [])
                 .filter((r) => r.id !== record?.id)
@@ -176,6 +198,26 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
     );
   };
 
+  /** "พม่าม้าล่อ (สายพันธุ์ไก่พม่า)", or "breed not recorded". */
+  const parentBreed = (a: AnimalSummary | undefined) => {
+    if (!a) return t('pedigree.unknown');
+    const name = breedLabel(a, locale);
+    if (!name) return t('rec.breeding.noBreed');
+    return a.breedGroup ? `${name} (${typeName(a.breedGroup, locale)})` : name;
+  };
+  /** Same rule as the API (shared code): a suggestion only — lineage is the real sire and dam. */
+  const suggested = () => {
+    if (!damType) return t('rec.breeding.suggestUnknown');
+    const s = suggestOffspringBreed(damType.breeds, sire?.breed, dam?.breed);
+    const b = s.breed ? damType.breeds.find((x) => x.key === s.breed) : undefined;
+    if (b) return typeName(b, locale);
+    const g = s.groupKey ? damType.breedGroups?.find((x) => x.key === s.groupKey) : undefined;
+    if (g) return t('rec.breeding.suggestGroup', { group: typeName(g, locale) });
+    return t(
+      s.basis === 'parent_unknown' ? 'rec.breeding.suggestUnknown' : 'rec.breeding.suggestNone',
+    );
+  };
+
   return (
     <form onSubmit={submit} noValidate>
       {config.notice && (
@@ -188,6 +230,8 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
           (f) => f.section === section && (!f.visible || f.visible(draft)),
         );
         if (fields.length === 0) return null;
+        if (section === CLUTCH_SECTION && !eggLaying) return null;
+        const parentsSection = breeding && section === 'rec.breeding.secParents';
         return (
           <Card
             key={section}
@@ -196,6 +240,29 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
             style={{ marginBottom: 'var(--ds-space-4)' }}
           >
             <div className="ds-grid ds-grid--2">{fields.map(control)}</div>
+            {parentsSection && (dam || sire) && (
+              <div
+                role="status"
+                className="ds-grid ds-grid--3"
+                style={{ marginTop: 'var(--ds-space-3)' }}
+              >
+                <p>
+                  <strong>{t('rec.breeding.damBreed')}</strong>
+                  <br />
+                  {parentBreed(dam)}
+                </p>
+                <p>
+                  <strong>{t('rec.breeding.sireBreed')}</strong>
+                  <br />
+                  {parentBreed(sire)}
+                </p>
+                <p>
+                  <strong>{t('rec.breeding.suggested')}</strong>
+                  <br />
+                  {suggested()}
+                </p>
+              </div>
+            )}
           </Card>
         );
       })}

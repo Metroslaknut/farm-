@@ -1,7 +1,12 @@
 import type { Types } from 'mongoose';
 import { memberAdded, memberRemoved, memberRoleChanged } from '../notifications/events';
 import { hub } from '../realtime/hub';
-import type { FarmMemberSummary, FarmRole } from '@farmplus/shared-types';
+import {
+  effectiveFarmPermissions,
+  type FarmMemberSummary,
+  type FarmPermission,
+  type FarmRole,
+} from '@farmplus/shared-types';
 import type { Actor } from '../../context';
 import { conflict, forbidden, notFound } from '../../lib/errors';
 import { FarmMember, User } from '../../models';
@@ -14,6 +19,7 @@ import {
   roleRank,
   type FarmAccess,
 } from './farm-access';
+import { assertPermissionsWithinRole, markMembershipEnded } from './invitations.service';
 
 type MemberDoc = Awaited<ReturnType<typeof FarmMember.find>>[number];
 
@@ -23,7 +29,9 @@ async function toSummaries(
 ): Promise<FarmMemberSummary[]> {
   const users = new Map(
     (
-      await User.find({ _id: { $in: members.map((m) => m.userId) } }).select('displayName email')
+      await User.find({ _id: { $in: members.map((m) => m.userId) } }).select(
+        'displayName email avatarUrl',
+      )
     ).map((u) => [String(u._id), u]),
   );
   return members.map((m) => {
@@ -32,9 +40,14 @@ async function toSummaries(
       id: String(m._id),
       userId: String(m.userId),
       displayName: u?.displayName ?? 'Unknown user',
+      ...(u?.avatarUrl ? { avatarUrl: u.avatarUrl } : {}),
       ...(canSeeEmail && u?.email ? { email: u.email } : {}),
       role: m.role,
       joinedAt: m.createdAt.toISOString(),
+      permissions: effectiveFarmPermissions(m.role, m.permissions),
+      customPermissions: m.role !== 'owner' && Array.isArray(m.permissions),
+      ...(m.invitedAt ? { invitedAt: m.invitedAt.toISOString() } : {}),
+      ...(m.approvedAt ? { approvedAt: m.approvedAt.toISOString() } : {}),
     };
   });
 }
@@ -63,6 +76,10 @@ export async function addMember(
   },
 ): Promise<FarmMemberSummary> {
   requireFarmPermission(access, 'members.manage');
+  // Farm owners let people in through invitations / join requests (the person must agree). Adding someone directly
+  // is kept for platform staff (`farms.manage`, MFA) who fix accounts on a farm's behalf.
+  if (!actor.access.permissions.has('farms.manage'))
+    throw forbidden('Invite the person instead: they must accept first', 'USE_INVITATION');
   assertFarmActive(access);
   assertMayAssign(access, input.role);
 
@@ -125,6 +142,8 @@ export async function updateMemberRole(
 
   const before = target.role;
   target.role = role;
+  // A custom set belongs to the old role; the new role starts from its own defaults.
+  target.permissions = null;
   await target.save();
   await recordAudit({
     actorId: actor.userId,
@@ -140,6 +159,48 @@ export async function updateMemberRole(
     role,
     actor.userId,
   );
+  await hub.revalidateUser(String(target.userId));
+  return (await toSummaries([target], true))[0]!;
+}
+
+/**
+ * The owner switches individual permissions on/off for a member (`null` = back to the role's defaults). The role is
+ * the ceiling; nobody can change their own permissions, and the owner's are fixed.
+ */
+export async function updateMemberPermissions(
+  actor: Actor,
+  access: FarmAccess,
+  memberId: Types.ObjectId,
+  permissions: FarmPermission[] | null,
+): Promise<FarmMemberSummary> {
+  requireFarmPermission(access, 'members.manage');
+  assertFarmActive(access);
+  const target = await loadTarget(access, memberId);
+  if (target.role === 'owner')
+    throw forbidden('The farm owner’s permissions cannot be changed', 'OWNER_IMMUTABLE');
+  if (String(target.userId) === actor.userId)
+    throw forbidden('You cannot change your own permissions', 'SELF_PERMISSION_CHANGE');
+  if (roleRank(target.role) >= actingRank(access))
+    throw forbidden('You cannot manage a member at or above your own level', 'ROLE_ESCALATION');
+  const next = assertPermissionsWithinRole(target.role, permissions);
+
+  const before = effectiveFarmPermissions(target.role, target.permissions);
+  target.permissions = next;
+  await target.save();
+  const after = effectiveFarmPermissions(target.role, target.permissions);
+  await recordAudit({
+    actorId: actor.userId,
+    action: 'farm.member_permissions_changed',
+    targetType: 'farm',
+    targetId: access.farm._id,
+    metadata: {
+      memberUserId: String(target.userId),
+      added: after.filter((p) => !before.includes(p)),
+      removed: before.filter((p) => !after.includes(p)),
+      custom: next !== null,
+    },
+    ip: actor.ip,
+  });
   await hub.revalidateUser(String(target.userId));
   return (await toSummaries([target], true))[0]!;
 }
@@ -161,6 +222,7 @@ export async function removeMember(
       throw forbidden('You cannot remove a member at or above your own level', 'ROLE_ESCALATION');
   }
   await target.deleteOne();
+  await markMembershipEnded(access.farm._id, target.userId, actor.userId);
   await recordAudit({
     actorId: actor.userId,
     action: leaving ? 'farm.member_left' : 'farm.member_removed',

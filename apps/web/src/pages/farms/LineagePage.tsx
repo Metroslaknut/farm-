@@ -35,7 +35,7 @@ export default function LineagePage() {
       </p>
       <div className="ds-row" style={{ justifyContent: 'space-between' }}>
         <h1>{t('lineage.title')}</h1>
-        {can('records.read') && (
+        {can('breeding.read') && (
           <NavButton to={`/farms/${farmId}/breeding`}>{t('lineage.breedingRecords')}</NavButton>
         )}
       </div>

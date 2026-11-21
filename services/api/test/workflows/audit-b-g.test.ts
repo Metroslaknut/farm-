@@ -72,7 +72,7 @@ afterEach(() => {
 });
 
 const API = '/api/v1';
-type M = 'get' | 'post' | 'patch' | 'delete';
+type M = 'get' | 'post' | 'put' | 'patch' | 'delete';
 const call = (m: M, s: Session | null, path: string, body?: object) => {
   const r = request(h.app)[m](`${API}${path}`);
   if (s) r.set(s.auth);
@@ -267,9 +267,9 @@ describe('B1 farm create / update / archive / restore', () => {
       ],
       ['expense void', 'post', `${F}/expenses/${ex.id}/void`, { reason: 'mistake' }],
       [
-        'member add',
+        'member invite',
         'post',
-        `${F}/members`,
+        `${F}/invitations`,
         { email: (await createUser(h.app)).email, role: 'viewer' },
       ],
       ['member role', 'patch', `${F}/members/${workerMemberId}`, { role: 'viewer' }],
@@ -491,7 +491,7 @@ describe('B2 ownership and member permissions', () => {
         `${F}/members/${workerM}`,
         { role: 'manager' },
         403,
-        'ROLE_ESCALATION',
+        'FARM_FORBIDDEN',
       ],
       [
         'manager changes owner',
@@ -500,7 +500,7 @@ describe('B2 ownership and member permissions', () => {
         `${F}/members/${ownerM}`,
         { role: 'viewer' },
         403,
-        'OWNER_IMMUTABLE',
+        'FARM_FORBIDDEN',
       ],
       [
         'manager removes owner',
@@ -518,7 +518,7 @@ describe('B2 ownership and member permissions', () => {
         `${F}/members/${secondM}`,
         { role: 'viewer' },
         403,
-        'ROLE_ESCALATION',
+        'FARM_FORBIDDEN',
       ],
       [
         'manager removes other manager',
@@ -527,7 +527,7 @@ describe('B2 ownership and member permissions', () => {
         `${F}/members/${secondM}`,
         undefined,
         403,
-        'ROLE_ESCALATION',
+        'FARM_FORBIDDEN',
       ],
       [
         'manager changes own role',
@@ -538,13 +538,30 @@ describe('B2 ownership and member permissions', () => {
         403,
       ],
       [
-        'manager adds a manager',
+        'manager invites a manager',
         s.manager,
         'post',
-        `${F}/members`,
+        `${F}/invitations`,
         { email: (await createUser(h.app)).email, role: 'manager' },
         403,
-        'ROLE_ESCALATION',
+        'FARM_FORBIDDEN',
+      ],
+      [
+        'manager narrows a worker’s permissions',
+        s.manager,
+        'put',
+        `${F}/members/${workerM}/permissions`,
+        { permissions: ['animals.read'] },
+        403,
+        'FARM_FORBIDDEN',
+      ],
+      [
+        'manager widens own permissions',
+        s.manager,
+        'put',
+        `${F}/members/${managerM}/permissions`,
+        { permissions: ['members.manage'] },
+        403,
       ],
       [
         'owner role is not assignable',
@@ -608,9 +625,12 @@ describe('B2 ownership and member permissions', () => {
     expect(
       (await call('patch', s.owner, `${F}/members/${foreignM}`, { role: 'viewer' })).status,
     ).toBe(404);
-    // manager may manage strictly lower roles
+    // staff management is the owner's alone
     expect(
       (await call('patch', s.manager, `${F}/members/${viewerM}`, { role: 'worker' })).status,
+    ).toBe(403);
+    expect(
+      (await call('patch', s.owner, `${F}/members/${viewerM}`, { role: 'worker' })).status,
     ).toBe(200);
     expect((await FarmMember.findById(viewerM))!.role).toBe('worker');
   });
@@ -628,7 +648,7 @@ describe('B2 ownership and member permissions', () => {
     const workerM = (await call('get', s.owner, `${F}/members`)).body.members.find(
       (m: any) => m.role === 'worker',
     ).id;
-    expect((await call('delete', s.manager, `${F}/members/${workerM}`)).status).toBe(204);
+    expect((await call('delete', s.owner, `${F}/members/${workerM}`)).status).toBe(204);
     expect(await FarmMember.countDocuments({ farmId: s.farmId, userId: s.worker.id })).toBe(0);
     for (const res of [
       await call('get', s.worker, F),
@@ -645,16 +665,22 @@ describe('B2 ownership and member permissions', () => {
     expect(String((await WeightRecord.findById(rec.body.record.id))!.createdBy)).toBe(s.worker.id);
   });
 
-  it('B2-4 adding the same person twice in parallel gives one membership and a clean 409 (no 500)', async () => {
+  it('B2-4 inviting the same person twice in parallel gives one invitation, one membership and a clean 409 (no 500)', async () => {
     const { owner, farmId } = await freshFarm();
     const u = await createUser(h.app);
     const rs = await Promise.all(
       Array.from({ length: 8 }, () =>
-        call('post', owner, `/farms/${farmId}/members`, { email: u.email, role: 'viewer' }),
+        call('post', owner, `/farms/${farmId}/invitations`, { email: u.email, role: 'viewer' }),
       ),
     );
-    expect(await FarmMember.countDocuments({ farmId, userId: u.id })).toBe(1);
     expect(rs.map((r) => r.status).sort()).toEqual([201, ...Array(7).fill(409)]);
+    const id = rs.find((r) => r.status === 201)!.body.invitation.id;
+    expect(await FarmMember.countDocuments({ farmId, userId: u.id })).toBe(0); // nothing before acceptance
+    const accepts = await Promise.all(
+      Array.from({ length: 4 }, () => call('post', u, `/farm-invitations/${id}/accept`)),
+    );
+    expect(accepts.map((r) => r.status).sort()).toEqual([200, 409, 409, 409]);
+    expect(await FarmMember.countDocuments({ farmId, userId: u.id })).toBe(1);
   });
 });
 
