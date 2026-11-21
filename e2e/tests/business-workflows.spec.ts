@@ -32,7 +32,7 @@ test('WF-UI-B06 an owner records a weighing in the browser; the API returns it a
   const animalId = (await animal.json()).animal.id as string;
 
   await signIn(page, owner, `/farms/${farmId}/weights/new`);
-  await page.getByLabel('Animal').selectOption({ label: code });
+  await page.getByRole('combobox', { name: /^Animal/ }).selectOption({ label: code });
   await page.getByLabel('Weight (kg)').fill('312.5');
   await page.getByRole('button', { name: 'Save weight' }).click();
   await expect(page.getByText('312.5 kg', { exact: false }).first()).toBeVisible();
