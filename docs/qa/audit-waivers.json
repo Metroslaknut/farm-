@@ -2,18 +2,18 @@
   "_comment": "Reviewed exceptions to the dependency audit policy (scripts/qa/audit-policy.mjs). A waiver needs a reason, an owner and an expiry; an expired waiver fails the build. Remove a waiver as soon as a patched version exists.",
   "waivers": [
     {
-      "id": "GHSA-86w9-cpqp-85rv",
-      "package": "node-forge",
-      "severity": "high",
-      "reason": "Only reachable through @expo/cli → @expo/code-signing-certificates, i.e. the developer/CI build tooling for the mobile app (EAS CLI, Expo Go code signing). It never runs in the API, the web app or inside the shipped mobile binary. No patched node-forge release exists yet.",
-      "owner": "mobile lead",
-      "expires": "2027-01-31"
-    },
-    {
       "id": "GHSA-vfj7-8cjw-p6xm",
       "package": "braces",
       "severity": "high",
       "reason": "Stack-exhaustion denial of service on deeply nested glob patterns, reachable only through Metro's file watcher (react-native → metro → micromatch) on a developer machine/CI that builds the mobile app, from patterns in our own repository. Not part of the shipped app or any server. No patched version exists yet.",
+      "owner": "mobile lead",
+      "expires": "2027-01-31"
+    },
+    {
+      "id": "GHSA-qr28-fpjm-wq7f",
+      "package": "decode-uri-component",
+      "severity": "high",
+      "reason": "Mobile app only: expo-router → query-string@7 → decode-uri-component@0.2.2 (quadratic-time decoding of malformed percent-encoding, i.e. a denial of service of the user's own app from a crafted deep link). The only patched release (0.5.1) is ESM-only while query-string@7 loads it with require(), so forcing it risks breaking navigation at runtime and cannot be verified without device testing. Not used by the API or the web app. Remove once expo-router ships a query-string that depends on a patched version, or after the mobile team verifies a forced upgrade on devices.",
       "owner": "mobile lead",
       "expires": "2027-01-31"
     }
