@@ -19,6 +19,7 @@ import {
   GrowthStandard,
   Listing,
   Order,
+  User,
   WeightRecord,
   type FarmDoc,
 } from '../../models';
@@ -150,14 +151,19 @@ export async function listFarms(
 }
 
 export async function getFarmDetail(access: FarmAccess): Promise<FarmDetail> {
-  const rows = await Animal.aggregate<{ _id: string; count: number }>([
-    { $match: { farmId: access.farm._id, archivedAt: null } },
-    { $group: { _id: '$currentStatus', count: { $sum: 1 } } },
+  const [rows, ownerMember] = await Promise.all([
+    Animal.aggregate<{ _id: string; count: number }>([
+      { $match: { farmId: access.farm._id, archivedAt: null } },
+      { $group: { _id: '$currentStatus', count: { $sum: 1 } } },
+    ]),
+    FarmMember.findOne({ farmId: access.farm._id, role: 'owner' }).select('userId'),
   ]);
+  const owner = ownerMember ? await User.findById(ownerMember.userId).select('displayName') : null;
   const byStatus = Object.fromEntries(rows.map((r) => [r._id, r.count]));
   const animalsTotal = rows.reduce((n, r) => n + r.count, 0);
   return {
     ...toFarmSummary(access.farm, access.role),
+    ...(owner ? { owner: { id: String(owner._id), displayName: owner.displayName } } : {}),
     access: { via: access.via, permissions: [...access.permissions].sort() },
     stats: { animalsTotal, animalsActive: byStatus['active'] ?? 0, byStatus },
   };

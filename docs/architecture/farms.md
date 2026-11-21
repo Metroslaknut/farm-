@@ -83,6 +83,8 @@ People get into a farm only with both sides agreeing. Statuses: `PENDING → APP
   `/summary`, listings from `/farms/:id/listings` (status filter, cursor paging, real sale price from the reservation), animal orders from
   `/farms/:id/orders` (buyer shown by public display name only; payment state derived from the order status).
 
+`GET /farms/:farmId` includes `owner: {id, displayName}` (display name only), shown on the animal form and animal detail.
+
 ## Animal types are data (not code)
 
 Besides breeds, an animal type carries `reproduction` (`live_birth` | `egg`), `rearingTypes[]` (e.g. chicken → fighting cock) and

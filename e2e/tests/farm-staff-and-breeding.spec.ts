@@ -114,7 +114,10 @@ test('chicken breeding: parents’ breeds and the suggested breed show at once; 
   await bird('COCK-1', 'Chao Saifa', 'male', 'pama_ma_lo');
   await bird('HEN-1', 'Mae Thongdee', 'female', 'lueang_hang_khao');
 
-  await signIn(page, owner, `/farms/${farmId}/breeding/new`);
+  // The animal form says which farm the bird belongs to and who owns it.
+  await signIn(page, owner, `/farms/${farmId}/animals/new`);
+  await expect(page.getByText('Farm: E2E Cock Farm · Owner: Breeder Boon')).toBeVisible();
+  await page.goto(`/farms/${farmId}/breeding/new`);
   await page.getByLabel(/^Dam/).selectOption({ label: 'HEN-1 — Mae Thongdee · Lueang Hang Khao' });
   await page
     .getByLabel(/Sire on this farm/)
@@ -127,6 +130,20 @@ test('chicken breeding: parents’ breeds and the suggested breed show at once; 
   await expect(page).toHaveURL(new RegExp(`/farms/${farmId}/breeding/[a-f0-9]{24}$`));
   await expect(page.getByText(/BR-\d{5}/).first()).toBeVisible();
   const recordId = page.url().split('/').pop()!;
+
+  // A photo from the device, attached to the breeding record (stored like animal photos).
+  await page.getByLabel('Choose photos from your device').setInputFiles({
+    name: 'mating.png',
+    mimeType: 'image/png',
+    buffer: Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(64, 1)]),
+  });
+  const uploaded = page.waitForResponse(
+    (r) => r.request().method() === 'POST' && r.url().endsWith(`/breeding/${recordId}/photos`),
+  );
+  await page.getByRole('button', { name: 'Upload photos (1)' }).click();
+  expect((await uploaded).status()).toBe(201);
+  await expect(page.getByRole('heading', { name: 'Photos & documents (1)' })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Photo' }).first()).toBeVisible();
 
   // Hatching: three chicks at once, breed pre-filled from the parents.
   await page.getByLabel('How many').fill('3');

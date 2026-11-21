@@ -168,6 +168,8 @@ export default function AnimalDetailPage() {
       ? [[t('animalForm.crossBreeds'), crossNames.join(', ')] as [string, string]]
       : []),
     [t('animals.col.sex'), enumLabel(t, 'sex', a.sex)],
+    ...(farm ? [[t('detail.farm'), farm.name] as [string, string]] : []),
+    ...(farm?.owner ? [[t('detail.farmOwner'), farm.owner.displayName] as [string, string]] : []),
     [t('detail.birthDate'), birthDate ? `${birthDate} · ${ageLabel(t, a.birthDate) ?? ''}` : '—'],
     [t('detail.acquired'), a.acquisitionDate ? fmt.date(a.acquisitionDate) : '—'],
     [

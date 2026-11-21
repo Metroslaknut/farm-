@@ -131,6 +131,8 @@ export interface FarmSummary {
 }
 
 export interface FarmDetail extends FarmSummary {
+  /** The farm owner as other members may see them (public display name only). */
+  owner?: { id: string; displayName: string };
   access: { via: 'member' | 'platform'; permissions: FarmPermission[] };
   stats: { animalsTotal: number; animalsActive: number; byStatus: Record<string, number> };
 }

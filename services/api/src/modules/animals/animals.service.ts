@@ -667,21 +667,8 @@ export async function removeMedia(
     (m) => String(m._id) !== String(mediaId),
   ) as typeof animal.media;
   await animal.save();
-  const key = media.url.startsWith(PHOTO_PATH)
-    ? media.url.slice(PHOTO_PATH.length)
-    : (photos?.keyOf(media.url) ?? null);
-  if (key) {
-    const stored = await AnimalPhoto.findOneAndDelete({ key, animalId: animal._id }).select(
-      'storage',
-    );
-    // The media entry is already gone; a failed object delete only leaves an unreachable-by-UI object, so report it.
-    if (stored?.storage === 'r2' && photos)
-      await photos
-        .remove(key)
-        .catch((error: unknown) =>
-          reportError(error, { source: 'job', route: 'animal-photo-remove' }),
-        );
-  }
+  // The media entry is already gone; a failed object delete only leaves an unreachable-by-UI object, so report it.
+  await deleteDevicePhoto(media.url, { animalId: animal._id }, photos);
   await auditAnimal(actor, 'animal.media_removed', animal, { kind: media.kind });
   return toDetail(animal);
 }
@@ -708,6 +695,89 @@ export function sniffImageType(bytes: Buffer): 'image/jpeg' | 'image/png' | 'ima
   return null;
 }
 
+/**
+ * Validate and store one photo uploaded from a device (JPEG/PNG/WebP, sniffed from the bytes, ≤ PHOTO_MAX_BYTES):
+ * the bytes go to the bucket (PHOTO_STORAGE=r2) or into the `animal_photos` document, which also records who and what it
+ * belongs to. Returns the URL to show and `discard` to undo everything if the caller cannot record it.
+ * Shared by animal photos and breeding-record photos.
+ */
+export async function storeDevicePhoto(args: {
+  actor: Actor;
+  farmId: Types.ObjectId;
+  animalId: Types.ObjectId;
+  breedingRecordId?: Types.ObjectId | undefined;
+  bytes: Buffer;
+  photos: PhotoStorage | null;
+  /** Checked once the file itself is valid (e.g. "at most N files"), before anything is stored. */
+  assertRoom?: () => void;
+}): Promise<{ key: string; url: string; mimeType: string; discard: () => Promise<void> }> {
+  const { bytes, photos } = args;
+  if (bytes.length === 0) throw new HttpError(400, 'EMPTY_FILE', 'The file is empty');
+  if (bytes.length > PHOTO_MAX_BYTES)
+    throw new HttpError(413, 'FILE_TOO_LARGE', 'The photo is too large');
+  const mimeType = sniffImageType(bytes);
+  if (!mimeType)
+    throw new HttpError(
+      415,
+      'UNSUPPORTED_MEDIA_TYPE',
+      'Only JPEG, PNG or WebP photos are accepted',
+    );
+  args.assertRoom?.();
+  const key = randomBytes(24).toString('hex');
+  // Object first: if the bucket refuses it nothing is recorded. If recording fails afterwards, the object is removed.
+  if (photos) await photos.put(key, bytes, mimeType);
+  const undoObject = async () => {
+    if (photos) await photos.remove(key).catch(() => undefined);
+  };
+  try {
+    await AnimalPhoto.create({
+      key,
+      farmId: args.farmId,
+      animalId: args.animalId,
+      ...(args.breedingRecordId ? { breedingRecordId: args.breedingRecordId } : {}),
+      uploadedBy: args.actor.userId,
+      mimeType,
+      sizeBytes: bytes.length,
+      storage: photos ? 'r2' : 'database',
+      ...(photos ? {} : { data: bytes }),
+    });
+  } catch (error) {
+    await undoObject();
+    throw error;
+  }
+  return {
+    key,
+    url: photos ? photos.urlFor(key) : `${PHOTO_PATH}${key}`,
+    mimeType,
+    discard: async () => {
+      await AnimalPhoto.deleteOne({ key });
+      await undoObject();
+    },
+  };
+}
+
+/**
+ * Delete a device-uploaded photo behind `url` (no-op for external links). `scope` limits which document may be
+ * deleted (e.g. the same animal or farm). A failed bucket delete is reported, not thrown: the reference is already gone.
+ */
+export async function deleteDevicePhoto(
+  url: string,
+  scope: Record<string, unknown>,
+  photos: PhotoStorage | null,
+): Promise<void> {
+  const key = url.startsWith(PHOTO_PATH)
+    ? url.slice(PHOTO_PATH.length)
+    : (photos?.keyOf(url) ?? null);
+  if (!key) return;
+  const stored = await AnimalPhoto.findOneAndDelete({ key, ...scope }).select('storage');
+  if (stored?.storage === 'r2' && photos)
+    await photos
+      .remove(key)
+      .catch((error: unknown) =>
+        reportError(error, { source: 'job', route: 'animal-photo-remove' }),
+      );
+}
+
 export async function uploadPhoto(
   actor: Actor,
   access: FarmAccess,
@@ -719,44 +789,21 @@ export async function uploadPhoto(
   assertFarmActive(access);
   const animal = await loadAnimal(access, animalId);
   if (animal.archivedAt) throw conflict('Archived animals are read-only', 'ANIMAL_ARCHIVED');
-  if (bytes.length === 0) throw new HttpError(400, 'EMPTY_FILE', 'The file is empty');
-  if (bytes.length > PHOTO_MAX_BYTES)
-    throw new HttpError(413, 'FILE_TOO_LARGE', 'The photo is too large');
-  const mimeType = sniffImageType(bytes);
-  if (!mimeType)
-    throw new HttpError(
-      415,
-      'UNSUPPORTED_MEDIA_TYPE',
-      'Only JPEG, PNG or WebP photos are accepted',
-    );
-  if (animal.media.length >= MAX_MEDIA)
-    throw conflict(`An animal can have at most ${MAX_MEDIA} files`, 'MEDIA_LIMIT');
-
-  const key = randomBytes(24).toString('hex');
-  // Object first: if the bucket refuses it nothing is recorded. If recording fails afterwards, the object is removed.
-  if (photos) await photos.put(key, bytes, mimeType);
-  const undoObject = async () => {
-    if (photos) await photos.remove(key).catch(() => undefined);
-  };
-  try {
-    await AnimalPhoto.create({
-      key,
-      farmId: animal.farmId,
-      animalId: animal._id,
-      uploadedBy: actor.userId,
-      mimeType,
-      sizeBytes: bytes.length,
-      storage: photos ? 'r2' : 'database',
-      ...(photos ? {} : { data: bytes }),
-    });
-  } catch (error) {
-    await undoObject();
-    throw error;
-  }
+  const stored = await storeDevicePhoto({
+    actor,
+    farmId: animal.farmId,
+    animalId: animal._id,
+    bytes,
+    photos,
+    assertRoom: () => {
+      if (animal.media.length >= MAX_MEDIA)
+        throw conflict(`An animal can have at most ${MAX_MEDIA} files`, 'MEDIA_LIMIT');
+    },
+  });
   animal.media.push({
     kind: 'photo',
-    url: photos ? photos.urlFor(key) : `${PHOTO_PATH}${key}`,
-    mimeType,
+    url: stored.url,
+    mimeType: stored.mimeType,
     caption: null,
     uploadedBy: actor.userId as unknown as Types.ObjectId,
     uploadedAt: new Date(),
@@ -764,8 +811,7 @@ export async function uploadPhoto(
   try {
     await animal.save();
   } catch (error) {
-    await AnimalPhoto.deleteOne({ key });
-    await undoObject();
+    await stored.discard();
     throw error;
   }
   await auditAnimal(actor, 'animal.media_added', animal, { kind: 'photo' });

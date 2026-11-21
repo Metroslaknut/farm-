@@ -60,6 +60,8 @@ describe('one account, many farms', () => {
     expect(detail.body.farm.access.permissions).toContain('breeding.write');
     expect(detail.body.farm.access.permissions).not.toContain('members.manage');
     expect(detail.body.farm.access.permissions).not.toContain('farm.archive');
+    // Everyone on the farm sees who owns it (display name only).
+    expect(detail.body.farm.owner).toEqual({ id: bob.id, displayName: expect.any(String) });
     // And Bob has no access to Alice's farms.
     expect((await send('get', bob, `/farms/${a1}`)).status).toBe(404);
   });

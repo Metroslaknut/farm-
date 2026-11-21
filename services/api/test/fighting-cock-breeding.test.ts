@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MIGRATIONS } from '../src/db/migrations';
-import { AnimalType, AuditLog } from '../src/models';
+import { AnimalPhoto, AnimalType, AuditLog } from '../src/models';
 import {
   createStaff,
   daysAgo,
@@ -476,6 +476,60 @@ describe('chicken breeding', () => {
       .set(f.owner.auth)
       .send({ permissions: null })
       .expect(200);
+  });
+});
+
+describe('breeding photos uploaded from the device', () => {
+  const png = Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(64, 1)]);
+  const upload = (recordId: string, body: Buffer, who: Session = f.worker) =>
+    api()
+      .post(F(`/breeding/${recordId}/photos`))
+      .set(who.auth)
+      .set('Content-Type', 'image/png')
+      .send(body);
+
+  it('stores the photo like animal photos, attaches it with history; removal deletes the file', async () => {
+    const hen = await bird('female', 'chi');
+    const rec = (await post('/breeding', f.worker, { damId: hen.id, breedingDate: daysAgo(4) }))
+      .body.record;
+
+    const res = await upload(rec.id, png);
+    expect(res.status).toBe(201);
+    const photo = res.body.record.attachments[0];
+    expect(photo).toMatchObject({ kind: 'photo', mimeType: 'image/png' });
+    expect(photo.url).toMatch(/^\/api\/v1\/animal-photos\/[0-9a-f]{48}$/);
+    expect(res.body.record.history.at(-1).kind).toBe('attachment_added');
+    const stored = await AnimalPhoto.findOne({ key: photo.url.split('/').pop() });
+    expect(String(stored?.breedingRecordId)).toBe(rec.id);
+    expect(String(stored?.animalId)).toBe(hen.id);
+    const served = await api().get(photo.url);
+    expect(served.status).toBe(200);
+    expect(served.headers['content-type']).toContain('image/png');
+
+    // Same checks as animal photos; and only people who may record breeding.
+    expect((await upload(rec.id, Buffer.from('not an image'))).status).toBe(415);
+    expect((await upload(rec.id, Buffer.alloc(0))).status).toBe(400);
+    expect((await upload(rec.id, png, f.viewer)).status).toBe(403);
+    const other = await setupFarm(h.app);
+    expect(
+      (
+        await api()
+          .post(`/api/v1/farms/${other.farmId}/breeding/${rec.id}/photos`)
+          .set(other.owner.auth)
+          .set('Content-Type', 'image/png')
+          .send(png)
+      ).status,
+    ).toBe(404);
+
+    const removed = await post(`/breeding/${rec.id}/attachments/${photo.id}/remove`, f.manager, {
+      reason: 'wrong photo',
+    });
+    expect(removed.status).toBe(200);
+    expect(await AnimalPhoto.countDocuments({ key: photo.url.split('/').pop() })).toBe(0);
+    expect((await api().get(photo.url)).status).toBe(404);
+    expect(await AuditLog.countDocuments({ action: 'breeding.attachment_added' })).toBeGreaterThan(
+      0,
+    );
   });
 });
 

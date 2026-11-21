@@ -499,7 +499,10 @@ export default function AnimalFormPage() {
               )}
             </div>
             {farm && (
-              <p className="ds-field__hint">{t('animalForm.farmLine', { farm: farm.name })}</p>
+              <p className="ds-field__hint">
+                {t('animalForm.farmLine', { farm: farm.name })}
+                {farm.owner && ` · ${t('animalForm.ownerLine', { owner: farm.owner.displayName })}`}
+              </p>
             )}
           </Card>
 

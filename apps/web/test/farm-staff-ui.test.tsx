@@ -4,12 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // All pages talk to the API only through `api.request` — replace it with fixtures.
 const request = vi.hoisted(() => vi.fn());
-vi.mock('../src/api', () => ({ api: { request } }));
+vi.mock('../src/api', () => ({ api: { request }, apiFileUrl: (u: string) => u }));
 
 import FarmStaffPage from '../src/pages/farms/FarmStaffPage';
 import MyInvitationsPage from '../src/pages/farms/MyInvitationsPage';
 import PedigreePage from '../src/pages/farms/records/PedigreePage';
 import { RecordForm } from '../src/pages/farms/records/RecordForm';
+import { RecordHistoryPanel } from '../src/pages/farms/records/RecordHistoryPanel';
 import { KINDS } from '../src/pages/farms/records/recordConfigs';
 import { setLocale } from '../src/i18n';
 import { forgetRecent } from '../src/lib/shared';
@@ -352,5 +353,45 @@ describe('breeding form', () => {
     expect(preview.getByText(/Burmese Ma Lo \(Burmese\)/)).toBeTruthy();
     expect(preview.getByText('Burmese + Thai')).toBeTruthy();
     expect(screen.getByText('Eggs and hatching')).toBeTruthy();
+  });
+});
+
+describe('breeding photos', () => {
+  const record = (attachments: object[]) => ({ id: 'r1', attachments, revision: 1 }) as never;
+  it('offers device upload only where allowed, and shows uploaded photos as thumbnails', () => {
+    const photo = {
+      id: 'p1',
+      kind: 'photo',
+      url: '/api/v1/animal-photos/abc',
+      mimeType: 'image/png',
+      addedBy: { id: 'u1', displayName: 'Worker' },
+      addedAt: '2026-11-21T00:00:00Z',
+    };
+    const { unmount } = render(
+      <RecordHistoryPanel
+        basePath={`/farms/${FARM}/breeding`}
+        record={record([photo])}
+        history={[]}
+        canWrite
+        canCorrect
+        onChanged={() => {}}
+        allowUpload
+      />,
+    );
+    expect(screen.getByRole('heading', { name: 'Upload photos' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Upload photos (0)' })).toBeTruthy();
+    expect(screen.getByRole('img').getAttribute('src')).toBe('/api/v1/animal-photos/abc');
+    unmount();
+    render(
+      <RecordHistoryPanel
+        basePath={`/farms/${FARM}/health`}
+        record={record([])}
+        history={[]}
+        canWrite
+        canCorrect
+        onChanged={() => {}}
+      />,
+    );
+    expect(screen.queryByRole('heading', { name: 'Upload photos' })).toBeNull();
   });
 });

@@ -61,6 +61,10 @@ Existing databases: role→permission mappings are code, no migration. `animal_t
   F1 × พม่า → "พม่า + ไทย", × ไซ่ง่อน → "พม่า + ไซ่ง่อน + ไทย"); one group → that group; otherwise none; a missing parent/breed →
   `parent_unknown`. It only pre-fills the form: lineage is always the real sire/dam.
 - `GET …/breeding?animalId=` lists the records where an animal is dam or sire.
+- **Photos from the device**: `POST …/breeding/:id/photos` (body = the image, `breeding.write`, upload rate limit) goes through the
+  same checks and storage as animal photos (`storeDevicePhoto`: JPEG/PNG/WebP sniffed, ≤ 3 MB, database or R2, served by
+  `/animal-photos/:key`; the `animal_photos` document is filed under the dam with `breedingRecordId`) and becomes a `photo`
+  attachment with its history entry. Removing an attachment (reason required) also deletes an uploaded photo's file.
 
 ## Growth tracking against admin-set criteria
 

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import {
   breedingListQuerySchema,
   confirmPregnancySchema,
@@ -10,6 +10,9 @@ import {
 import type { AppContext } from '../../context';
 import { parse } from '../../lib/http';
 import { parseObjectId } from '../../lib/object-id';
+import { rateLimits } from '../../middleware/rate-limit';
+import { PHOTO_MAX_BYTES } from '../animals/animals.service';
+import { addUploadedPhoto } from '../records/record-core';
 import { mountCommonRecordRoutes, recordContext } from '../records/record-routes';
 import {
   addOffspring,
@@ -85,6 +88,18 @@ export function breedingRouter(ctx: AppContext): Router {
       ),
     });
   });
+  // A photo from the user's device: the body is the image itself (bytes sniffed, same limits as animal photos).
+  router.post(
+    '/:id/photos',
+    rateLimits(ctx.env).upload,
+    express.raw({ type: () => true, limit: PHOTO_MAX_BYTES }),
+    async (req, res) => {
+      const bytes = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      res.status(201).json({
+        record: await addUploadedPhoto(breedingSpec, await recordContext(req, ctx), id(req), bytes),
+      });
+    },
+  );
   mountCommonRecordRoutes(router, ctx, breedingSpec);
   return router;
 }

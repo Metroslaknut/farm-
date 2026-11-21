@@ -229,6 +229,7 @@ POST /api/v1/farms/:farmId/breeding/:id/corrections
 POST /api/v1/farms/:farmId/breeding/:id/delivery
 POST /api/v1/farms/:farmId/breeding/:id/failure
 POST /api/v1/farms/:farmId/breeding/:id/offspring
+POST /api/v1/farms/:farmId/breeding/:id/photos
 POST /api/v1/farms/:farmId/breeding/:id/pregnancy
 POST /api/v1/farms/:farmId/breeding/:id/void
 POST /api/v1/farms/:farmId/expenses
