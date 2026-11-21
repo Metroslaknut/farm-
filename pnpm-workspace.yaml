@@ -8,3 +8,16 @@ packages:
 allowBuilds:
   esbuild: true
   mongodb-memory-server: true
+
+# Security floors for transitive dependencies (scripts/qa/audit-policy.mjs). Each entry only lifts versions inside the
+# vulnerable range to the first patched release of the SAME major, so nothing changes API. Remove an entry once every
+# dependent requires a patched version by itself.
+overrides:
+  body-parser@<2.4.0: ^2.4.0
+  qs@<6.16.1: ^6.16.1
+  ip-address@<10.7.4: ^10.7.4
+  follow-redirects@<1.16.2: ^1.16.2
+  undici@>=8.0.0 <8.12.2: ^8.12.2
+  node-forge@<1.4.3: ^1.4.3
+  # eslint-plugin-react-hooks and zod-validation-error accept "^3.25.0 || ^4.0.0": move them onto the patched zod 4.
+  zod@<4.6.6: ^4.6.7
