@@ -1,6 +1,6 @@
 import type { Types } from 'mongoose';
 import {
-  FARM_ROLE_PERMISSIONS,
+  effectiveFarmPermissions,
   PLATFORM_FARM_PERMISSIONS,
   type FarmPermission,
   type FarmRole,
@@ -47,8 +47,9 @@ export async function loadFarmAccess(actor: Actor, farmId: Types.ObjectId): Prom
   ]);
   if (!farm) throw notFound('Farm not found');
 
+  // Role permissions, narrowed by the owner's per-member choice (resolved per request: changes apply at once).
   const permissions = new Set<FarmPermission>(
-    membership ? FARM_ROLE_PERMISSIONS[membership.role] : [],
+    membership ? effectiveFarmPermissions(membership.role, membership.permissions) : [],
   );
   for (const p of platformPermissions(actor)) permissions.add(p);
 

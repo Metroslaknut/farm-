@@ -37,6 +37,13 @@ export function farmsRouter(ctx: AppContext): Router {
   router.post('/:farmId/members', limit.members, c.addMember);
   router.patch('/:farmId/members/:memberId', c.updateMember);
   router.delete('/:farmId/members/:memberId', c.removeMember);
+  router.put('/:farmId/members/:memberId/permissions', c.updateMemberPermissions);
+
+  router.get('/:farmId/invitations', c.listInvitations);
+  router.post('/:farmId/invitations', limit.members, c.createInvitation);
+  router.post('/:farmId/invitations/:invitationId/cancel', c.cancelInvitation);
+  router.post('/:farmId/invitations/:invitationId/approve', c.approveRequest);
+  router.post('/:farmId/invitations/:invitationId/reject', c.rejectRequest);
 
   router.use('/:farmId/animals', farmAnimalsRouter(ctx));
   router.use('/:farmId/breeding', breedingRouter(ctx));

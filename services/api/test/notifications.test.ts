@@ -137,8 +137,11 @@ describe('who is notified of offers, counter-offers and moderation', () => {
     const d = await w.deal({ delivery: false });
     const newcomer = await createUser(h.app);
     const memberId = await addFarmMember(h.app, d.seller, d.farmId, newcomer, 'worker');
-    expect(await types(newcomer)).toContain('farm.member_added');
-    expect(await types(d.seller)).not.toContain('farm.member_added');
+    // Invited → the newcomer is told; they accept → the owner is told. Nobody is told about their own action.
+    expect(await types(newcomer)).toContain('farm.invitation_received');
+    expect(await types(newcomer)).not.toContain('farm.invitation_accepted');
+    expect(await types(d.seller)).toContain('farm.invitation_accepted');
+    expect(await types(d.seller)).not.toContain('farm.invitation_received');
     expect(
       (await send('post', d.seller, `/farms/${d.farmId}/members/${memberId}`, {})).status,
     ).toBeGreaterThanOrEqual(400); // (sanity: not a real route)

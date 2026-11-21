@@ -236,21 +236,35 @@ export async function typeIdOf(app: Express, session: Session, key = 'buffalo'):
   return type.id;
 }
 
-/** Add `user` to `farmId` through the real API (as the owner). */
+/**
+ * Add `user` to `farmId` through the real API: the owner invites, the person accepts (farm owners cannot add people
+ * directly). Returns the new membership id.
+ */
 export async function addFarmMember(
   app: Express,
   owner: Session,
   farmId: string,
   user: Session,
   role: 'manager' | 'worker' | 'viewer',
+  permissions?: string[],
 ): Promise<string> {
-  const res = await request(app)
-    .post(`/api/v1/farms/${farmId}/members`)
+  const invite = await request(app)
+    .post(`/api/v1/farms/${farmId}/invitations`)
     .set(owner.auth)
-    .send({ email: user.email, role });
-  if (res.status !== 201)
-    throw new Error(`add member failed: ${res.status} ${JSON.stringify(res.body)}`);
-  return res.body.member.id;
+    .send({ email: user.email, role, ...(permissions ? { permissions } : {}) });
+  if (invite.status !== 201)
+    throw new Error(`invite failed: ${invite.status} ${JSON.stringify(invite.body)}`);
+  const accept = await request(app)
+    .post(`/api/v1/farm-invitations/${invite.body.invitation.id}/accept`)
+    .set(user.auth);
+  if (accept.status !== 200)
+    throw new Error(`accept failed: ${accept.status} ${JSON.stringify(accept.body)}`);
+  const members = await request(app).get(`/api/v1/farms/${farmId}/members`).set(owner.auth);
+  const member = (members.body.members as { id: string; userId: string }[]).find(
+    (m) => m.userId === user.id,
+  );
+  if (!member) throw new Error('member not found after accepting the invitation');
+  return member.id;
 }
 
 // ---------------------------------------------------------------------------

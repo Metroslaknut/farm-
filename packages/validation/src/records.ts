@@ -360,6 +360,26 @@ const sireExternal = z
   .strict()
   .refine((v) => Boolean(v.name || v.code || v.note), 'Give at least one detail');
 
+const eggCount = z.number().int().min(0).max(10_000);
+/** Clutch counts (egg-laying species). Each is optional; known counts must be consistent with each other. */
+export const clutchSchema = z
+  .object({
+    eggsLaid: eggCount.optional(),
+    eggsFertile: eggCount.optional(),
+    eggsSet: eggCount.optional(),
+    chicksHatched: eggCount.optional(),
+  })
+  .strict()
+  .superRefine((v, ctx) => {
+    if (v.eggsLaid !== undefined && v.eggsFertile !== undefined && v.eggsFertile > v.eggsLaid)
+      issue(ctx, ['eggsFertile'], 'Cannot be more than the eggs laid');
+    if (v.eggsLaid !== undefined && v.eggsSet !== undefined && v.eggsSet > v.eggsLaid)
+      issue(ctx, ['eggsSet'], 'Cannot be more than the eggs laid');
+    if (v.eggsSet !== undefined && v.chicksHatched !== undefined && v.chicksHatched > v.eggsSet)
+      issue(ctx, ['chicksHatched'], 'Cannot be more than the eggs set');
+  });
+export type ClutchInput = z.infer<typeof clutchSchema>;
+
 export const createBreedingSchema = z
   .object({
     damId: objectId,
@@ -367,6 +387,7 @@ export const createBreedingSchema = z
     sireExternal: sireExternal.optional(),
     method: z.enum(BREEDING_METHODS).default('unknown'),
     breedingDate: notInFuture('The breeding date'),
+    clutch: clutchSchema.optional(),
     notes: optionalText(2000),
     attachments,
   })
@@ -376,6 +397,15 @@ export const createBreedingSchema = z
       issue(ctx, ['sireExternal'], 'Choose a sire on this farm or an outside sire, not both');
     if (v.sireId && v.sireId === v.damId)
       issue(ctx, ['sireId'], 'The sire and dam must be different animals');
+  });
+
+/** Update clutch counts as they become known (an event on the record, kept in its history). */
+export const recordClutchSchema = z
+  .object({ clutch: clutchSchema, notes: optionalText(500) })
+  .strict()
+  .refine((v) => Object.keys(v.clutch).length > 0, {
+    message: 'Enter at least one count',
+    path: ['clutch'],
   });
 
 export const confirmPregnancySchema = z
@@ -398,6 +428,7 @@ const offspringEntry = z.union([
             .string()
             .regex(/^[a-z][a-z0-9_]{1,39}$/)
             .optional(),
+          color: text(120).min(1).optional(),
           notes: optionalText(1000),
         })
         .strict(),
@@ -416,7 +447,9 @@ const offspringEntry = z.union([
 export const recordDeliverySchema = z
   .object({
     date: notInFuture('The delivery date'),
-    offspring: z.array(offspringEntry).max(20).default([]),
+    // A hatch can be a whole clutch, so up to 50 entries per request.
+    offspring: z.array(offspringEntry).max(50).default([]),
+    clutch: clutchSchema.optional(),
     notes: optionalText(1000),
   })
   .strict();
@@ -424,6 +457,8 @@ export const recordDeliverySchema = z
 export const breedingListQuerySchema = recordListBase.extend({
   damId: objectId.optional(),
   sireId: objectId.optional(),
+  /** Records where this animal is the dam OR the sire (its breeding history). */
+  animalId: objectId.optional(),
   status: z.enum(BREEDING_STATUSES).optional(),
   sortBy: z.enum(['breedingDate', 'createdAt']).default('breedingDate'),
 });

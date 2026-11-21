@@ -4,6 +4,7 @@ import {
   confirmPregnancySchema,
   createBreedingSchema,
   failBreedingSchema,
+  recordClutchSchema,
   recordDeliverySchema,
 } from '@farmplus/validation';
 import type { AppContext } from '../../context';
@@ -17,6 +18,7 @@ import {
   createBreeding,
   failBreeding,
   listBreeding,
+  recordClutch,
   recordDelivery,
 } from './breeding.service';
 
@@ -53,6 +55,15 @@ export function breedingRouter(ctx: AppContext): Router {
         await recordContext(req, ctx),
         id(req),
         parse(failBreedingSchema, req.body),
+      ),
+    });
+  });
+  router.post('/:id/clutch', async (req, res) => {
+    res.json({
+      record: await recordClutch(
+        await recordContext(req, ctx),
+        id(req),
+        parse(recordClutchSchema, req.body),
       ),
     });
   });

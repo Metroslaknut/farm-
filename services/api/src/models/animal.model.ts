@@ -26,6 +26,10 @@ export interface AnimalAttrs {
   animalCode: string;
   animalTypeId: Types.ObjectId;
   breed?: string | null;
+  /** Rearing type key from the animal type's catalogue (e.g. fighting cock). */
+  rearingType?: string | null;
+  /** Further breeds in the animal's make-up, as stated by the farm. */
+  crossBreeds?: string[];
   name?: string | null;
   sex: AnimalSex;
   birthDate?: Date | null;
@@ -52,6 +56,8 @@ const schema = new Schema<AnimalAttrs>(
     animalCode: { type: String, required: true, trim: true },
     animalTypeId: { type: Schema.Types.ObjectId, required: true, ref: 'AnimalType' },
     breed: { type: String, default: null },
+    rearingType: { type: String, default: null },
+    crossBreeds: { type: [String], default: undefined },
     name: { type: String, default: null },
     sex: { type: String, enum: ANIMAL_SEXES, required: true },
     birthDate: { type: Date, default: null },
@@ -97,6 +103,8 @@ schema.index(
 );
 schema.index({ farmId: 1, archivedAt: 1, currentStatus: 1 });
 schema.index({ farmId: 1, animalTypeId: 1 });
+// Breed filters and breed-group filters (resolved to breed keys).
+schema.index({ farmId: 1, breed: 1 });
 schema.index({ farmId: 1, createdAt: -1 });
 // The animal list's default order. It must carry the list query's collation, or MongoDB cannot use it for the sort.
 schema.index(

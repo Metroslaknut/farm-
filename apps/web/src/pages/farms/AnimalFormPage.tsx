@@ -10,9 +10,11 @@ import {
 } from '@farmplus/shared-types';
 import {
   createAnimalSchema,
+  createWeightSchema,
   estimatedBirthDate,
   fieldErrorsFromDetails,
   fieldErrorsFromZod,
+  thaiToday,
   updateAnimalSchema,
   type FieldErrors,
 } from '@farmplus/validation';
@@ -42,6 +44,12 @@ interface Draft {
   damId: string;
   color: string;
   notes: string;
+  rearingType: string;
+  /** UI-only filter of the breed list (the group comes from the catalogue, never stored on the animal). */
+  breedGroup: string;
+  crossBreeds: string[];
+  /** Create only: first weighing (kg), saved as a weight record. */
+  weightKg: string;
 }
 const EMPTY: Draft = {
   animalCode: '',
@@ -59,6 +67,10 @@ const EMPTY: Draft = {
   damId: '',
   color: '',
   notes: '',
+  rearingType: '',
+  breedGroup: '',
+  crossBreeds: [],
+  weightKg: '',
 };
 const toDraft = (a: AnimalDetail): Draft => ({
   animalCode: a.animalCode,
@@ -76,7 +88,17 @@ const toDraft = (a: AnimalDetail): Draft => ({
   damId: a.dam?.id ?? '',
   color: a.color ?? '',
   notes: a.notes ?? '',
+  rearingType: a.rearingType ?? '',
+  breedGroup: a.breedGroup?.key ?? '',
+  crossBreeds: a.crossBreeds ?? [],
+  weightKg: '',
 });
+
+/** "C-1 — Name · Breed": parents are picked by code, with their breed shown straight away. */
+const parentLabel = (a: AnimalSummary, locale: string) =>
+  [`${a.animalCode}${a.name ? ` — ${a.name}` : ''}`, breedLabel(a, locale)]
+    .filter(Boolean)
+    .join(' · ');
 
 /** One form for registering a new animal and editing an existing one (identity fields are read-only when editing). */
 export default function AnimalFormPage() {
@@ -132,6 +154,17 @@ export default function AnimalFormPage() {
   );
 
   const type = types.data?.animalTypes.find((x) => x.id === draft.animalTypeId);
+  // Groups of the chosen rearing type (or all); breeds of the chosen group (or all).
+  const groups = (type?.breedGroups ?? []).filter(
+    (g) => !draft.rearingType || !g.rearingTypeKey || g.rearingTypeKey === draft.rearingType,
+  );
+  const breeds = (type?.breeds ?? []).filter(
+    (b) => !draft.breedGroup || b.groupKey === draft.breedGroup,
+  );
+  const breedName = (key: string) => {
+    const b = type?.breeds.find((x) => x.key === key);
+    return b ? typeName(b, locale) : key;
+  };
   /** Editing a field clears its error straight away (it is re-validated on the next submit). */
   const clearError = (key: string) =>
     setErrors((e) =>
@@ -190,7 +223,11 @@ export default function AnimalFormPage() {
         ...(optional(draft.damId) ? { damId: draft.damId } : {}),
         ...(optional(draft.color) ? { color: draft.color.trim() } : {}),
         ...(optional(draft.notes) ? { notes: draft.notes.trim() } : {}),
+        ...(optional(draft.rearingType) ? { rearingType: draft.rearingType } : {}),
+        ...(draft.crossBreeds.length ? { crossBreeds: draft.crossBreeds } : {}),
       });
+      if (optional(draft.weightKg) && !(Number(draft.weightKg) > 0))
+        return setErrors({ weightKg: t('animalForm.weightInvalid') });
     } else {
       // PATCH only what changed; clearing an optional field sends null.
       const diff: Record<string, unknown> = {};
@@ -206,6 +243,9 @@ export default function AnimalFormPage() {
       nullable('damId', draft.damId);
       nullable('color', draft.color);
       nullable('notes', draft.notes);
+      nullable('rearingType', draft.rearingType);
+      if (draft.crossBreeds.join(',') !== base.crossBreeds.join(','))
+        diff['crossBreeds'] = draft.crossBreeds.length ? draft.crossBreeds : null;
       if (draft.sex !== base.sex) diff['sex'] = draft.sex;
       if (draft.currentStatus !== base.currentStatus) diff['currentStatus'] = draft.currentStatus;
       if (draft.birthDateEstimated !== base.birthDateEstimated)
@@ -229,11 +269,28 @@ export default function AnimalFormPage() {
             body: parsed.data,
           });
       let photoError: string | undefined;
+      // The first weighing is a normal weight record (needs records.write); a failure keeps the animal.
+      if (!editing && optional(draft.weightKg)) {
+        const weight = createWeightSchema.safeParse({
+          animalId: res.animal.id,
+          weighedOn: draft.acquisitionDate || thaiToday(),
+          weightKg: Number(draft.weightKg),
+          method: 'scale',
+        });
+        try {
+          if (weight.success)
+            await api.request('POST', `/farms/${farmId}/weights`, { body: weight.data });
+        } catch (e) {
+          photoError = t('animalForm.weightFailed', { error: errorMessage(e) });
+        }
+      }
       if (photos.length > 0) {
         try {
           await uploadPhotos(farmId!, res.animal.id, photos, setUploading);
         } catch (e) {
-          photoError = t('photos.uploadFailed', { error: errorMessage(e) });
+          photoError = [photoError, t('photos.uploadFailed', { error: errorMessage(e) })]
+            .filter(Boolean)
+            .join(' ');
         }
       }
       navigate(`/farms/${farmId}/animals/${res.animal.id}`, { state: { photoError } });
@@ -287,6 +344,9 @@ export default function AnimalFormPage() {
                     ...x,
                     animalTypeId: e.target.value,
                     breed: '',
+                    breedGroup: '',
+                    rearingType: '',
+                    crossBreeds: [],
                     sireId: '',
                     damId: '',
                   }));
@@ -300,16 +360,57 @@ export default function AnimalFormPage() {
                   </option>
                 ))}
               </Select>
+              {type && (type.rearingTypes ?? []).length > 0 && (
+                <Select
+                  label={t('animalForm.rearingType')}
+                  error={field('rearingType')}
+                  value={draft.rearingType}
+                  onChange={(e) => {
+                    set('rearingType', e.target.value);
+                    set('breedGroup', '');
+                  }}
+                >
+                  <option value="">{t('animalForm.notSpecified')}</option>
+                  {(type.rearingTypes ?? []).map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {typeName(r, locale)}
+                    </option>
+                  ))}
+                </Select>
+              )}
+              {groups.length > 0 && (
+                <Select
+                  label={t('animalForm.breedGroup')}
+                  value={draft.breedGroup}
+                  onChange={(e) => {
+                    set('breedGroup', e.target.value);
+                    set('breed', '');
+                  }}
+                >
+                  <option value="">{t('animalForm.allGroups')}</option>
+                  {groups.map((g) => (
+                    <option key={g.key} value={g.key}>
+                      {typeName(g, locale)}
+                    </option>
+                  ))}
+                </Select>
+              )}
               <Select
                 label={t('animalForm.breed')}
                 error={field('breed')}
-                {...text('breed')}
+                value={draft.breed}
+                onChange={(e) => {
+                  const key = e.target.value;
+                  const group = type?.breeds.find((b) => b.key === key)?.groupKey;
+                  set('breed', key);
+                  if (group) set('breedGroup', group);
+                }}
                 disabled={!type}
               >
                 <option value="">
                   {type ? t('animalForm.notSpecified') : t('animalForm.chooseTypeFirst')}
                 </option>
-                {type?.breeds.map((b) => (
+                {breeds.map((b) => (
                   <option key={b.key} value={b.key}>
                     {typeName(b, locale)}
                   </option>
@@ -318,6 +419,50 @@ export default function AnimalFormPage() {
                   <option value={draft.breed}>{breedLabel({ breed: draft.breed }, locale)}</option>
                 )}
               </Select>
+              {type && type.breeds.length > 1 && (
+                <div className="ds-field">
+                  <Select
+                    label={t('animalForm.crossBreeds')}
+                    hint={t('animalForm.crossBreedsHint')}
+                    error={field('crossBreeds')}
+                    value=""
+                    onChange={(e) =>
+                      e.target.value &&
+                      set('crossBreeds', [...draft.crossBreeds, e.target.value].slice(0, 6))
+                    }
+                  >
+                    <option value="">{t('animalForm.addCrossBreed')}</option>
+                    {type.breeds
+                      .filter((b) => b.key !== draft.breed && !draft.crossBreeds.includes(b.key))
+                      .map((b) => (
+                        <option key={b.key} value={b.key}>
+                          {typeName(b, locale)}
+                        </option>
+                      ))}
+                  </Select>
+                  {draft.crossBreeds.length > 0 && (
+                    <p className="ds-row" style={{ gap: 'var(--ds-space-1)' }}>
+                      {draft.crossBreeds.map((k) => (
+                        <Button
+                          key={k}
+                          size="sm"
+                          aria-label={t('animalForm.removeCrossBreed', {
+                            name: breedName(k),
+                          })}
+                          onClick={() =>
+                            set(
+                              'crossBreeds',
+                              draft.crossBreeds.filter((x) => x !== k),
+                            )
+                          }
+                        >
+                          {breedName(k)} ✕
+                        </Button>
+                      ))}
+                    </p>
+                  )}
+                </div>
+              )}
               <Select label={t('animals.col.sex')} required error={field('sex')} {...text('sex')}>
                 <option value="">{t('common.choose')}</option>
                 {ANIMAL_SEXES.map((s) => (
@@ -343,7 +488,19 @@ export default function AnimalFormPage() {
                 error={field('color')}
                 {...text('color')}
               />
+              {!editing && (
+                <TextField
+                  label={t('animalForm.weightKg')}
+                  hint={t('animalForm.weightHint')}
+                  inputMode="decimal"
+                  error={field('weightKg')}
+                  {...text('weightKg')}
+                />
+              )}
             </div>
+            {farm && (
+              <p className="ds-field__hint">{t('animalForm.farmLine', { farm: farm.name })}</p>
+            )}
           </Card>
 
           <Card title={t('animalForm.datesOrigin')} headingLevel={2}>
@@ -419,8 +576,7 @@ export default function AnimalFormPage() {
                   .filter((a) => a.id !== animalId)
                   .map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.animalCode}
-                      {a.name ? ` — ${a.name}` : ''}
+                      {parentLabel(a, locale)}
                     </option>
                   ))}
               </Select>
@@ -435,8 +591,7 @@ export default function AnimalFormPage() {
                   .filter((a) => a.id !== animalId)
                   .map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.animalCode}
-                      {a.name ? ` — ${a.name}` : ''}
+                      {parentLabel(a, locale)}
                     </option>
                   ))}
               </Select>

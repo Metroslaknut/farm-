@@ -107,6 +107,7 @@ export async function listFarms(
     q?: string | undefined;
     status?: 'active' | 'archived' | undefined;
     scope: 'mine' | 'all';
+    relation?: 'owned' | 'managed' | undefined;
   },
 ): Promise<Page<FarmSummary>> {
   const filter: Record<string, unknown> = {};
@@ -124,7 +125,14 @@ export async function listFarms(
       throw forbidden('Listing every farm requires platform permission', 'FORBIDDEN');
     }
   } else {
-    filter['_id'] = { $in: memberships.map((m) => m.farmId) };
+    const wanted = memberships.filter((m) =>
+      query.relation === 'owned'
+        ? m.role === 'owner'
+        : query.relation === 'managed'
+          ? m.role !== 'owner'
+          : true,
+    );
+    filter['_id'] = { $in: wanted.map((m) => m.farmId) };
   }
   const [farms, total] = await Promise.all([
     Farm.find(filter)

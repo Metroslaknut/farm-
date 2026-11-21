@@ -20,6 +20,7 @@ import {
 } from '../../components/ui';
 import { errorMessage } from '../../lib/format';
 import { useLocale } from '../../i18n';
+import { loadAnimalTypes } from '../../lib/animalTypes';
 import { useAsync } from '../../lib/useAsync';
 import { NavButton } from './NavButton';
 import {
@@ -60,6 +61,7 @@ function Thumb({ url, alt }: { url: string; alt: string }) {
 export default function AnimalDetailPage() {
   const t = useFarmsT();
   const [locale] = useLocale();
+  const types = useAsync(() => loadAnimalTypes(), []);
   const fmt = useFarmFormat();
   const { farmId, animalId } = useParams();
   const { farm, can } = useFarm(farmId);
@@ -138,11 +140,33 @@ export default function AnimalDetailPage() {
       ? t('detail.estimated', { date: fmt.date(a.birthDate) })
       : fmt.date(a.birthDate)
     : undefined;
+  const catalog = types.data?.animalTypes.find((x) => x.id === a.animalType.id);
+  const rearing = a.rearingType
+    ? catalog?.rearingTypes?.find((r) => r.key === a.rearingType)
+    : undefined;
+  const crossNames = (a.crossBreeds ?? []).map((k) => {
+    const b = catalog?.breeds.find((x) => x.key === k);
+    return b ? typeName(b, locale) : breedLabel({ breed: k }, locale);
+  });
   const rows: [string, React.ReactNode][] = [
     [
       t('animals.col.type'),
       [typeName(a.animalType, locale), breedLabel(a, locale)].filter(Boolean).join(' · '),
     ],
+    ...(a.breedGroup
+      ? [[t('animalForm.breedGroup'), typeName(a.breedGroup, locale)] as [string, string]]
+      : []),
+    ...(a.rearingType
+      ? [
+          [
+            t('animalForm.rearingType'),
+            rearing ? typeName(rearing, locale) : breedLabel({ breed: a.rearingType }, locale),
+          ] as [string, string],
+        ]
+      : []),
+    ...(crossNames.length
+      ? [[t('animalForm.crossBreeds'), crossNames.join(', ')] as [string, string]]
+      : []),
     [t('animals.col.sex'), enumLabel(t, 'sex', a.sex)],
     [t('detail.birthDate'), birthDate ? `${birthDate} · ${ageLabel(t, a.birthDate) ?? ''}` : '—'],
     [t('detail.acquired'), a.acquisitionDate ? fmt.date(a.acquisitionDate) : '—'],

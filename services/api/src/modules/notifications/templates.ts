@@ -104,6 +104,39 @@ export const TEMPLATES = {
     body: `You no longer have access to ${p.farmName}.`,
     link: '/farms',
   }),
+  'farm.invitation_received': (p: { farmName: string; role: string }): Rendered => ({
+    title: 'Farm invitation',
+    body: `You were invited to help run ${p.farmName} as ${p.role}.`,
+    link: '/farms/invitations',
+  }),
+  'farm.invitation_accepted': (p: {
+    farmName: string;
+    name: string;
+    farmId: string;
+  }): Rendered => ({
+    title: 'Invitation accepted',
+    body: `${p.name} accepted your invitation to ${p.farmName}.`,
+    link: `/farms/${p.farmId}/staff`,
+  }),
+  'farm.invitation_declined': (p: {
+    farmName: string;
+    name: string;
+    farmId: string;
+  }): Rendered => ({
+    title: 'Invitation declined',
+    body: `${p.name} declined your invitation to ${p.farmName}.`,
+    link: `/farms/${p.farmId}/staff`,
+  }),
+  'farm.join_requested': (p: { farmName: string; name: string; farmId: string }): Rendered => ({
+    title: 'Request to join your farm',
+    body: `${p.name} asked to join ${p.farmName}.`,
+    link: `/farms/${p.farmId}/staff`,
+  }),
+  'farm.join_rejected': (p: { farmName: string }): Rendered => ({
+    title: 'Join request declined',
+    body: `Your request to join ${p.farmName} was declined.`,
+    link: '/farms/invitations',
+  }),
   'farm.member_role_changed': (p: {
     farmName: string;
     role: string;

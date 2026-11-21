@@ -47,11 +47,14 @@ type TypeRef = {
   key: string;
   name: string;
   nameTh?: string;
-  breeds: { key: string; name: string; nameTh?: string }[];
+  breeds: { key: string; name: string; nameTh?: string; groupKey?: string }[];
+  groups: Map<string, { key: string; name: string; nameTh?: string }>;
 };
 
 async function typeRefs(ids: Types.ObjectId[]): Promise<Map<string, TypeRef>> {
-  const types = await AnimalType.find({ _id: { $in: ids } }).select('key name nameTh breeds');
+  const types = await AnimalType.find({ _id: { $in: ids } }).select(
+    'key name nameTh breeds breedGroups',
+  );
   return new Map(
     types.map((t) => [
       String(t._id),
@@ -64,7 +67,14 @@ async function typeRefs(ids: Types.ObjectId[]): Promise<Map<string, TypeRef>> {
           key: b.key,
           name: b.name,
           ...(b.nameTh ? { nameTh: b.nameTh } : {}),
+          ...(b.groupKey ? { groupKey: b.groupKey } : {}),
         })),
+        groups: new Map(
+          (t.breedGroups ?? []).map((g) => [
+            g.key,
+            { key: g.key, name: g.name, ...(g.nameTh ? { nameTh: g.nameTh } : {}) },
+          ]),
+        ),
       },
     ]),
   );
@@ -78,6 +88,7 @@ function toSummary(
   const photo = a.media.find((m) => m.kind === 'photo');
   const type = types.get(String(a.animalTypeId));
   const breed = a.breed ? type?.breeds.find((b) => b.key === a.breed) : undefined;
+  const group = breed?.groupKey ? type?.groups.get(breed.groupKey) : undefined;
   return {
     id: String(a._id),
     farmId: String(a.farmId),
@@ -93,6 +104,8 @@ function toSummary(
     ...(a.breed ? { breed: a.breed } : {}),
     ...(breed ? { breedName: breed.name } : {}),
     ...(breed?.nameTh ? { breedNameTh: breed.nameTh } : {}),
+    ...(group ? { breedGroup: group } : {}),
+    ...(a.rearingType ? { rearingType: a.rearingType } : {}),
     ...(a.name ? { name: a.name } : {}),
     sex: a.sex,
     ...(a.birthDate ? { birthDate: toDay(a.birthDate)! } : {}),
@@ -139,6 +152,7 @@ async function toDetail(a: AnimalDoc): Promise<AnimalDetail> {
     offspringCount: await Animal.countDocuments({ $or: [{ sireId: a._id }, { damId: a._id }] }),
     media: a.media.map(toMedia),
     ...(a.color ? { color: a.color } : {}),
+    ...(a.crossBreeds?.length ? { crossBreeds: [...a.crossBreeds] } : {}),
     ...(a.notes ? { notes: a.notes } : {}),
     ...(a.archivedAt ? { archivedAt: a.archivedAt.toISOString() } : {}),
     ...(a.archiveReason ? { archiveReason: a.archiveReason } : {}),
@@ -160,6 +174,24 @@ function assertBreed(type: AnimalTypeDoc, breed: string | null | undefined): voi
   if (breed && !type.breeds.some((b) => b.key === breed && b.active)) {
     throw invalid('breed', `Breed "${breed}" is not available for ${type.name}`);
   }
+}
+
+/** Further breeds must be active breeds of the same type, other than the main breed. */
+function assertCrossBreeds(
+  type: AnimalTypeDoc,
+  crossBreeds: string[] | null | undefined,
+  mainBreed: string | null | undefined,
+): void {
+  for (const key of crossBreeds ?? []) {
+    if (key === mainBreed) throw invalid('crossBreeds', 'Do not repeat the main breed');
+    if (!type.breeds.some((b) => b.key === key && b.active))
+      throw invalid('crossBreeds', `Breed "${key}" is not available for ${type.name}`);
+  }
+}
+
+function assertRearingType(type: AnimalTypeDoc, key: string | null | undefined): void {
+  if (key && !(type.rearingTypes ?? []).some((r) => r.key === key && r.active))
+    throw invalid('rearingType', `Rearing type "${key}" is not available for ${type.name}`);
 }
 
 /** True if `target` appears among the ancestors of `startId` (walks sire/dam links upwards, bounded). */
@@ -277,6 +309,8 @@ export async function createAnimal(
   const farmId = access.farm._id;
   const type = await resolveActiveType(input.animalTypeId);
   assertBreed(type, input.breed);
+  assertCrossBreeds(type, input.crossBreeds, input.breed);
+  assertRearingType(type, input.rearingType);
   const birthDate = input.birthDate ? toDate(input.birthDate) : null;
   await validateParents({ farmId, type, sireId: input.sireId, damId: input.damId, birthDate });
 
@@ -295,6 +329,8 @@ export async function createAnimal(
     damId: input.damId ?? null,
     color: input.color ?? null,
     notes: input.notes ?? null,
+    rearingType: input.rearingType ?? null,
+    crossBreeds: input.crossBreeds ?? [],
     createdBy: actor.userId,
   };
 
@@ -348,6 +384,18 @@ export async function listAnimals(
   else if (query.archived === 'true') filter['archivedAt'] = { $ne: null };
   if (query.animalTypeId) filter['animalTypeId'] = query.animalTypeId;
   if (query.breed) filter['breed'] = query.breed;
+  else if (query.breedGroup) {
+    // Groups live in the catalogue, not on animals: resolve the group to its breed keys.
+    const types = await AnimalType.find(
+      query.animalTypeId ? { _id: query.animalTypeId } : { 'breeds.groupKey': query.breedGroup },
+    ).select('breeds');
+    filter['breed'] = {
+      $in: types.flatMap((t) =>
+        t.breeds.filter((b) => b.groupKey === query.breedGroup).map((b) => b.key),
+      ),
+    };
+  }
+  if (query.rearingType) filter['rearingType'] = query.rearingType;
   if (query.sex) filter['sex'] = query.sex;
   if (query.status) filter['currentStatus'] = query.status;
   if (query.q) {
@@ -359,7 +407,7 @@ export async function listAnimals(
     Animal.find(filter)
       // List cards need neither hydrated Mongoose documents nor the private/history fields.
       .select(
-        'farmId animalCode animalTypeId breed name sex birthDate currentStatus archivedAt media createdAt',
+        'farmId animalCode animalTypeId breed rearingType name sex birthDate currentStatus archivedAt media createdAt',
       )
       .lean()
       // numericOrdering: A-2 sorts before A-10; strength 2: case-insensitive.
@@ -422,6 +470,13 @@ export async function updateAnimal(
 
   const type = (await AnimalType.findById(animal.animalTypeId))!;
   if (input.breed !== undefined) assertBreed(type, input.breed);
+  if (input.crossBreeds !== undefined || input.breed !== undefined)
+    assertCrossBreeds(
+      type,
+      input.crossBreeds === undefined ? animal.crossBreeds : input.crossBreeds,
+      input.breed === undefined ? animal.breed : input.breed,
+    );
+  if (input.rearingType !== undefined) assertRearingType(type, input.rearingType);
 
   const next = {
     birthDate:
@@ -465,6 +520,7 @@ export async function updateAnimal(
       throw conflict('This animal is recorded as a dam; it cannot be male', 'SEX_CONFLICT');
   }
 
+  const lineageBefore = { sireId: animal.sireId, damId: animal.damId };
   if (input.breed !== undefined) animal.breed = input.breed;
   if (input.name !== undefined) animal.name = input.name;
   if (input.sex !== undefined) animal.sex = input.sex;
@@ -480,10 +536,21 @@ export async function updateAnimal(
   if (input.damId !== undefined) animal.damId = damId ? (damId as unknown as Types.ObjectId) : null;
   if (input.color !== undefined) animal.color = input.color;
   if (input.notes !== undefined) animal.notes = input.notes;
+  if (input.rearingType !== undefined) animal.rearingType = input.rearingType;
+  if (input.crossBreeds !== undefined) animal.crossBreeds = input.crossBreeds ?? [];
+  // Lineage edits are audited with their old and new values (who changed a sire/dam, from what, to what).
+  const idOrNull = (v: unknown) => (v ? String(v) : null);
+  const lineage: Record<string, { from: string | null; to: string | null }> = {};
+  for (const key of ['sireId', 'damId'] as const) {
+    const before = idOrNull(lineageBefore[key]);
+    const after = idOrNull(animal[key]);
+    if (input[key] !== undefined && before !== after) lineage[key] = { from: before, to: after };
+  }
   await animal.save();
 
   await auditAnimal(actor, 'animal.updated', animal, {
     fields: Object.keys(input),
+    ...(Object.keys(lineage).length > 0 ? { lineage } : {}),
     ...(input.currentStatus !== undefined && input.currentStatus !== previousStatus
       ? { status: { from: previousStatus, to: input.currentStatus } }
       : {}),

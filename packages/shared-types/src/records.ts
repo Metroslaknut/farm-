@@ -315,9 +315,41 @@ export const BREEDING_STATUSES = ['bred', 'pregnant', 'delivered', 'failed'] as 
 export type BreedingStatus = (typeof BREEDING_STATUSES)[number];
 export const OFFSPRING_OUTCOMES = ['alive', 'stillborn', 'died_at_birth'] as const;
 
+/** A breed as resolved from the animal type's catalogue (with its group, when grouped). */
+export interface BreedRef {
+  key: string;
+  name: string;
+  nameTh?: string;
+  group?: { key: string; name: string; nameTh?: string };
+}
+
+/** Egg-laying species: what came of the clutch. Every count is optional (entered when known). */
+export interface ClutchCounts {
+  eggsLaid?: number;
+  /** Eggs found fertile (e.g. by candling), if known. */
+  eggsFertile?: number;
+  /** Eggs set for incubation. */
+  eggsSet?: number;
+  chicksHatched?: number;
+}
+
 export interface BreedingRecordDTO extends RecordMeta {
+  /** Farm-scoped record code (BR-00001…); absent on records created before codes existed. */
+  code?: string;
   dam: AnimalLite;
   sire?: AnimalLite;
+  /** The parents' CURRENT breeds, read from their animal records (never a copy that could drift). */
+  damBreed?: BreedRef;
+  sireBreed?: BreedRef;
+  /** Breed suggested for offspring from the parents' breeds; the user confirms or changes it. */
+  offspringBreedSuggestion?: {
+    basis: 'same_breed' | 'composition_match' | 'same_group' | 'no_match' | 'parent_unknown';
+    breed?: BreedRef;
+    group?: { key: string; name: string; nameTh?: string };
+  };
+  /** How the species reproduces (`egg`: the pregnancy step means incubation, delivery means hatching). */
+  reproduction: 'live_birth' | 'egg';
+  clutch?: ClutchCounts;
   /** A sire that is not an animal on this farm (e.g. a bull used for artificial insemination). */
   sireExternal?: { name?: string; code?: string; note?: string };
   method: (typeof BREEDING_METHODS)[number];
@@ -366,6 +398,14 @@ export interface PedigreeAnimal extends AnimalLite {
   sex: AnimalSex;
   birthDate?: string;
   breed?: string;
+  breedName?: string;
+  breedNameTh?: string;
+  breedGroup?: { key: string; name: string; nameTh?: string };
+  /**
+   * Filial generation from RECORDED parents: 0 = parent stock (no parents recorded), 1 = F1, 2 = F2 …;
+   * `null` = unknown (only one parent recorded, or an ancestor's generation is unknown). Never guessed.
+   */
+  filialGeneration: number | null;
   currentStatus: AnimalStatus;
   archived: boolean;
 }
@@ -381,7 +421,12 @@ export interface LineageResponse {
   animal: AnimalLite;
   sire?: AnimalLite;
   dam?: AnimalLite;
-  offspring: (AnimalLite & { sex: AnimalSex; birthDate?: string; role: 'sire' | 'dam' })[];
+  offspring: (AnimalLite & {
+    sex: AnimalSex;
+    birthDate?: string;
+    role: 'sire' | 'dam';
+    filialGeneration: number | null;
+  })[];
   /** Family tree up to `generations` levels above the animal. */
   pedigree: PedigreeNode;
   generations: number;

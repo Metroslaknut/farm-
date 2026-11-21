@@ -10,6 +10,8 @@ import FarmHomePage from './FarmHomePage';
 import FarmIndexPage from './FarmIndexPage';
 import FarmFormPage from './FarmFormPage';
 import FarmListPage from './FarmListPage';
+import FarmStaffPage from './FarmStaffPage';
+import MyInvitationsPage from './MyInvitationsPage';
 import FarmOverviewPage from './FarmOverviewPage';
 import LineagePage from './LineagePage';
 import TradesPage from './TradesPage';
@@ -48,12 +50,15 @@ export default function FarmsApp() {
         <Route element={<FarmShell />}>
           <Route path="profile" element={<UserProfilePage />} />
           <Route path="settings" element={<AccountSettingsPage />} />
+          {/* Reachable without a farm of one's own: an invitation may be how a person gets their first farm. */}
+          <Route path="invitations" element={<MyInvitationsPage />} />
           <Route element={<RequireFarmSetup />}>
             <Route index element={<FarmIndexPage />} />
             <Route path="list" element={<FarmListPage />} />
             <Route path=":farmId" element={<FarmHomePage />} />
             <Route path=":farmId/info" element={<FarmOverviewPage />} />
             <Route path=":farmId/edit" element={<FarmFormPage />} />
+            <Route path=":farmId/staff" element={<FarmStaffPage />} />
             <Route path=":farmId/dashboard" element={<FarmDashboardPage />} />
             <Route path=":farmId/animals" element={<AnimalListPage />} />
             <Route path=":farmId/animals/new" element={<AnimalFormPage />} />

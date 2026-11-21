@@ -17,7 +17,16 @@ export interface OffspringAttrs {
   note?: string | null;
 }
 
+export interface ClutchAttrs {
+  eggsLaid?: number | null;
+  eggsFertile?: number | null;
+  eggsSet?: number | null;
+  chicksHatched?: number | null;
+}
+
 export interface BreedingRecordAttrs extends RecordBaseAttrs {
+  /** Farm-scoped code (BR-00001…), issued from `farms.breedingSeq`. Absent on older records. */
+  code?: string | null;
   damId: Types.ObjectId;
   sireId?: Types.ObjectId | null;
   sireExternal?: { name?: string | null; code?: string | null; note?: string | null } | null;
@@ -29,6 +38,8 @@ export interface BreedingRecordAttrs extends RecordBaseAttrs {
   failedOn?: Date | null;
   failureReason?: string | null;
   delivery?: { date: Date; notes?: string | null; offspring: OffspringAttrs[] } | null;
+  /** Egg-laying species: clutch counts, entered as they become known. */
+  clutch?: ClutchAttrs | null;
   notes?: string | null;
   warnings: string[];
 }
@@ -36,6 +47,7 @@ export interface BreedingRecordAttrs extends RecordBaseAttrs {
 const schema = new Schema<BreedingRecordAttrs>(
   {
     ...recordBaseDefinition,
+    code: { type: String, default: null },
     damId: { type: Schema.Types.ObjectId, required: true, ref: 'Animal' },
     sireId: { type: Schema.Types.ObjectId, default: null, ref: 'Animal' },
     sireExternal: { type: Schema.Types.Mixed, default: null },
@@ -70,6 +82,18 @@ const schema = new Schema<BreedingRecordAttrs>(
       ),
       default: null,
     },
+    clutch: {
+      type: new Schema(
+        {
+          eggsLaid: { type: Number, default: null },
+          eggsFertile: { type: Number, default: null },
+          eggsSet: { type: Number, default: null },
+          chicksHatched: { type: Number, default: null },
+        },
+        { _id: false },
+      ),
+      default: null,
+    },
     notes: { type: String, default: null },
     warnings: { type: [String], default: [] },
   },
@@ -78,6 +102,10 @@ const schema = new Schema<BreedingRecordAttrs>(
 schema.index({ farmId: 1, damId: 1, breedingDate: -1 });
 schema.index({ farmId: 1, sireId: 1, breedingDate: -1 });
 schema.index({ farmId: 1, status: 1 });
+schema.index(
+  { farmId: 1, code: 1 },
+  { unique: true, partialFilterExpression: { code: { $type: 'string' } } },
+);
 // Default list order (newest first, `_id` tie-break) straight from the index, without an in-memory sort.
 schema.index({ farmId: 1, breedingDate: -1, _id: -1 });
 /**
