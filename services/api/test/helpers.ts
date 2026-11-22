@@ -16,6 +16,7 @@ import { MockPaymentProvider, createPaymentProvider } from '../src/modules/finan
 import { createVideoProvider, type VideoProvider } from '../src/modules/media/provider';
 import { syncRbac } from '../src/rbac/seed';
 import { InMemoryNotifier } from '../src/services/notifier';
+import { thaiToday } from '@farmplus/validation';
 
 export const PASSWORD = 'correct horse battery staple';
 export const WEBHOOK_SECRET = 'test-webhook-secret-1234567890';
@@ -270,10 +271,18 @@ export async function addFarmMember(
 // ---------------------------------------------------------------------------
 // Part 08 helpers
 // ---------------------------------------------------------------------------
-export const daysAgo = (n: number): string =>
-  new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
-export const daysAhead = (n: number): string =>
-  new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+/**
+ * Calendar days counted from TODAY IN THAILAND, the day the API validates against (`thaiToday`). Counting from the UTC
+ * date was off by one between 17:00 and 24:00 UTC: "tomorrow" in UTC was already today in Bangkok, so future-date checks
+ * accepted it and those tests failed whenever CI ran at night Thai time.
+ */
+const thaiDayOffset = (n: number): string => {
+  const day = new Date(`${thaiToday()}T00:00:00Z`);
+  day.setUTCDate(day.getUTCDate() + n);
+  return day.toISOString().slice(0, 10);
+};
+export const daysAgo = (n: number): string => thaiDayOffset(-n);
+export const daysAhead = (n: number): string => thaiDayOffset(n);
 
 export interface FarmSetup {
   owner: Session;

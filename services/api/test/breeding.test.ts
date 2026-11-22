@@ -275,9 +275,8 @@ describe('recording a breeding', () => {
     const adult = await mk('G-ADULT', 'female', 600);
     const ok = await breed({ damId: adult.id, breedingDate: daysAgo(30) });
     expect(ok.status).toBe(201);
-    const expected = new Date(Date.now() - 30 * 86_400_000 + 150 * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
+    // Bred 30 days ago + 150 days of gestation, on the same (Thai) calendar the dates are entered in.
+    const expected = daysAhead(120);
     expect(ok.body.record.expectedDeliveryDate).toBe(expected);
     expect((await get(`/breeding/${ok.body.record.id}`)).body.record.expectedDeliveryDate).toBe(
       expected,

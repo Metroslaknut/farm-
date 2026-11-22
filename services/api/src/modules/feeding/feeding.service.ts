@@ -1,6 +1,6 @@
 import type { Types } from 'mongoose';
 import type { FeedingRecordDTO, Page } from '@farmplus/shared-types';
-import { createFeedingSchema, type CreateFeedingInput } from '@farmplus/validation';
+import { createFeedingSchema, thaiToday, type CreateFeedingInput } from '@farmplus/validation';
 import { HttpError } from '../../lib/errors';
 import { Animal, FeedingRecord, type FeedingRecordDoc } from '../../models';
 import { assertFarmActive, requireFarmPermission, type FarmAccess } from '../farms/farm-access';
@@ -30,7 +30,8 @@ const EDITABLE = [
   'groupLabel',
   'notes',
 ] as const;
-const today = () => new Date().toISOString().slice(0, 10);
+/** Today on the Thai calendar: record dates are Thai calendar days (as validated), so "active" must use the same day. */
+const today = () => thaiToday();
 
 /** Feeding LOGS (what was fed) and SCHEDULES (the routine). Quantities are what people enter; nothing is recommended. */
 export const feedingSpec: RecordSpec<FeedingRecordDoc, FeedingRecordDTO> = {
