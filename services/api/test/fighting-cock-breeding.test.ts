@@ -204,7 +204,13 @@ describe('fighting-cock catalogue (data, not code)', () => {
       const lai = (after['breeds'] as { key: string; name: string; active: boolean }[]).find(
         (b) => b.key === 'lai',
       );
-      expect(lai).toEqual({ key: 'lai', name: 'Lai (admin edit)', active: false });
+      // Name and active flag untouched; only the missing group was filled in.
+      expect(lai).toEqual({
+        key: 'lai',
+        name: 'Lai (admin edit)',
+        active: false,
+        groupKey: 'thai',
+      });
       expect((after['breeds'] as { key: string; name: string }[])[0]!.name).toBe(
         'Native (renamed)',
       );
@@ -212,7 +218,8 @@ describe('fighting-cock catalogue (data, not code)', () => {
       await migration.up({ db, log: (m) => log.push(m) });
       const again = (await db.collection('animal_types').findOne({ key: 'chicken' }))!;
       expect(again['breeds']).toHaveLength(40);
-      expect(log.at(-2)).toContain('added 0 rearing type(s), 0 group(s), 0 breed(s)');
+      expect(log.at(-3)).toContain('added 0 rearing type(s), 0 group(s), 0 breed(s)');
+      expect(log.at(-2)).toContain('filed 0 existing breed(s)');
     } finally {
       await db.collection('animal_types').deleteOne({ key: 'chicken' });
       await db.collection('animal_types').updateOne({ key: legacy }, { $set: { key: 'chicken' } });

@@ -36,7 +36,8 @@ export const MIGRATIONS: Migration[] = [
     id: '0002-fighting-cock-catalogue',
     description:
       'Adds the fighting-cock rearing type, 5 breed groups and 39 breeds to the chicken animal type (only entries that ' +
-      'are missing; nothing existing is changed or removed) and marks chicken/duck as egg-laying where unset.',
+      'are missing; nothing existing is renamed, deactivated or removed), files an already-existing breed with the same ' +
+      'key under its catalogue group where it has none, and marks chicken/duck as egg-laying where unset.',
     async up({ db, log }) {
       // Untyped on purpose: the migration must not depend on today's model types.
       const types = db.collection<Record<string, unknown>>('animal_types');
@@ -79,6 +80,27 @@ export const MIGRATIONS: Migration[] = [
         log(
           `chicken: added ${rearing.length} rearing type(s), ${groups.length} group(s), ${breeds.length} breed(s)`,
         );
+        // A breed that already existed under a catalogue key (e.g. added by hand) gets the catalogue's group and
+        // composition only where those fields are unset; its name, Thai name and active flag are left as they are.
+        let filed = 0;
+        for (const b of catalogue.breeds) {
+          if (!has(chicken['breeds'], b.key)) continue;
+          const set: Record<string, unknown> = { 'breeds.$[b].groupKey': b.groupKey };
+          const res = await types.updateOne(
+            { _id: chicken._id },
+            { $set: set },
+            { arrayFilters: [{ 'b.key': b.key, 'b.groupKey': { $in: [null] } }] },
+          );
+          if (b.composition) {
+            await types.updateOne(
+              { _id: chicken._id },
+              { $set: { 'breeds.$[b].composition': b.composition } },
+              { arrayFilters: [{ 'b.key': b.key, 'b.composition': { $in: [null] } }] },
+            );
+          }
+          filed += res.modifiedCount;
+        }
+        log(`chicken: filed ${filed} existing breed(s) under their catalogue group`);
       }
       const egg = await types.updateMany(
         { key: { $in: ['chicken', 'duck'] }, reproduction: { $exists: false } },
