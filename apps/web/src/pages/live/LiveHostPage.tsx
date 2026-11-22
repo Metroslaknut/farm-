@@ -7,6 +7,7 @@ import {
   type LiveDTO,
   type LiveIngest,
   type PlaybackInfo,
+  type VideoLimitsDTO,
 } from '@farmplus/shared-types';
 import {
   createLiveSchema,
@@ -29,6 +30,7 @@ import {
 import { useT } from '../../i18n';
 import { errorMessage } from '../../lib/format';
 import { pollWhileVisible } from '../../lib/poll';
+import { useAsync } from '../../lib/useAsync';
 import { localizeFieldErrors } from '../community/localize';
 import { Player } from '../videos/Player';
 import '../videos/videos.css';
@@ -50,6 +52,12 @@ export default function LiveHostPage() {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [muted, setMuted] = useState(true);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // VIDEO_PROVIDER=none: a new live cannot be created (an existing one is still shown and can be ended).
+  const limits = useAsync(
+    (signal) => api.request<VideoLimitsDTO>('GET', '/videos/limits', { signal }),
+    [],
+  );
+  const disabled = limits.data?.provider === 'none';
 
   const refresh = useCallback(async () => {
     if (!me) return;
@@ -148,7 +156,9 @@ export default function LiveHostPage() {
       <h1>{t('common.goLive')}</h1>
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
 
-      {live === null ? (
+      {live === null && disabled ? (
+        <Alert tone="info">{t('host.unavailable')}</Alert>
+      ) : live === null ? (
         <form onSubmit={create} noValidate>
           <Card>
             <p>{t('host.intro')}</p>

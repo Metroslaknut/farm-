@@ -603,7 +603,18 @@ export default function FarmHomePage() {
           ))}
         </select>
       </div>
-      {farm.status === 'archived' && <Alert tone="warning">{t('common.farmArchived')}</Alert>}
+      {farm.status === 'archived' && (
+        <Alert tone="warning">
+          {t('common.farmArchived')}
+          {/* The owner restores it from the farm settings page (hidden from the menu while archived). */}
+          {can('farm.archive') && (
+            <>
+              {' '}
+              <Link to={`/farms/${farm.id}/edit`}>{t('form.restore')}</Link>
+            </>
+          )}
+        </Alert>
+      )}
       {main.error && (
         <Alert tone="danger">
           {main.error}{' '}

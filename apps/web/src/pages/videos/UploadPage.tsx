@@ -39,6 +39,7 @@ export default function UploadPage() {
     (signal) => api.request<VideoLimitsDTO>('GET', '/videos/limits', { signal }),
     [],
   );
+  const disabled = limits.data?.provider === 'none';
   const [file, setFile] = useState<File>();
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
@@ -144,7 +145,9 @@ export default function UploadPage() {
       </p>
       <h1>{t('upload.title')}</h1>
       {limits.error && <Alert tone="danger">{limits.error}</Alert>}
-      {phase === 'form' && (
+      {/* VIDEO_PROVIDER=none: say so up front instead of failing after the form is filled in. */}
+      {disabled && <Alert tone="info">{t('upload.unavailable')}</Alert>}
+      {phase === 'form' && !disabled && (
         <form onSubmit={submit} noValidate>
           {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
           <Card>

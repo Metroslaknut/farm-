@@ -61,6 +61,7 @@ export default defineMessages({
     'slide.likeError': 'อัปเดตการถูกใจไม่สำเร็จ ลองอีกครั้ง',
 
     'upload.title': 'อัปโหลดวิดีโอ',
+    'upload.unavailable': 'ยังไม่เปิดให้อัปโหลดวิดีโอในขณะนี้ ดูวิดีโอที่มีอยู่ได้ตามปกติ',
     'upload.chooseFile': 'กรุณาเลือกไฟล์วิดีโอ',
     'upload.file': 'ไฟล์วิดีโอ',
     'upload.hint': 'MP4, MOV, M4V หรือ WebM · ไม่เกิน {mb} MB · ความยาวไม่เกิน {seconds} วินาที',
@@ -175,6 +176,8 @@ export default defineMessages({
     'slide.likeError': 'Could not update your like. Try again.',
 
     'upload.title': 'Upload a video',
+    'upload.unavailable':
+      'Video uploads are not available yet. You can still watch the videos already here.',
     'upload.chooseFile': 'Choose a video file',
     'upload.file': 'Video file',
     'upload.hint': 'MP4, MOV, M4V or WebM · up to {mb} MB · up to {seconds} seconds',

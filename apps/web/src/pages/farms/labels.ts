@@ -4,7 +4,7 @@ import {
   formatDateTime as fmtDateTime,
   validationMessage,
 } from '@farmplus/i18n';
-import { formatAge, humanize } from '@farmplus/shared-utils';
+import { formatAge, formatBaht, humanize } from '@farmplus/shared-utils';
 import type { FieldErrors } from '@farmplus/validation';
 import type { Tone } from '../../components/ui';
 import { getLocale, useLocale, useT, type Translate } from '../../i18n';
@@ -91,6 +91,9 @@ export function ageDaysLabel(t: FarmsT, days: number | undefined): string | unde
   if (y === 0) return t('age.m', { m });
   return m === 0 ? t('age.y', { y }) : t('age.ym', { y, m });
 }
+
+/** Record amounts are baht with up to 2 decimals (the API keeps satang): "฿150.00", like the rest of the app. */
+export const bahtLabel = (baht: number): string => formatBaht(Math.round(baht * 100));
 
 /** Dates in the current language (Thai: Buddhist calendar). A dash when missing or invalid. */
 export function useFarmFormat() {

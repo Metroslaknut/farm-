@@ -2,19 +2,27 @@ import { useState, type FormEvent } from 'react';
 import { ContactSellerButton } from '../../components/inbox/ContactSellerButton';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { FavoriteResult, ListingDTO, NegotiationDTO } from '@farmplus/shared-types';
-import { formatBaht, humanize, parseBahtToMinor } from '@farmplus/shared-utils';
+import { formatBaht, parseBahtToMinor } from '@farmplus/shared-utils';
 import { createOfferSchema } from '@farmplus/validation';
 import { api } from '../../api';
 import { Alert, Badge, Button, Card, TextField, Textarea } from '../../components/ui';
 import { errorMessage } from '../../lib/format';
 import { useAsync } from '../../lib/useAsync';
-import { ListingStatusBadge, localizeError, rich, sexLabel, useMarketT } from './common';
+import {
+  ListingStatusBadge,
+  localizeError,
+  rich,
+  sexLabel,
+  useAnimalLabel,
+  useMarketT,
+} from './common';
 
 /** `/market/listing/:id` — details, save, and make an offer. */
 export default function ListingDetailPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const t = useMarketT();
+  const animalLabel = useAnimalLabel();
   const [version, setVersion] = useState(0);
   const { data, error, loading } = useAsync(
     (signal) =>
@@ -133,10 +141,7 @@ export default function ListingDetailPage() {
               }}
             >
               <dt>{t('detail.animal')}</dt>
-              <dd>
-                {l.animal.animalTypeName}
-                {l.animal.breed ? ` · ${humanize(l.animal.breed)}` : ''}
-              </dd>
+              <dd>{animalLabel(l.animal)}</dd>
               <dt>{t('detail.sex')}</dt>
               <dd>{sexLabel(t, l.animal.sex)}</dd>
               {l.animal.birthDate && (

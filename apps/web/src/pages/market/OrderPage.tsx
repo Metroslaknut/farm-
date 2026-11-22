@@ -6,7 +6,7 @@ import type {
   ShipmentStatus,
   ShippingQuoteDTO,
 } from '@farmplus/shared-types';
-import { formatBaht, humanize } from '@farmplus/shared-utils';
+import { formatBaht } from '@farmplus/shared-utils';
 import { api } from '../../api';
 import {
   Alert,
@@ -20,7 +20,7 @@ import {
 } from '../../components/ui';
 import { errorMessage } from '../../lib/format';
 import { useAsync } from '../../lib/useAsync';
-import { codeLabel, sexLabel, useDateTime, useMarketT } from './common';
+import { codeLabel, sexLabel, useAnimalLabel, useDateTime, useMarketT } from './common';
 import { ORDER_TONE, TotalsTable, daysText, orderStatusLabel } from './orderCommon';
 import { PayPanel } from './PayPanel';
 
@@ -33,6 +33,7 @@ type Dialog = 'cancel' | 'ship' | 'requote' | null;
 export default function OrderPage() {
   const { id = '' } = useParams();
   const t = useMarketT();
+  const animalLabel = useAnimalLabel();
   const dateTime = useDateTime();
   const [version, setVersion] = useState(0);
   const { data, error, loading } = useAsync(
@@ -177,9 +178,7 @@ export default function OrderPage() {
                 <div key={i.animalId}>
                   <strong>{i.title}</strong>
                   <p className="ds-field__hint" style={{ margin: 0 }}>
-                    {i.animal.animalTypeName}
-                    {i.animal.breed ? ` · ${humanize(i.animal.breed)}` : ''} ·{' '}
-                    {sexLabel(t, i.animal.sex)}
+                    {animalLabel(i.animal)} · {sexLabel(t, i.animal.sex)}
                   </p>
                   <p style={{ margin: 0 }}>
                     {formatBaht(i.unitPriceMinor)} × {i.quantity}{' '}

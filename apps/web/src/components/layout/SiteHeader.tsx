@@ -4,6 +4,7 @@ import type { CartDTO } from '@farmplus/shared-types';
 import { api } from '../../api';
 import { shopCategories } from '../../lib/shopCategories';
 import { AuthContext } from '../../auth/AuthContext';
+import { useMinWidth } from '../../hooks/useMediaQuery';
 import { useT, type Translate } from '../../i18n';
 import { useAsync } from '../../lib/useAsync';
 import { InboxLinks } from '../inbox/InboxLinks';
@@ -55,6 +56,8 @@ export function SiteHeader() {
   const navigate = useNavigate();
   const ids = useId();
   const t = useT('layout');
+  // Phones (< 768px, the header's own breakpoint): the search box is too narrow for the full hint.
+  const wideSearch = useMinWidth('md');
 
   // The cart count follows navigation (an item added on a product page shows up on the next page).
   const cart = useAsync(
@@ -204,7 +207,9 @@ export function SiteHeader() {
               type="search"
               value={q}
               maxLength={80}
-              placeholder={t('header.searchPlaceholder')}
+              placeholder={t(
+                wideSearch ? 'header.searchPlaceholder' : 'header.searchPlaceholderShort',
+              )}
               onChange={(e) => setQ(e.target.value)}
             />
             <button type="submit">
