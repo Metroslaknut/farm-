@@ -102,7 +102,8 @@ export async function animalHistory(
     }
   }
 
-  if (want('breeding')) {
+  // Breeding is its own permission: a member without breeding.read sees the rest of the timeline only.
+  if (want('breeding') && access.permissions.has('breeding.read')) {
     const rows = await BreedingRecord.find({
       farmId,
       ...liveOnly,

@@ -52,6 +52,8 @@ export const SELF_SERVICE: Set<string> = new Set([
   'GET /api/v1/farms',
   // Onboarding state of the caller only (their own memberships + whether they may create a farm).
   'GET /api/v1/farms/me',
+  // The caller's own farm invitations and join requests (scoped to userId; nothing about other people).
+  'GET /api/v1/farm-invitations',
   'GET /api/v1/animal-types',
   'GET /api/v1/posts',
   'GET /api/v1/marketplace/listings',

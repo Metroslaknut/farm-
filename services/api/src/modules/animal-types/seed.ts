@@ -1,4 +1,5 @@
 import { AnimalType } from '../../models';
+import { fightingCockCatalogue } from './fighting-cock-catalogue';
 
 const b = (key: string, name: string, nameTh: string) => ({ key, name, nameTh, active: true });
 
@@ -48,16 +49,21 @@ const STARTER_TYPES = [
     key: 'chicken',
     name: 'Chicken',
     nameTh: 'ไก่',
+    reproduction: 'egg',
+    rearingTypes: fightingCockCatalogue().rearingTypes,
+    breedGroups: fightingCockCatalogue().breedGroups,
     breeds: [
       b('native', 'Native', 'พื้นเมือง'),
       b('layer', 'Layer', 'ไก่ไข่'),
       b('broiler', 'Broiler', 'ไก่เนื้อ'),
+      ...fightingCockCatalogue().breeds,
     ],
   },
   {
     key: 'duck',
     name: 'Duck',
     nameTh: 'เป็ด',
+    reproduction: 'egg',
     breeds: [
       b('pekin', 'Pekin', 'ปักกิ่ง'),
       b('khaki_campbell', 'Khaki Campbell', 'กากีแคมป์เบลล์'),

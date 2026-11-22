@@ -27,6 +27,7 @@ import { adminAiRouter } from '../modules/ai/ai.routes';
 import { shopRouter } from '../modules/products/products.routes';
 import { ordersRouter, shippingRouter } from '../modules/orders/orders.routes';
 import { farmsRouter } from '../modules/farms/farms.routes';
+import { myFarmInvitationsRouter } from '../modules/farms/invitations.routes';
 import { registrationsRouter } from '../modules/registrations/registrations.routes';
 import { adminRouter } from './admin';
 import { authRouter } from './auth';
@@ -44,6 +45,7 @@ export function v1Router(ctx: AppContext, auth: AuthService): Router {
   router.use('/users', usersRouter(ctx));
   router.use('/registrations', registrationsRouter(ctx));
   router.use('/farms', farmsRouter(ctx));
+  router.use('/farm-invitations', myFarmInvitationsRouter(ctx));
   router.use('/animals', animalsRouter(ctx));
   router.use('/animal-photos', animalPhotosRouter(ctx));
   router.use('/animal-types', animalTypesRouter(ctx));

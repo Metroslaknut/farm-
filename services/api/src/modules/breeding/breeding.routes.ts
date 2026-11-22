@@ -1,14 +1,18 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import {
   breedingListQuerySchema,
   confirmPregnancySchema,
   createBreedingSchema,
   failBreedingSchema,
+  recordClutchSchema,
   recordDeliverySchema,
 } from '@farmplus/validation';
 import type { AppContext } from '../../context';
 import { parse } from '../../lib/http';
 import { parseObjectId } from '../../lib/object-id';
+import { rateLimits } from '../../middleware/rate-limit';
+import { PHOTO_MAX_BYTES } from '../animals/animals.service';
+import { addUploadedPhoto } from '../records/record-core';
 import { mountCommonRecordRoutes, recordContext } from '../records/record-routes';
 import {
   addOffspring,
@@ -17,6 +21,7 @@ import {
   createBreeding,
   failBreeding,
   listBreeding,
+  recordClutch,
   recordDelivery,
 } from './breeding.service';
 
@@ -56,6 +61,15 @@ export function breedingRouter(ctx: AppContext): Router {
       ),
     });
   });
+  router.post('/:id/clutch', async (req, res) => {
+    res.json({
+      record: await recordClutch(
+        await recordContext(req, ctx),
+        id(req),
+        parse(recordClutchSchema, req.body),
+      ),
+    });
+  });
   router.post('/:id/delivery', async (req, res) => {
     res.status(201).json({
       record: await recordDelivery(
@@ -74,6 +88,18 @@ export function breedingRouter(ctx: AppContext): Router {
       ),
     });
   });
+  // A photo from the user's device: the body is the image itself (bytes sniffed, same limits as animal photos).
+  router.post(
+    '/:id/photos',
+    rateLimits(ctx.env).upload,
+    express.raw({ type: () => true, limit: PHOTO_MAX_BYTES }),
+    async (req, res) => {
+      const bytes = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      res.status(201).json({
+        record: await addUploadedPhoto(breedingSpec, await recordContext(req, ctx), id(req), bytes),
+      });
+    },
+  );
   mountCommonRecordRoutes(router, ctx, breedingSpec);
   return router;
 }

@@ -27,6 +27,7 @@ export async function recordContext(req: Request, ctx: AppContext): Promise<Reco
       allowedHosts: ctx.env.MEDIA_ALLOWED_HOSTS,
       production: ctx.env.NODE_ENV === 'production',
     },
+    photos: ctx.photos,
   };
 }
 

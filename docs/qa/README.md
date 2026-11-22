@@ -3,13 +3,14 @@
 The pre-release audit of FARM+: what was tested, how to run it, what was found and fixed, and what remains. Start with the summary
 below; details are in the linked documents.
 
-| Document                                             | Content                                                                                      |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [security-audit.md](security-audit.md)               | The security checklist item by item: status, the tests that prove it, findings               |
-| [financial-test-cases.md](financial-test-cases.md)   | The required financial cases mapped to executable tests, plus the system-wide invariant test |
-| [load-test-results.md](load-test-results.md)         | Method, numbers, interpretation and limits of the load/performance run                       |
-| [risks-and-limitations.md](risks-and-limitations.md) | Risk register: known limitations, residual risks, what must happen before launch             |
-| [audit-waivers.json](audit-waivers.json)             | The reviewed, expiring exceptions to the dependency policy                                   |
+| Document                                                               | Content                                                                                                                                 |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [security-audit.md](security-audit.md)                                 | The security checklist item by item: status, the tests that prove it, findings                                                          |
+| [financial-test-cases.md](financial-test-cases.md)                     | The required financial cases mapped to executable tests, plus the system-wide invariant test                                            |
+| [load-test-results.md](load-test-results.md)                           | Method, numbers, interpretation and limits of the load/performance run                                                                  |
+| [risks-and-limitations.md](risks-and-limitations.md)                   | Risk register: known limitations, residual risks, what must happen before launch                                                        |
+| [farm-staff-breeding-2026-11-21.md](farm-staff-breeding-2026-11-21.md) | Farm staff (invitations, per-member permissions), fighting-cock breeds, chicken breeding & pedigree: changes, schema, API, test results |
+| [audit-waivers.json](audit-waivers.json)                               | The reviewed, expiring exceptions to the dependency policy                                                                              |
 
 ## Results of the final run (13 Oct 2026, macOS arm64, Node 26, in-memory MongoDB, no git history available)
 

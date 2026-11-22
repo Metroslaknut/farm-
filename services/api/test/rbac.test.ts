@@ -380,7 +380,8 @@ describe('role → permission management', () => {
       expect([ra.status, rb.status]).toEqual([200, 200]);
       const roles = await api().get('/api/v1/roles').set(root.auth);
       const support = roles.body.roles.find((role: { key: string }) => role.key === 'support');
-      expect([a, b]).toContainEqual(support.permissions);
+      // The API lists permissions sorted, so compare as sets: the result must be exactly one of the two, never a mix.
+      expect([[...a].sort(), [...b].sort()]).toContainEqual([...support.permissions].sort());
     } finally {
       await api()
         .put('/api/v1/roles/support/permissions')

@@ -6,7 +6,7 @@ import {
   fieldErrorsFromZod,
   type FieldErrors,
 } from '@farmplus/validation';
-import { api } from '../../../api';
+import { api, apiFileUrl } from '../../../api';
 import {
   Alert,
   Badge,
@@ -19,6 +19,10 @@ import {
 } from '../../../components/ui';
 import { errorMessage } from '../../../lib/format';
 import { enumLabel, localizeErrors, useFarmFormat, useFarmsT, type FarmsKey } from '../labels';
+import { PhotoPicker, type PendingPhoto } from '../PhotoPicker';
+
+/** Same cap as the API (a record holds at most 20 files). */
+const MAX_FILES = 20;
 
 const show = (v: unknown): string =>
   v === null || v === undefined || v === ''
@@ -70,6 +74,8 @@ interface Props {
   canWrite: boolean;
   canCorrect: boolean;
   onChanged: () => void;
+  /** Offer uploading photos from the device (`POST <basePath>/:id/photos`), e.g. for breeding records. */
+  allowUpload?: boolean;
 }
 
 export function RecordHistoryPanel({
@@ -79,6 +85,7 @@ export function RecordHistoryPanel({
   canWrite,
   canCorrect,
   onChanged,
+  allowUpload = false,
 }: Props) {
   const t = useFarmsT();
   const [form, setForm] = useState({ kind: 'document', url: '', caption: '' });
@@ -88,6 +95,28 @@ export function RecordHistoryPanel({
   const [reason, setReason] = useState('');
   const [removeError, setRemoveError] = useState<string>();
   const editable = !record.voided;
+  const [pending, setPending] = useState<PendingPhoto[]>([]);
+  const [uploading, setUploading] = useState<number>();
+  const [uploadError, setUploadError] = useState<string>();
+
+  /** One request per photo (the body is the image); stops at the first failure and keeps the rest to retry. */
+  const upload = async () => {
+    setUploadError(undefined);
+    let left = pending;
+    try {
+      for (const [i, p] of pending.entries()) {
+        setUploading(i + 1);
+        await api.request('POST', `${basePath}/${record.id}/photos`, { body: p.blob });
+        left = pending.slice(i + 1);
+      }
+    } catch (e) {
+      setUploadError(t('rec.hist.uploadFailed', { error: errorMessage(e) }));
+    } finally {
+      setPending(left);
+      setUploading(undefined);
+      onChanged();
+    }
+  };
 
   const attach = async (event: FormEvent) => {
     event.preventDefault();
@@ -143,8 +172,21 @@ export function RecordHistoryPanel({
           {record.attachments.map((a) => (
             <li key={a.id} className="ds-row">
               <Badge>{enumLabel(t, 'mediaKindRaw', a.kind)}</Badge>
-              <a href={a.url} target="_blank" rel="noopener noreferrer">
-                {a.caption ?? a.url}
+              <a href={apiFileUrl(a.url)} target="_blank" rel="noopener noreferrer">
+                {a.kind === 'photo' ? (
+                  <img
+                    src={apiFileUrl(a.url)}
+                    alt={a.caption ?? t('common.photo')}
+                    style={{
+                      width: 72,
+                      height: 72,
+                      objectFit: 'cover',
+                      borderRadius: 'var(--ds-radius-md)',
+                    }}
+                  />
+                ) : (
+                  (a.caption ?? a.url)
+                )}
               </a>
               <span className="ds-field__hint">
                 {t('rec.hist.addedBy', { name: a.addedBy.displayName })}
@@ -164,6 +206,31 @@ export function RecordHistoryPanel({
             </li>
           ))}
         </ul>
+        {allowUpload && canWrite && editable && record.attachments.length < MAX_FILES && (
+          <div style={{ marginBottom: 'var(--ds-space-4)' }}>
+            <h3>{t('rec.hist.uploadTitle')}</h3>
+            <PhotoPicker
+              photos={pending}
+              onChange={setPending}
+              max={MAX_FILES - record.attachments.length}
+              disabled={uploading !== undefined}
+            />
+            {uploading !== undefined && (
+              <p role="status" className="ds-field__hint">
+                {t('photos.uploading', { n: uploading, total: pending.length })}
+              </p>
+            )}
+            {uploadError && <Alert tone="danger">{uploadError}</Alert>}
+            <Button
+              variant="primary"
+              disabled={pending.length === 0}
+              loading={uploading !== undefined}
+              onClick={() => void upload()}
+            >
+              {t('rec.hist.uploadPhotos', { n: pending.length })}
+            </Button>
+          </div>
+        )}
         {canWrite && editable && (
           <form onSubmit={attach} noValidate>
             <h3>{t('common.attachTitle')}</h3>

@@ -15,7 +15,13 @@ import { HttpError, conflict, notFound } from '../../lib/errors';
 import { Animal, User } from '../../models';
 import type { RecordBaseAttrs } from '../../models';
 import { recordAudit } from '../../services/audit.service';
-import { assertMediaUrlAllowed, type MediaPolicy } from '../animals/animals.service';
+import {
+  assertMediaUrlAllowed,
+  deleteDevicePhoto,
+  storeDevicePhoto,
+  type MediaPolicy,
+} from '../animals/animals.service';
+import type { PhotoStorage } from '../animals/photo-storage';
 import { assertFarmActive, requireFarmPermission, type FarmAccess } from '../farms/farm-access';
 
 /**
@@ -34,6 +40,8 @@ export interface RecordContext {
   actor: Actor;
   access: FarmAccess;
   policy: MediaPolicy;
+  /** Object storage for device-uploaded photos (null/absent = stored in MongoDB). */
+  photos?: PhotoStorage | null;
 }
 
 export interface RecordSpec<D extends RecordDoc = RecordDoc, DTO = unknown> {
@@ -387,6 +395,19 @@ export async function addAttachment<D extends RecordDoc, T>(
     caption?: string | undefined;
   },
 ) {
+  const doc = await loadWritableForAttachment(spec, ctx, id);
+  if (doc.attachments.some((a) => a.url === input.url))
+    throw conflict('This file is already attached', 'ATTACHMENT_EXISTS');
+  const [attachment] = buildAttachments([input], ctx.actor, ctx.policy);
+  await pushAttachment(spec, ctx, doc, attachment!);
+  return getRecord(spec, ctx.access, doc._id);
+}
+
+async function loadWritableForAttachment<D extends RecordDoc, T>(
+  spec: RecordSpec<D, T>,
+  ctx: RecordContext,
+  id: Types.ObjectId,
+) {
   requireFarmPermission(ctx.access, spec.permissions.write);
   assertFarmActive(ctx.access);
   const doc = await loadRecord(spec, ctx.access, id);
@@ -394,15 +415,24 @@ export async function addAttachment<D extends RecordDoc, T>(
   if (doc.voided) throw conflict('A voided record is read-only', 'RECORD_VOIDED');
   if (doc.attachments.length >= MAX_ATTACHMENTS)
     throw conflict(`A record can have at most ${MAX_ATTACHMENTS} files`, 'ATTACHMENT_LIMIT');
-  if (doc.attachments.some((a) => a.url === input.url))
-    throw conflict('This file is already attached', 'ATTACHMENT_EXISTS');
-  const [attachment] = buildAttachments([input], ctx.actor, ctx.policy);
+  return doc;
+}
+
+/** Add one attachment, with its history entry and audit (shared by links and uploaded photos). */
+async function pushAttachment<D extends RecordDoc, T>(
+  spec: RecordSpec<D, T>,
+  ctx: RecordContext,
+  doc: D,
+  attachment: { kind: 'photo' | 'document'; url: string; [k: string]: unknown },
+) {
   doc.attachments.push(attachment as never);
   doc.history.push({
     at: new Date(),
     by: ctx.actor.userId as unknown as Types.ObjectId,
     kind: 'attachment_added',
-    changes: [{ field: 'attachments', from: null, to: { kind: input.kind, url: input.url } }],
+    changes: [
+      { field: 'attachments', from: null, to: { kind: attachment.kind, url: attachment.url } },
+    ],
   });
   doc.updatedBy = ctx.actor.userId as unknown as Types.ObjectId;
   await doc.save();
@@ -411,9 +441,45 @@ export async function addAttachment<D extends RecordDoc, T>(
     action: `${spec.kind}.attachment_added`,
     targetType: spec.kind,
     targetId: doc._id,
-    metadata: { farmId: String(doc.farmId), kind: input.kind },
+    metadata: { farmId: String(doc.farmId), kind: attachment.kind },
     ip: ctx.actor.ip,
   });
+}
+
+/**
+ * A photo uploaded from the device (the request body is the image): stored like animal photos (same checks, same
+ * storage, served by `/animal-photos/:key`) and attached to the record. Filed under the record's animal (its dam for
+ * breeding records).
+ */
+export async function addUploadedPhoto<D extends RecordDoc, T>(
+  spec: RecordSpec<D, T>,
+  ctx: RecordContext,
+  id: Types.ObjectId,
+  bytes: Buffer,
+) {
+  const doc = await loadWritableForAttachment(spec, ctx, id);
+  const owner = doc as unknown as { animalId?: Types.ObjectId; damId?: Types.ObjectId };
+  const stored = await storeDevicePhoto({
+    actor: ctx.actor,
+    farmId: doc.farmId as Types.ObjectId,
+    animalId: (owner.animalId ?? owner.damId)!,
+    ...(spec.kind === 'breeding' ? { breedingRecordId: doc._id as Types.ObjectId } : {}),
+    bytes,
+    photos: ctx.photos ?? null,
+  });
+  try {
+    await pushAttachment(spec, ctx, doc, {
+      kind: 'photo',
+      url: stored.url,
+      mimeType: stored.mimeType,
+      caption: null,
+      addedBy: ctx.actor.userId,
+      addedAt: new Date(),
+    });
+  } catch (error) {
+    await stored.discard();
+    throw error;
+  }
   return getRecord(spec, ctx.access, doc._id);
 }
 
@@ -446,6 +512,8 @@ export async function removeAttachment<D extends RecordDoc, T>(
   });
   doc.updatedBy = ctx.actor.userId as unknown as Types.ObjectId;
   await doc.save();
+  // An uploaded photo's file goes with it (external links are left alone); the history keeps the URL.
+  await deleteDevicePhoto(attachment.url, { farmId: doc.farmId }, ctx.photos ?? null);
   await recordAudit({
     actorId: ctx.actor.userId,
     action: `${spec.kind}.attachment_removed`,

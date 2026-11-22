@@ -38,6 +38,7 @@ export function formatAge(
 export * from './video';
 export * from './commission';
 export * from './products';
+export * from './breeding';
 
 /** Satang → "฿50,000.00". Money is always integer satang; this only formats. */
 export function formatBaht(minor: number): string {

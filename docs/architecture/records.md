@@ -25,6 +25,9 @@ Every kind is described by a `RecordSpec` (`records/record-core.ts`) and shares 
 | `records.read`                       |   ✔   |    ✔    |   ✔    |   ✔    |
 | `records.write` (create, attach)     |   ✔   |    ✔    |   ✔    |        |
 | `records.correct` (correct, void)    |   ✔   |    ✔    |        |        |
+| `breeding.read`                      |   ✔   |    ✔    |   ✔    |   ✔    |
+| `breeding.write` (create, events)    |   ✔   |    ✔    |   ✔    |        |
+| `breeding.correct` (correct, void)   |   ✔   |    ✔    |        |        |
 | `expenses.read` / `expenses.write`\* |   ✔   |    ✔    |        |        |
 
 \* Expenses are financial data: they are only reachable with `expenses.*` (also by id, and in the animal history timeline). Platform `farms.read` staff get `records.read`.
@@ -45,6 +48,23 @@ Existing databases: role→permission mappings are code, no migration. `animal_t
   parents are set; conflicts → `409 PARENT_CONFLICT`/`ALREADY_OFFSPRING`), or notes a stillbirth/death without an identity. A unique partial index on
   `delivery.offspring.animalId` (non-voided) prevents one animal being the offspring of two breedings. Voiding a breeding unlinks its offspring.
 - MongoDB transactions are not assumed (standalone dev DB): delivery is claimed with an atomic compare-and-set and rolled back on failure.
+- Breeding has its own `breeding.*` permissions (same holders as `records.*` by default); the animal timeline omits breeding
+  entries for members without `breeding.read`.
+- **Record code** `BR-00001…` from an atomic per-farm counter (`farms.breedingSeq`), unique per farm (older records have none).
+- **Egg-laying species** (`animal_types.reproduction = egg`): `clutch {eggsLaid, eggsFertile, eggsSet, chicksHatched}` (each optional;
+  fertile ≤ laid, set ≤ laid, hatched ≤ set) set on create, on delivery, or as an event `POST …/breeding/:id/clutch` (history entry).
+  The "pregnancy" step means incubation and "delivery" means hatching; up to 50 offspring per request. Registered chicks inherit the
+  rearing type when both recorded parents share it.
+- **Parents' breeds and suggestion**: every record shows `sireBreed`/`damBreed` (read live from the animals) and
+  `offspringBreedSuggestion` (`@farmplus/shared-utils` `suggestOffspringBreed`, shared with the web form): same breed → that breed;
+  union of the parents' components equals an active breed's composition → that breed (พม่าม้าล่อ × เหลืองหางขาว → "พม่า + ไทย",
+  F1 × พม่า → "พม่า + ไทย", × ไซ่ง่อน → "พม่า + ไซ่ง่อน + ไทย"); one group → that group; otherwise none; a missing parent/breed →
+  `parent_unknown`. It only pre-fills the form: lineage is always the real sire/dam.
+- `GET …/breeding?animalId=` lists the records where an animal is dam or sire.
+- **Photos from the device**: `POST …/breeding/:id/photos` (body = the image, `breeding.write`, upload rate limit) goes through the
+  same checks and storage as animal photos (`storeDevicePhoto`: JPEG/PNG/WebP sniffed, ≤ 3 MB, database or R2, served by
+  `/animal-photos/:key`; the `animal_photos` document is filed under the dam with `breedingRecordId`) and becomes a `photo`
+  attachment with its history entry. Removing an attachment (reason required) also deletes an uploaded photo's file.
 
 ## Growth tracking against admin-set criteria
 
@@ -72,7 +92,9 @@ Existing databases: role→permission mappings are code, no migration. `animal_t
 `GET /farms/:farmId/animals/:animalId/history` merges animal audit events (registration, edits, status, archive), breeding (as dam/sire/offspring), health,
 feeding, weights and (with `expenses.read`) expenses, newest first, voided entries flagged, actors named. `/growth` and `/lineage` are sibling endpoints.
 `/lineage?generations=1–5` (default 3) also returns the pedigree tree (recorded parents of the same farm, recursively), `generation` (how many
-ancestor generations are recorded, walked up to 25 levels) and siblings (`full` / `half_sire` / `half_dam`).
+ancestor generations are recorded, walked up to 25 levels) and siblings (`full` / `half_sire` / `half_dam`). Every animal in it (tree,
+siblings, offspring) carries `filialGeneration`: 0 = parent stock (no parents recorded), otherwise max(sire, dam) + 1 (F1, F2, …);
+`null` when only one parent or an ancestor's generation is unknown — never guessed. Tree nodes also carry breed name and group.
 
 ## Known limitations
 

@@ -377,14 +377,12 @@ describe('editing and archiving farms', () => {
       .send({ name: 'Edit While Archived' });
     expect(edit.status).toBe(409);
     expect(edit.body.error.code).toBe('FARM_ARCHIVED');
-    expect(
-      (
-        await api()
-          .post(V(`/farms/${farmId}/members`))
-          .set(owner.auth)
-          .send({ email: 'x@example.test', role: 'viewer' })
-      ).status,
-    ).toBe(409);
+    const invite = await api()
+      .post(V(`/farms/${farmId}/invitations`))
+      .set(owner.auth)
+      .send({ email: 'x@example.test', role: 'viewer' });
+    expect(invite.status).toBe(409);
+    expect(invite.body.error.code).toBe('FARM_ARCHIVED');
     expect(
       (
         await api()
@@ -423,20 +421,29 @@ describe('editing and archiving farms', () => {
 });
 
 describe('farm membership', () => {
-  it('owner adds members by e-mail or id; the list shows e-mails only to managers', async () => {
+  it('people join through invitations; direct adds are for platform staff; e-mails only for the owner', async () => {
     const owner = await createFarmer(h.app);
     const farmId = await makeFarm(h.app, owner);
     const manager = await createUser(h.app);
     const worker = await createUser(h.app);
     const viewer = await createUser(h.app);
     const mid = await addFarmMember(h.app, owner, farmId, manager, 'manager');
-    const byId = await api()
+    await addFarmMember(h.app, owner, farmId, viewer, 'viewer');
+
+    // The owner cannot add someone without their consent.
+    const direct = await api()
       .post(V(`/farms/${farmId}/members`))
       .set(owner.auth)
       .send({ userId: worker.id, role: 'worker' });
-    expect(byId.status).toBe(201);
-    expect(byId.body.member).toMatchObject({ role: 'worker', userId: worker.id });
-    await addFarmMember(h.app, owner, farmId, viewer, 'viewer');
+    expect(direct.status).toBe(403);
+    expect(direct.body.error.code).toBe('USE_INVITATION');
+    // Platform staff (farms.manage, MFA) still can, e.g. when fixing an account on the farm's behalf.
+    const byStaff = await api()
+      .post(V(`/farms/${farmId}/members`))
+      .set(root.auth)
+      .send({ userId: worker.id, role: 'worker' });
+    expect(byStaff.status).toBe(201);
+    expect(byStaff.body.member).toMatchObject({ role: 'worker', userId: worker.id });
 
     const asOwner = await api()
       .get(V(`/farms/${farmId}/members`))
@@ -451,19 +458,30 @@ describe('farm membership', () => {
     expect(asOwner.body.members.every((m: { email?: string }) => typeof m.email === 'string')).toBe(
       true,
     );
-    const asViewer = await api()
-      .get(V(`/farms/${farmId}/members`))
-      .set(viewer.auth);
-    expect(asViewer.status).toBe(200);
-    expect(asViewer.body.members.some((m: { email?: string }) => m.email)).toBe(false);
+    const invited = asOwner.body.members.find((m: { id: string }) => m.id === mid);
+    expect(invited.invitedAt).toBeTruthy();
+    expect(invited.approvedAt).toBeTruthy();
+    expect(invited.customPermissions).toBe(false);
+    expect(invited.permissions).toContain('breeding.write');
+    expect(invited.permissions).not.toContain('members.manage');
+    // Managers no longer manage staff, so they do not see e-mail addresses either.
+    for (const who of [viewer, manager]) {
+      const res = await api()
+        .get(V(`/farms/${farmId}/members`))
+        .set(who.auth);
+      expect(res.status).toBe(200);
+      expect(res.body.members.some((m: { email?: string }) => m.email)).toBe(false);
+    }
     expect(JSON.stringify(asOwner.body)).not.toMatch(/passwordHash|secret/);
+    expect(
+      await AuditLog.countDocuments({ action: 'farm.invitation_accepted', targetId: farmId }),
+    ).toBe(2);
     expect(await AuditLog.countDocuments({ action: 'farm.member_added', targetId: farmId })).toBe(
-      3,
+      1,
     );
-    expect(mid).toBeTruthy();
   });
 
-  it('prevents privilege escalation: you can only assign roles below your own', async () => {
+  it('staff management is the owner’s alone: managers cannot invite, change roles or remove', async () => {
     const owner = await createFarmer(h.app);
     const farmId = await makeFarm(h.app, owner);
     const manager = await createUser(h.app);
@@ -472,52 +490,52 @@ describe('farm membership', () => {
     const managerMember = await addFarmMember(h.app, owner, farmId, manager, 'manager');
     const workerMember = await addFarmMember(h.app, owner, farmId, worker, 'worker');
 
-    const peer = await api()
-      .post(V(`/farms/${farmId}/members`))
-      .set(manager.auth)
-      .send({ email: extra.email, role: 'manager' });
-    expect(peer.status).toBe(403);
-    expect(peer.body.error.code).toBe('ROLE_ESCALATION');
+    for (const who of [manager, worker]) {
+      const invite = await api()
+        .post(V(`/farms/${farmId}/invitations`))
+        .set(who.auth)
+        .send({ email: extra.email, role: 'viewer' });
+      expect(invite.status).toBe(403);
+      expect(invite.body.error.code).toBe('FARM_FORBIDDEN');
+      expect(
+        (
+          await api()
+            .get(V(`/farms/${farmId}/invitations`))
+            .set(who.auth)
+        ).status,
+      ).toBe(403);
+    }
     expect(
       (
         await api()
-          .post(V(`/farms/${farmId}/members`))
-          .set(manager.auth)
+          .post(V(`/farms/${farmId}/invitations`))
+          .set(owner.auth)
           .send({ email: extra.email, role: 'owner' })
       ).status,
-    ).toBe(400); // not assignable at all
-    expect(
-      (
-        await api()
-          .post(V(`/farms/${farmId}/members`))
-          .set(worker.auth)
-          .send({ email: extra.email, role: 'viewer' })
-      ).status,
-    ).toBe(403);
-    expect(
-      (
-        await api()
-          .post(V(`/farms/${farmId}/members`))
-          .set(manager.auth)
-          .send({ email: extra.email, role: 'worker' })
-      ).status,
-    ).toBe(201);
+    ).toBe(400); // owner is never assignable
 
-    // a manager cannot touch a peer, promote a worker to manager, or change themselves
+    // a manager cannot change roles, permissions, or remove anyone (themselves excepted: they may leave)
     expect(
       (
         await api()
           .patch(V(`/farms/${farmId}/members/${workerMember}`))
           .set(manager.auth)
-          .send({ role: 'manager' })
+          .send({ role: 'viewer' })
       ).status,
     ).toBe(403);
     expect(
       (
         await api()
-          .patch(V(`/farms/${farmId}/members/${managerMember}`))
+          .put(V(`/farms/${farmId}/members/${workerMember}/permissions`))
           .set(manager.auth)
-          .send({ role: 'viewer' })
+          .send({ permissions: ['animals.read'] })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await api()
+          .delete(V(`/farms/${farmId}/members/${workerMember}`))
+          .set(manager.auth)
       ).status,
     ).toBe(403);
     expect(
@@ -527,15 +545,7 @@ describe('farm membership', () => {
           .set(worker.auth)
       ).status,
     ).toBe(403);
-    expect(
-      (
-        await api()
-          .patch(V(`/farms/${farmId}/members/${workerMember}`))
-          .set(manager.auth)
-          .send({ role: 'viewer' })
-      ).status,
-    ).toBe(200);
-    // the owner can promote
+    // the owner can change roles
     expect(
       (
         await api()
@@ -546,7 +556,7 @@ describe('farm membership', () => {
     ).toBe('manager');
     expect(
       await AuditLog.countDocuments({ action: 'farm.member_role_changed', targetId: farmId }),
-    ).toBe(2);
+    ).toBe(1);
   });
 
   it('the owner is permanent: cannot be changed, removed, or leave', async () => {
@@ -633,7 +643,7 @@ describe('farm membership', () => {
     ).toBe(2);
   });
 
-  it('validates who can be added; member ids cannot cross farms', async () => {
+  it('validates who can be invited; member ids cannot cross farms', async () => {
     const owner = await createFarmer(h.app);
     const farmId = await makeFarm(h.app, owner);
     const other = await createFarmer(h.app);
@@ -641,20 +651,35 @@ describe('farm membership', () => {
     const user = await createUser(h.app);
     const suspended = await createUser(h.app);
     await User.updateOne({ _id: suspended.id }, { status: 'suspended' });
-    const add = (body: object) =>
+    const invite = (body: object) =>
       api()
-        .post(V(`/farms/${farmId}/members`))
+        .post(V(`/farms/${farmId}/invitations`))
         .set(owner.auth)
         .send(body);
 
-    expect((await add({ email: 'nobody@example.test', role: 'viewer' })).status).toBe(404);
-    expect((await add({ userId: suspended.id, role: 'viewer' })).status).toBe(404);
-    expect((await add({ email: user.email, userId: user.id, role: 'viewer' })).status).toBe(400);
-    expect((await add({ role: 'viewer' })).status).toBe(400);
-    expect((await add({ email: user.email, role: 'superhero' })).status).toBe(400);
-    await add({ email: user.email, role: 'viewer' }).expect(201);
-    expect((await add({ email: user.email, role: 'worker' })).status).toBe(409);
-    expect((await add({ email: owner.email, role: 'worker' })).status).toBe(409); // owner is already a member
+    expect((await invite({ email: 'nobody@example.test', role: 'viewer' })).status).toBe(404);
+    expect((await invite({ email: suspended.email, role: 'viewer' })).status).toBe(404);
+    expect(
+      (await invite({ email: user.email, phone: '+66812345678', role: 'viewer' })).status,
+    ).toBe(400);
+    expect((await invite({ userId: user.id, role: 'viewer' })).status).toBe(400); // exact e-mail/phone only
+    expect((await invite({ role: 'viewer' })).status).toBe(400);
+    expect((await invite({ email: user.email, role: 'superhero' })).status).toBe(400);
+    const first = await invite({ email: user.email, role: 'viewer' });
+    expect(first.status).toBe(201);
+    const again = await invite({ email: user.email, role: 'worker' });
+    expect(again.status).toBe(409);
+    expect(again.body.error.code).toBe('INVITATION_PENDING');
+    expect((await invite({ email: owner.email, role: 'worker' })).body.error.code).toBe(
+      'SELF_INVITE',
+    );
+    await api()
+      .post(V(`/farm-invitations/${first.body.invitation.id}/accept`))
+      .set(user.auth)
+      .expect(200);
+    const member = await invite({ email: user.email, role: 'worker' });
+    expect(member.status).toBe(409);
+    expect(member.body.error.code).toBe('ALREADY_MEMBER');
 
     const foreignMember = (await FarmMember.findOne({ farmId: otherFarm, role: 'owner' }))!._id;
     expect(

@@ -21,6 +21,7 @@ import {
   createHealthSchema,
   createWeightSchema,
 } from '@farmplus/validation';
+import { getLocale } from '../../../i18n';
 import { enumLabel, type EnumGroup, type FarmsKey, type FarmsT } from '../labels';
 
 export type Draft = Record<string, string>;
@@ -93,6 +94,37 @@ const animalName = (a?: { animalCode: string; name?: string }) =>
   a ? `${a.animalCode}${a.name ? ` — ${a.name}` : ''}` : '';
 
 export const HEALTH_NOTICE: FarmsKey = 'rec.health.notice';
+export const CLUTCH_SECTION: FarmsKey = 'rec.breeding.secClutch';
+
+/** "พม่าม้าล่อ (สายพันธุ์ไก่พม่า)" in the current language. */
+export function breedRefLabel(
+  b:
+    | { key: string; name: string; nameTh?: string; group?: { name: string; nameTh?: string } }
+    | undefined,
+  _t: FarmsT,
+): string | undefined {
+  if (!b) return undefined;
+  const th = getLocale() === 'th';
+  const name = (th && b.nameTh) || b.name;
+  const group = b.group && ((th && b.group.nameTh) || b.group.name);
+  return group ? `${name} (${group})` : name;
+}
+
+/** The suggested offspring breed, or why there is none. */
+export function suggestionLabel(
+  s: { basis: string; breed?: any; group?: { name: string; nameTh?: string } } | undefined,
+  t: FarmsT,
+): string | undefined {
+  if (!s) return undefined;
+  if (s.breed) return breedRefLabel(s.breed, t);
+  if (s.group) {
+    const g = (getLocale() === 'th' && s.group.nameTh) || s.group.name;
+    return t('rec.breeding.suggestGroup', { group: g });
+  }
+  return t(
+    s.basis === 'parent_unknown' ? 'rec.breeding.suggestUnknown' : 'rec.breeding.suggestNone',
+  );
+}
 
 // ---------------------------------------------------------------------------
 const health: KindConfig = {
@@ -675,7 +707,7 @@ const breeding: KindConfig = {
   path: 'breeding',
   singular: 'kind.breeding.singular',
   plural: 'kind.breeding.plural',
-  permissions: { read: 'records.read', write: 'records.write', correct: 'records.correct' },
+  permissions: { read: 'breeding.read', write: 'breeding.write', correct: 'breeding.correct' },
   schema: createBreedingSchema,
   filters: [
     {
@@ -684,7 +716,8 @@ const breeding: KindConfig = {
       options: opts(BREEDING_STATUSES, 'breedingStatus'),
     },
   ],
-  animalFilterName: 'damId',
+  // The API matches the animal as dam OR sire: one filter shows an animal's whole breeding history.
+  animalFilterName: 'animalId',
   fields: [
     {
       name: 'damId',
@@ -737,9 +770,18 @@ const breeding: KindConfig = {
       required: true,
       section: 'rec.breeding.sec',
     },
+    // Egg-laying species only (the form shows this section when the dam's type lays eggs).
+    ...(['eggsLaid', 'eggsFertile', 'eggsSet', 'chicksHatched'] as const).map((k): Field => ({
+      name: `clutch.${k}`,
+      label: `rec.breeding.clutch.${k}`,
+      type: 'number',
+      step: '1',
+      section: CLUTCH_SECTION,
+    })),
     { name: 'notes', label: 'rec.notes', type: 'textarea', section: 'rec.breeding.sec' },
   ],
   columns: [
+    { header: 'rec.breeding.code', cell: (r) => r.code ?? '—' },
     { header: 'rec.breeding.bredOn', cell: (r, _t, fmt) => fmt.date(r.breedingDate) },
     { header: 'detail.dam', cell: (r) => animalName(r.dam) },
     {
@@ -759,7 +801,9 @@ const breeding: KindConfig = {
       date: fmt.date(r.breedingDate),
     }),
   describe: (r, t, fmt) => [
+    [t('rec.breeding.code'), r.code],
     [t('detail.dam'), animalName(r.dam)],
+    [t('rec.breeding.damBreed'), breedRefLabel(r.damBreed, t)],
     [
       t('detail.sire'),
       r.sire
@@ -769,6 +813,8 @@ const breeding: KindConfig = {
             .filter(Boolean)
             .join(' · '),
     ],
+    [t('rec.breeding.sireBreed'), breedRefLabel(r.sireBreed, t)],
+    [t('rec.breeding.suggested'), suggestionLabel(r.offspringBreedSuggestion, t)],
     [t('rec.method'), enumLabel(t, 'breedingMethod', r.method)],
     [t('rec.breeding.bredOn'), fmt.date(r.breedingDate)],
     [t('animals.col.status'), enumLabel(t, 'breedingStatus', r.status)],
@@ -784,7 +830,16 @@ const breeding: KindConfig = {
       t('rec.breeding.failedOn'),
       r.failedOn && `${fmt.date(r.failedOn)}${r.failureReason ? ` — ${r.failureReason}` : ''}`,
     ],
-    [t('rec.breeding.delivered'), r.delivery?.date && fmt.date(r.delivery.date)],
+    [
+      t(r.reproduction === 'egg' ? 'rec.breeding.hatched' : 'rec.breeding.delivered'),
+      r.delivery?.date && fmt.date(r.delivery.date),
+    ],
+    ...(['eggsLaid', 'eggsFertile', 'eggsSet', 'chicksHatched'] as const).map(
+      (k): [string, string | undefined] => [
+        t(`rec.breeding.clutch.${k}`),
+        r.clutch?.[k] === undefined ? undefined : String(r.clutch[k]),
+      ],
+    ),
     [t('rec.notes'), r.notes],
   ],
 };

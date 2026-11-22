@@ -1,7 +1,10 @@
 import type { Types } from 'mongoose';
+import { filialGeneration, suggestOffspringBreed } from '@farmplus/shared-utils';
 import type {
   AnimalLite,
   BreedingRecordDTO,
+  BreedRef,
+  ClutchCounts,
   BreedingStatus,
   LineageResponse,
   Page,
@@ -9,7 +12,9 @@ import type {
   PedigreeNode,
 } from '@farmplus/shared-types';
 import {
+  clutchSchema,
   createBreedingSchema,
+  type ClutchInput,
   type CreateBreedingInput,
   type RecordDeliveryInput,
 } from '@farmplus/validation';
@@ -18,6 +23,7 @@ import {
   Animal,
   AnimalType,
   BreedingRecord,
+  Farm,
   type AnimalDoc,
   type AnimalTypeDoc,
   type BreedingRecordDoc,
@@ -43,8 +49,16 @@ const invalid = (path: string, message: string) =>
 const addDays = (date: Date, days: number): Date => new Date(date.getTime() + days * DAY_MS);
 const ageDays = (animal: AnimalDoc, on: Date): number | undefined =>
   animal.birthDate ? Math.floor((on.getTime() - animal.birthDate.getTime()) / DAY_MS) : undefined;
-const EDITABLE = ['sireId', 'sireExternal', 'method', 'breedingDate', 'notes'] as const;
+const EDITABLE = ['sireId', 'sireExternal', 'method', 'breedingDate', 'clutch', 'notes'] as const;
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+/** Stored clutch (nulls for unknown) → API shape (unknown counts omitted). */
+const clutchOf = (c: BreedingRecordDoc['clutch']): ClutchCounts | undefined => {
+  if (!c) return undefined;
+  const out: ClutchCounts = {};
+  for (const k of ['eggsLaid', 'eggsFertile', 'eggsSet', 'chicksHatched'] as const)
+    if (c[k] != null) out[k] = c[k]!;
+  return Object.keys(out).length ? out : undefined;
+};
 const cleanExternal = (
   ext: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> | undefined => {
@@ -74,6 +88,33 @@ function ageRule(
   }
 }
 
+type CatalogueType = Pick<AnimalTypeDoc, 'breeds' | 'breedGroups'>;
+
+function groupRef(
+  type: CatalogueType | undefined,
+  key: string | null | undefined,
+): BreedRef['group'] | undefined {
+  const g = key ? (type?.breedGroups ?? []).find((x) => x.key === key) : undefined;
+  return g ? { key: g.key, name: g.name, ...(g.nameTh ? { nameTh: g.nameTh } : {}) } : undefined;
+}
+
+/** A breed key resolved against the catalogue (with its group). Unknown keys are reported by key only. */
+export function breedRef(
+  type: CatalogueType | undefined,
+  key: string | null | undefined,
+): BreedRef | undefined {
+  if (!key) return undefined;
+  const b = type?.breeds.find((x) => x.key === key);
+  if (!b) return { key, name: key };
+  const group = groupRef(type, b.groupKey);
+  return {
+    key: b.key,
+    name: b.name,
+    ...(b.nameTh ? { nameTh: b.nameTh } : {}),
+    ...(group ? { group } : {}),
+  };
+}
+
 /**
  * Breeding records link EXISTING animal identities (Part 07) — a birth never creates a second copy of an animal.
  * Rules checked here: dam female, sire male, same species, ages (where configured), no parent×offspring pairing,
@@ -82,7 +123,7 @@ function ageRule(
 export const breedingSpec: RecordSpec<BreedingRecordDoc, BreedingRecordDTO> = {
   kind: 'breeding',
   model: BreedingRecord,
-  permissions: { read: 'records.read', write: 'records.write', correct: 'records.correct' },
+  permissions: { read: 'breeding.read', write: 'breeding.write', correct: 'breeding.correct' },
   createSchema: createBreedingSchema,
   editable: EDITABLE,
   toInput(doc) {
@@ -94,6 +135,8 @@ export const breedingSpec: RecordSpec<BreedingRecordDoc, BreedingRecordDTO> = {
     if (doc.sireId) input['sireId'] = String(doc.sireId);
     const ext = cleanExternal(doc.sireExternal as Record<string, unknown> | null);
     if (ext) input['sireExternal'] = ext;
+    const clutch = clutchOf(doc.clutch);
+    if (clutch) input['clutch'] = clutch;
     if (doc.notes) input['notes'] = doc.notes;
     return input;
   },
@@ -102,6 +145,7 @@ export const breedingSpec: RecordSpec<BreedingRecordDoc, BreedingRecordDTO> = {
     doc.sireExternal = input.sireExternal ?? null;
     doc.method = input.method;
     doc.breedingDate = toDate(input.breedingDate);
+    doc.clutch = input.clutch ? { ...input.clutch } : null;
     doc.notes = input.notes ?? null;
     doc.expectedDeliveryDate = extra.expectedDeliveryDate;
     doc.warnings = extra.warnings;
@@ -196,20 +240,59 @@ export const breedingSpec: RecordSpec<BreedingRecordDoc, BreedingRecordDTO> = {
       d.sireId,
       ...(d.delivery?.offspring.map((o) => o.animalId) ?? []),
     ]);
-    const [meta, animals] = await Promise.all([
+    const parentIds = docs
+      .flatMap((d) => [d.damId, d.sireId])
+      .filter((x): x is Types.ObjectId => Boolean(x));
+    const [meta, animals, parents] = await Promise.all([
       metaFor(docs),
       animalLites(docs[0]?.farmId as Types.ObjectId, ids),
+      Animal.find({ _id: { $in: parentIds }, farmId: docs[0]?.farmId }).select(
+        'breed animalTypeId',
+      ),
     ]);
+    const parentById = new Map(parents.map((p) => [String(p._id), p]));
+    const types = new Map(
+      (
+        await AnimalType.find({
+          _id: { $in: [...new Set(parents.map((p) => String(p.animalTypeId)))] },
+        }).select('breeds breedGroups reproduction')
+      ).map((t) => [String(t._id), t]),
+    );
     const lite = (id: Types.ObjectId | null | undefined): AnimalLite | undefined =>
       id ? (animals.get(String(id)) ?? { id: String(id), animalCode: '?' }) : undefined;
     return docs.map((d) => {
       const sire = lite(d.sireId);
       const ext = cleanExternal(d.sireExternal as Record<string, unknown> | null);
+      const damRow = parentById.get(String(d.damId));
+      const sireRow = d.sireId ? parentById.get(String(d.sireId)) : undefined;
+      const type = damRow ? types.get(String(damRow.animalTypeId)) : undefined;
+      const damBreed = breedRef(type, damRow?.breed);
+      const sireBreed = breedRef(type, sireRow?.breed);
+      const suggestion = type
+        ? suggestOffspringBreed(type.breeds, sireRow?.breed, damRow?.breed)
+        : undefined;
+      const suggestedBreed = breedRef(type, suggestion?.breed);
+      const suggestedGroup = groupRef(type, suggestion?.groupKey);
+      const clutch = clutchOf(d.clutch);
       return {
         ...meta(d),
+        ...(d.code ? { code: d.code } : {}),
         dam: lite(d.damId)!,
         ...(sire ? { sire } : {}),
         ...(ext ? { sireExternal: ext } : {}),
+        ...(damBreed ? { damBreed } : {}),
+        ...(sireBreed ? { sireBreed } : {}),
+        ...(suggestion
+          ? {
+              offspringBreedSuggestion: {
+                basis: suggestion.basis,
+                ...(suggestedBreed ? { breed: suggestedBreed } : {}),
+                ...(suggestedGroup ? { group: suggestedGroup } : {}),
+              },
+            }
+          : {}),
+        reproduction: type?.reproduction ?? 'live_birth',
+        ...(clutch ? { clutch } : {}),
         method: d.method,
         breedingDate: day(d.breedingDate)!,
         status: d.status,
@@ -276,11 +359,18 @@ export async function createBreeding(
   ctx: RecordContext,
   input: CreateBreedingInput,
 ): Promise<BreedingRecordDTO> {
-  requireFarmPermission(ctx.access, 'records.write');
+  requireFarmPermission(ctx.access, 'breeding.write');
   assertFarmActive(ctx.access);
   const computed = (await breedingSpec.validate!(ctx, input)) as Computed;
+  // Human-readable record code from an atomic per-farm counter (unique per farm by index).
+  const farm = await Farm.findOneAndUpdate(
+    { _id: ctx.access.farm._id },
+    { $inc: { breedingSeq: 1 } },
+    { returnDocument: 'after' },
+  );
   const doc = new BreedingRecord({
     farmId: ctx.access.farm._id,
+    code: `BR-${String(farm?.breedingSeq ?? 0).padStart(5, '0')}`,
     damId: input.damId,
     createdBy: ctx.actor.userId,
     status: 'bred',
@@ -299,6 +389,7 @@ export async function listBreeding(
     pageSize: number;
     damId?: string | undefined;
     sireId?: string | undefined;
+    animalId?: string | undefined;
     status?: BreedingStatus | undefined;
     from?: string | undefined;
     to?: string | undefined;
@@ -307,7 +398,7 @@ export async function listBreeding(
     order: 'asc' | 'desc';
   },
 ): Promise<Page<BreedingRecordDTO>> {
-  requireFarmPermission(access, 'records.read');
+  requireFarmPermission(access, 'breeding.read');
   const filter: Record<string, unknown> = {
     farmId: access.farm._id,
     ...dateRange('breedingDate', q.from, q.to),
@@ -315,6 +406,7 @@ export async function listBreeding(
   if (q.includeVoided === 'false') filter['voided'] = false;
   if (q.damId) filter['damId'] = q.damId;
   if (q.sireId) filter['sireId'] = q.sireId;
+  if (q.animalId) filter['$or'] = [{ damId: q.animalId }, { sireId: q.animalId }];
   if (q.status) filter['status'] = q.status;
   const sort = { [q.sortBy]: q.order === 'asc' ? 1 : -1, _id: -1 } as Record<string, 1 | -1>;
   const [rows, total] = await Promise.all([
@@ -340,7 +432,7 @@ async function loadOpen(
   id: Types.ObjectId,
   allowed: BreedingStatus[],
 ): Promise<BreedingRecordDoc> {
-  requireFarmPermission(ctx.access, 'records.write');
+  requireFarmPermission(ctx.access, 'breeding.write');
   assertFarmActive(ctx.access);
   const doc = await BreedingRecord.findOne({ _id: id, farmId: ctx.access.farm._id });
   if (!doc) throw notFound('Record not found');
@@ -443,6 +535,38 @@ export async function failBreeding(
   );
 }
 
+/** Merge newly known clutch counts into the stored ones; the merged set must stay consistent. */
+function mergeClutch(doc: BreedingRecordDoc, patch: ClutchInput) {
+  const before = clutchOf(doc.clutch) ?? {};
+  const merged = { ...before, ...patch };
+  const checked = clutchSchema.safeParse(merged);
+  if (!checked.success) {
+    const first = checked.error.issues[0]!;
+    throw invalid(`clutch.${first.path.join('.')}`, first.message);
+  }
+  const changes = (Object.keys(patch) as (keyof ClutchCounts)[])
+    .filter((k) => before[k] !== merged[k])
+    .map((k) => ({ field: `clutch.${k}`, from: before[k] ?? null, to: merged[k] ?? null }));
+  doc.clutch = merged;
+  return changes;
+}
+
+/**
+ * Egg-laying species: record clutch counts as they become known (laid → fertile → set → hatched). An event on the
+ * record (kept in its history), allowed until the record is voided.
+ */
+export async function recordClutch(
+  ctx: RecordContext,
+  id: Types.ObjectId,
+  input: { clutch: ClutchInput; notes?: string | undefined },
+): Promise<BreedingRecordDTO> {
+  const doc = await loadOpen(ctx, id, ['bred', 'pregnant', 'delivered', 'failed']);
+  const changes = mergeClutch(doc, input.clutch);
+  if (changes.length === 0) throw conflict('Nothing to change', 'NO_CHANGE');
+  if (input.notes) doc.notes = [doc.notes, input.notes].filter(Boolean).join('\n');
+  return finish(ctx, doc, changes, 'clutch_recorded');
+}
+
 // ---------------------------------------------------------------------------
 // Delivery and offspring
 // ---------------------------------------------------------------------------
@@ -518,6 +642,12 @@ async function applyOffspring(
   entries: OffspringEntry[],
 ): Promise<Applied[]> {
   const seenIds = new Set<string>(doc.delivery?.offspring.map((o) => String(o.animalId)) ?? []);
+  // Offspring inherit the rearing type when both recorded parents share one (e.g. fighting cock × fighting cock).
+  const sire = doc.sireId ? await Animal.findOne({ _id: doc.sireId, farmId: doc.farmId }) : null;
+  const rearingType =
+    dam.rearingType && (!doc.sireId || sire?.rearingType === dam.rearingType)
+      ? dam.rearingType
+      : null;
   const seenCodes = new Set<string>();
   const checked: { entry: OffspringEntry; animal?: AnimalDoc }[] = [];
   for (const [i, entry] of entries.entries()) {
@@ -575,6 +705,8 @@ async function applyOffspring(
           ...(entry.register.animalCode ? { animalCode: entry.register.animalCode } : {}),
           ...(entry.register.name ? { name: entry.register.name } : {}),
           ...(entry.register.breed ? { breed: entry.register.breed } : {}),
+          ...(entry.register.color ? { color: entry.register.color } : {}),
+          ...(rearingType ? { rearingType } : {}),
           sex: entry.register.sex,
           birthDate: day(date)!,
           birthDateEstimated: false,
@@ -634,12 +766,18 @@ export async function recordDelivery(
   await assertNoLaterBreedingWithin(doc, date);
   const dam = await damOf(doc);
   const previous = doc.status;
+  const clutchBefore = doc.clutch ? { ...clutchOf(doc.clutch) } : null;
+  const clutchChanges = input.clutch ? mergeClutch(doc, input.clutch) : [];
 
   // Claim: only one request can move this record to "delivered"; a concurrent one gets 409 before touching any animal.
   const claimed = await BreedingRecord.findOneAndUpdate(
     { _id: doc._id, status: { $in: ['bred', 'pregnant'] }, voided: false },
     {
-      $set: { status: 'delivered', delivery: { date, notes: input.notes ?? null, offspring: [] } },
+      $set: {
+        status: 'delivered',
+        delivery: { date, notes: input.notes ?? null, offspring: [] },
+        ...(clutchChanges.length ? { clutch: doc.clutch } : {}),
+      },
     },
     { returnDocument: 'after' },
   );
@@ -658,13 +796,14 @@ export async function recordDelivery(
         { field: 'status', from: previous, to: 'delivered' },
         { field: 'delivery.date', from: null, to: input.date },
         { field: 'delivery.offspring', from: null, to: applied.length },
+        ...clutchChanges,
       ],
       'delivered',
     );
   } catch (error) {
     await BreedingRecord.updateOne(
       { _id: doc._id },
-      { $set: { status: previous, delivery: null } },
+      { $set: { status: previous, delivery: null, clutch: clutchBefore } },
     );
     if ((error as { code?: unknown } | null)?.code === 11000)
       throw conflict(
@@ -708,16 +847,37 @@ export async function addOffspring(
 /** Ancestry is walked at most this deep (parent links are validated loop-free; this is a safety net). */
 const MAX_GENERATIONS = 25;
 
-const pedigreeAnimal = (a: AnimalDoc): PedigreeAnimal => ({
-  id: String(a._id),
-  animalCode: a.animalCode,
-  ...(a.name ? { name: a.name } : {}),
-  sex: a.sex,
-  ...(a.birthDate ? { birthDate: day(a.birthDate)! } : {}),
-  ...(a.breed ? { breed: a.breed } : {}),
-  currentStatus: a.currentStatus,
-  archived: Boolean(a.archivedAt),
-});
+/**
+ * Load every recorded ancestor of `starts` (same farm only) into `known`, one query per generation.
+ * Returns how many ancestor generations were found above the first start.
+ */
+async function loadAncestry(
+  known: Map<string, AnimalDoc>,
+  starts: AnimalDoc[],
+  farmId: Types.ObjectId,
+): Promise<number> {
+  let frontier = starts;
+  let generation = 0;
+  while (frontier.length > 0 && generation < MAX_GENERATIONS) {
+    const parentIds = [
+      ...new Set(
+        frontier
+          .flatMap((a) => [a.sireId, a.damId])
+          .filter(Boolean)
+          .map(String),
+      ),
+    ];
+    const missing = parentIds.filter((id) => !known.has(id));
+    if (missing.length)
+      for (const a of await Animal.find({ _id: { $in: missing }, farmId }))
+        known.set(String(a._id), a);
+    const next = parentIds.map((id) => known.get(id)).filter((a): a is AnimalDoc => Boolean(a));
+    if (next.length === 0) break;
+    generation += 1;
+    frontier = next;
+  }
+  return generation;
+}
 
 export async function lineageFor(
   access: FarmAccess,
@@ -736,26 +896,59 @@ export async function lineageFor(
     animalCode: a.animalCode,
     ...(a.name ? { name: a.name } : {}),
   });
-  // Ancestors, one query per generation (same farm only), cached by id.
   const known = new Map<string, AnimalDoc>([[String(animal._id), animal]]);
-  let frontier: AnimalDoc[] = [animal];
-  let generation = 0;
-  while (frontier.length > 0 && generation < MAX_GENERATIONS) {
-    const parentIds = frontier
-      .flatMap((a) => [a.sireId, a.damId])
-      .filter(Boolean)
-      .map(String);
-    const missing = [...new Set(parentIds)].filter((id) => !known.has(id));
-    if (missing.length)
-      for (const a of await Animal.find({ _id: { $in: missing }, farmId: animal.farmId }))
-        known.set(String(a._id), a);
-    const next = [...new Set(parentIds)]
-      .map((id) => known.get(id))
-      .filter((a): a is AnimalDoc => Boolean(a));
-    if (next.length === 0) break;
-    generation += 1;
-    frontier = next;
-  }
+  const generation = await loadAncestry(known, [animal], animal.farmId);
+
+  const parentFilter = [
+    ...(animal.sireId ? [{ sireId: animal.sireId }] : []),
+    ...(animal.damId ? [{ damId: animal.damId }] : []),
+  ];
+  const [children, siblings, type] = await Promise.all([
+    Animal.find({
+      farmId: animal.farmId,
+      $or: [{ sireId: animal._id }, { damId: animal._id }],
+    }).sort({ birthDate: -1, animalCode: 1 }),
+    parentFilter.length
+      ? Animal.find({ farmId: animal.farmId, _id: { $ne: animal._id }, $or: parentFilter }).sort({
+          birthDate: 1,
+          animalCode: 1,
+        })
+      : Promise.resolve([] as AnimalDoc[]),
+    AnimalType.findById(animal.animalTypeId).select('breeds breedGroups'),
+  ]);
+  // Offspring and siblings: their other parents (and ancestry) are needed for their F-generation.
+  for (const a of [...children, ...siblings]) known.set(String(a._id), a);
+  await loadAncestry(known, [...children, ...siblings], animal.farmId);
+
+  const memo = new Map<string, number | null>();
+  const fGen = (id: string) =>
+    filialGeneration(
+      id,
+      (x) => {
+        const a = known.get(x);
+        return a
+          ? { sireId: a.sireId ? String(a.sireId) : null, damId: a.damId ? String(a.damId) : null }
+          : undefined;
+      },
+      memo,
+    );
+  const pedigreeAnimal = (a: AnimalDoc): PedigreeAnimal => {
+    const breed = breedRef(type ?? undefined, a.breed);
+    return {
+      id: String(a._id),
+      animalCode: a.animalCode,
+      ...(a.name ? { name: a.name } : {}),
+      sex: a.sex,
+      ...(a.birthDate ? { birthDate: day(a.birthDate)! } : {}),
+      ...(a.breed ? { breed: a.breed } : {}),
+      ...(breed && breed.name !== breed.key ? { breedName: breed.name } : {}),
+      ...(breed?.nameTh ? { breedNameTh: breed.nameTh } : {}),
+      ...(breed?.group ? { breedGroup: breed.group } : {}),
+      filialGeneration: fGen(String(a._id)),
+      currentStatus: a.currentStatus,
+      archived: Boolean(a.archivedAt),
+    };
+  };
   const tree = (a: AnimalDoc, level: number): PedigreeNode => {
     const s = level < generations && a.sireId ? known.get(String(a.sireId)) : undefined;
     const d = level < generations && a.damId ? known.get(String(a.damId)) : undefined;
@@ -767,22 +960,6 @@ export async function lineageFor(
   };
   const sire = animal.sireId ? known.get(String(animal.sireId)) : undefined;
   const dam = animal.damId ? known.get(String(animal.damId)) : undefined;
-  const parentFilter = [
-    ...(animal.sireId ? [{ sireId: animal.sireId }] : []),
-    ...(animal.damId ? [{ damId: animal.damId }] : []),
-  ];
-  const [children, siblings] = await Promise.all([
-    Animal.find({
-      farmId: animal.farmId,
-      $or: [{ sireId: animal._id }, { damId: animal._id }],
-    }).sort({ birthDate: -1, animalCode: 1 }),
-    parentFilter.length
-      ? Animal.find({ farmId: animal.farmId, _id: { $ne: animal._id }, $or: parentFilter }).sort({
-          birthDate: 1,
-          animalCode: 1,
-        })
-      : Promise.resolve([] as AnimalDoc[]),
-  ]);
   const same = (a: Types.ObjectId | null | undefined, b: Types.ObjectId | null | undefined) =>
     Boolean(a && b && String(a) === String(b));
   return {
@@ -794,6 +971,7 @@ export async function lineageFor(
       sex: c.sex,
       ...(c.birthDate ? { birthDate: day(c.birthDate)! } : {}),
       role: String(c.sireId) === String(animal._id) ? ('sire' as const) : ('dam' as const),
+      filialGeneration: fGen(String(c._id)),
     })),
     pedigree: tree(animal, 0),
     generations,

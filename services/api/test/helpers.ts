@@ -16,6 +16,7 @@ import { MockPaymentProvider, createPaymentProvider } from '../src/modules/finan
 import { createVideoProvider, type VideoProvider } from '../src/modules/media/provider';
 import { syncRbac } from '../src/rbac/seed';
 import { InMemoryNotifier } from '../src/services/notifier';
+import { thaiToday } from '@farmplus/validation';
 
 export const PASSWORD = 'correct horse battery staple';
 export const WEBHOOK_SECRET = 'test-webhook-secret-1234567890';
@@ -236,30 +237,52 @@ export async function typeIdOf(app: Express, session: Session, key = 'buffalo'):
   return type.id;
 }
 
-/** Add `user` to `farmId` through the real API (as the owner). */
+/**
+ * Add `user` to `farmId` through the real API: the owner invites, the person accepts (farm owners cannot add people
+ * directly). Returns the new membership id.
+ */
 export async function addFarmMember(
   app: Express,
   owner: Session,
   farmId: string,
   user: Session,
   role: 'manager' | 'worker' | 'viewer',
+  permissions?: string[],
 ): Promise<string> {
-  const res = await request(app)
-    .post(`/api/v1/farms/${farmId}/members`)
+  const invite = await request(app)
+    .post(`/api/v1/farms/${farmId}/invitations`)
     .set(owner.auth)
-    .send({ email: user.email, role });
-  if (res.status !== 201)
-    throw new Error(`add member failed: ${res.status} ${JSON.stringify(res.body)}`);
-  return res.body.member.id;
+    .send({ email: user.email, role, ...(permissions ? { permissions } : {}) });
+  if (invite.status !== 201)
+    throw new Error(`invite failed: ${invite.status} ${JSON.stringify(invite.body)}`);
+  const accept = await request(app)
+    .post(`/api/v1/farm-invitations/${invite.body.invitation.id}/accept`)
+    .set(user.auth);
+  if (accept.status !== 200)
+    throw new Error(`accept failed: ${accept.status} ${JSON.stringify(accept.body)}`);
+  const members = await request(app).get(`/api/v1/farms/${farmId}/members`).set(owner.auth);
+  const member = (members.body.members as { id: string; userId: string }[]).find(
+    (m) => m.userId === user.id,
+  );
+  if (!member) throw new Error('member not found after accepting the invitation');
+  return member.id;
 }
 
 // ---------------------------------------------------------------------------
 // Part 08 helpers
 // ---------------------------------------------------------------------------
-export const daysAgo = (n: number): string =>
-  new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
-export const daysAhead = (n: number): string =>
-  new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+/**
+ * Calendar days counted from TODAY IN THAILAND, the day the API validates against (`thaiToday`). Counting from the UTC
+ * date was off by one between 17:00 and 24:00 UTC: "tomorrow" in UTC was already today in Bangkok, so future-date checks
+ * accepted it and those tests failed whenever CI ran at night Thai time.
+ */
+const thaiDayOffset = (n: number): string => {
+  const day = new Date(`${thaiToday()}T00:00:00Z`);
+  day.setUTCDate(day.getUTCDate() + n);
+  return day.toISOString().slice(0, 10);
+};
+export const daysAgo = (n: number): string => thaiDayOffset(-n);
+export const daysAhead = (n: number): string => thaiDayOffset(n);
 
 export interface FarmSetup {
   owner: Session;
