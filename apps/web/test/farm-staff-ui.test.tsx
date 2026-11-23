@@ -128,7 +128,8 @@ describe('FarmStaffPage (owner)', () => {
     const pending = within(
       await screen.findByRole('table', { name: 'Invitations and join requests' }),
     );
-    expect(pending.getAllByText('Join request').length).toBeGreaterThan(0);
+    // The table can render before its rows arrive (slow CI): wait for the row, do not assume it.
+    expect((await pending.findAllByText('Join request')).length).toBeGreaterThan(0);
 
     // Invite by e-mail as a worker
     fireEvent.change(screen.getByLabelText(/Their e-mail/), {
