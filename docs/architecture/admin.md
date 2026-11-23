@@ -56,5 +56,7 @@ when they do they must expose their own audited workflows and be mounted in `adm
 - The UI hides what you cannot use, but **only the API is the control** (every endpoint re-checks).
 - Refresh token in `sessionStorage` is readable by XSS; an httpOnly cookie is the stronger follow-up.
 - Existing databases: users created before this Part lack the new status fields until saved; filtering by them only matches new/updated users (no migration script was added).
-- Public registration submission has endpoints but no public UI (public UI intentionally untouched).
+- Applicants submit and follow **seller** and **identity** registrations on the web at `/farms/seller` (linked from the
+  account menu, the farm menu and the "approved sellers only" notices on the listing/product forms). `farm_owner`
+  registrations still have no applicant UI.
 - No automated visual-regression tests; UI was verified with the component tests plus a scripted real-browser run (see report).

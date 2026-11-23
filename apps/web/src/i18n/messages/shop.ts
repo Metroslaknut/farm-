@@ -237,7 +237,7 @@ export default defineMessages({
     'form.save': 'บันทึกการเปลี่ยนแปลง',
     'form.create': 'สร้างสินค้า',
     'form.sellerRequired':
-      'เฉพาะผู้ขายที่ได้รับอนุมัติเท่านั้นที่ขายสินค้าได้ และบัญชีของคุณยังไม่ได้รับอนุมัติเป็นผู้ขาย จึงยังสร้างสินค้านี้ไม่ได้ กรุณาติดต่อผู้ดูแลแพลตฟอร์มเพื่อสมัครเป็นผู้ขาย',
+      'เฉพาะผู้ขายที่ได้รับอนุมัติเท่านั้นที่ขายสินค้าได้ และบัญชีของคุณยังไม่ได้รับอนุมัติเป็นผู้ขาย จึงยังสร้างสินค้านี้ไม่ได้',
     'history.title': 'ประวัติ',
     'history.aria': 'ประวัติสินค้า',
     'history.system': 'ระบบ',
@@ -504,7 +504,7 @@ export default defineMessages({
     'form.save': 'Save changes',
     'form.create': 'Create product',
     'form.sellerRequired':
-      'Only approved sellers can sell products, and your account has not been approved as a seller yet, so this product cannot be created. Please contact the platform team to register as a seller.',
+      'Only approved sellers can sell products, and your account has not been approved as a seller yet, so this product cannot be created.',
     'history.title': 'History',
     'history.aria': 'Product history',
     'history.system': 'System',
