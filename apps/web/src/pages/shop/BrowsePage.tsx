@@ -13,6 +13,7 @@ import { Alert, Button, Checkbox, Select, TextField } from '../../components/ui'
 import { useAsync } from '../../lib/useAsync';
 import { useUrlSeed } from '../../lib/useUrlSeed';
 import { ProductCard, categoryLabel, useShopT, ViewToggle, type View } from './common';
+import { useLocale } from '../../i18n';
 import './shop-browse.css';
 
 /** Upper bound of the price slider, in baht. Adjust to your catalogue. */
@@ -48,6 +49,7 @@ const fromUrl = (search: URLSearchParams): Filters => ({
 /** `/shop` — sidebar filters + result bar + product grid. */
 export default function ShopBrowsePage() {
   const t = useShopT();
+  const [locale] = useLocale();
   const [search] = useSearchParams();
   const [draft, setDraft] = useState<Filters>(() => fromUrl(search));
   const [applied, setApplied] = useState<Filters>(() => fromUrl(search));
@@ -177,7 +179,7 @@ export default function ShopBrowsePage() {
                 .map((c) => (
                   <Checkbox
                     key={c.key}
-                    label={categoryLabel(t, c.key, c.name)}
+                    label={categoryLabel(c, locale)}
                     checked={applied.category === c.key}
                     onChange={(e) => applyNow({ category: e.target.checked ? c.key : '' })}
                   />

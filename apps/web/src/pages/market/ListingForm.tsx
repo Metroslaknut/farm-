@@ -24,6 +24,7 @@ import { Alert, Button, Card, Select, TextField, Textarea } from '../../componen
 import { useLocale } from '../../i18n';
 import { errorMessage } from '../../lib/format';
 import { useCanSell } from '../../lib/sellEligibility';
+import { SellerRequiredNotice } from '../farms/SellerRequiredNotice';
 import { typeName } from '../farms/labels';
 import { localizeErrors, sexLabel, useAnimalLabel, useMarketT } from './common';
 
@@ -191,7 +192,7 @@ export function ListingForm({
       noValidate
       aria-label={editing ? t('form.editAria') : t('form.newAria')}
     >
-      {!canSell && <Alert tone="warning">{t('form.sellerRequired')}</Alert>}
+      {!canSell && <SellerRequiredNotice message={t('form.sellerRequired')} />}
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
       <Card title={t('form.animal')} headingLevel={2} style={{ marginBottom: 'var(--ds-space-4)' }}>
         {editing ? (

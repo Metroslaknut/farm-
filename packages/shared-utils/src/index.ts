@@ -40,6 +40,17 @@ export * from './commission';
 export * from './products';
 export * from './breeding';
 
+/**
+ * A catalog name in the given language: the Thai name when the locale is Thai and one is set, otherwise `name`.
+ * Shared by web and mobile (product categories, …).
+ */
+export function localName(
+  item: { name: string; nameTh?: string | null | undefined },
+  locale: string,
+): string {
+  return (locale === 'th' && item.nameTh) || item.name;
+}
+
 /** Satang → "฿50,000.00". Money is always integer satang; this only formats. */
 export function formatBaht(minor: number): string {
   const negative = minor < 0;

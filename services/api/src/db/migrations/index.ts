@@ -109,4 +109,37 @@ export const MIGRATIONS: Migration[] = [
       log(`reproduction=egg set on ${egg.modifiedCount} type(s) that had none`);
     },
   },
+  {
+    id: '0003-product-category-name-th',
+    description:
+      'Fills the new optional product_categories.nameTh for the 5 built-in categories (seed keys), only where it is ' +
+      'empty and the English name is still the seeded one. Categories an administrator created or renamed are untouched.',
+    async up({ db, log }) {
+      let filled = 0;
+      for (const c of CATEGORY_NAMES_TH_0003) {
+        const res = await db.collection('product_categories').updateOne(
+          {
+            key: c.key,
+            name: c.name,
+            $or: [{ nameTh: { $exists: false } }, { nameTh: null }, { nameTh: '' }],
+          },
+          { $set: { nameTh: c.nameTh } },
+        );
+        filled += res.modifiedCount;
+      }
+      log(`nameTh set on ${filled} built-in categor${filled === 1 ? 'y' : 'ies'}`);
+    },
+  },
 ];
+
+/**
+ * Frozen copy for migration 0003 (an applied migration must not change behaviour when the seed is edited later).
+ * Matches `SEED_CATEGORIES` in modules/products/compliance.ts at the time of writing (a test checks it).
+ */
+export const CATEGORY_NAMES_TH_0003 = [
+  { key: 'feed', name: 'Animal feed', nameTh: 'อาหารสัตว์' },
+  { key: 'supplements', name: 'Feed supplements & minerals', nameTh: 'อาหารเสริมและแร่ธาตุ' },
+  { key: 'equipment', name: 'Farm equipment', nameTh: 'อุปกรณ์ฟาร์ม' },
+  { key: 'medicines', name: 'Veterinary medicines', nameTh: 'ยาสัตว์' },
+  { key: 'medicated_feed', name: 'Medicated feed', nameTh: 'อาหารสัตว์ผสมยา' },
+] as const;

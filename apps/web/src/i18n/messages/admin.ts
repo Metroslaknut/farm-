@@ -473,6 +473,13 @@ export default defineMessages({
     'categories.closed': 'ปิดขาย',
     'categories.openSales': 'เปิดการขาย',
     'categories.closeSales': 'ปิดการขาย',
+    'categories.editNames': 'แก้ไขชื่อ',
+    'categories.namesTitle': 'ชื่อหมวดสินค้า {key}',
+    'categories.namesText':
+      'ผู้ซื้อที่ใช้ภาษาไทยจะเห็นชื่อภาษาไทย ถ้าเว้นว่างจะแสดงชื่อภาษาอังกฤษแทน',
+    'categories.nameEn': 'ชื่อภาษาอังกฤษ',
+    'categories.nameTh': 'ชื่อภาษาไทย',
+    'categories.saveNames': 'บันทึกชื่อ',
     'categories.openTitle': 'เปิดการขาย {name}',
     'categories.closeTitle': 'ปิดการขาย {name}',
     'categories.openText': 'ผู้ขายจะลงขายและผู้ซื้อจะสั่งซื้อสินค้าในหมวดหมู่นี้ได้',
@@ -1349,6 +1356,13 @@ export default defineMessages({
     'categories.closed': 'Closed',
     'categories.openSales': 'Open sales',
     'categories.closeSales': 'Close sales',
+    'categories.editNames': 'Edit names',
+    'categories.namesTitle': 'Names of category {key}',
+    'categories.namesText':
+      'Buyers using Thai see the Thai name; leave it empty to show the English name instead.',
+    'categories.nameEn': 'English name',
+    'categories.nameTh': 'Thai name',
+    'categories.saveNames': 'Save names',
     'categories.openTitle': 'Open sales of {name}',
     'categories.closeTitle': 'Close sales of {name}',
     'categories.openText':

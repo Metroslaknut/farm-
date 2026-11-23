@@ -6,9 +6,9 @@ import type {
   ProductDTO,
   ProductStatus,
 } from '@farmplus/shared-types';
-import { formatBaht } from '@farmplus/shared-utils';
+import { formatBaht, localName } from '@farmplus/shared-utils';
 import { Badge, type Tone } from '../../components/ui';
-import { useT, type Translate } from '../../i18n';
+import { useLocale, useT, type Translate } from '../../i18n';
 
 export const PRODUCT_TONE: Record<ProductStatus, Tone> = {
   DRAFT: 'neutral',
@@ -26,23 +26,17 @@ export const useShopT = (): ShopT => useT('shop');
 
 export const productStatusLabel = (t: ShopT, status: ProductStatus): string =>
   t(`status.${status}`);
-/** Built-in product category keys that have a name in both languages (`category.<key>`). */
-const KNOWN_CATEGORIES = [
-  'feed',
-  'supplements',
-  'equipment',
-  'medicines',
-  'medicated_feed',
-] as const;
+/** A product category's name in the current language (`nameTh` when Thai and set, else `name`). */
+export const categoryLabel = (
+  category: { name: string; nameTh?: string | null | undefined },
+  locale: string,
+): string => localName(category, locale);
 
-/**
- * A product category's name in the current language. Categories store one (English) name, so the built-in ones are
- * translated by their stable key; a category an admin added later shows its stored name.
- */
-export const categoryLabel = (t: ShopT, key: string | undefined, name: string): string =>
-  (KNOWN_CATEGORIES as readonly string[]).includes(key ?? '')
-    ? t(`category.${key as (typeof KNOWN_CATEGORIES)[number]}`)
-    : name;
+/** The category name a product carries (`categoryName` / `categoryNameTh`), in the current language. */
+export const productCategoryLabel = (
+  product: { categoryName: string; categoryNameTh?: string | undefined },
+  locale: string,
+): string => localName({ name: product.categoryName, nameTh: product.categoryNameTh }, locale);
 export const deliveryLabel = (t: ShopT, option: DeliveryOption): string => t(`delivery.${option}`);
 
 export function ProductStatusBadge({ status }: { status: ProductStatus }): ReactNode {
@@ -92,6 +86,7 @@ export function Stars({ average, count }: { average: number | null; count: numbe
 
 export function ProductCard({ product, to }: { product: ProductDTO; to: string }) {
   const t = useShopT();
+  const [locale] = useLocale();
   const photo = product.photos[0];
   return (
     <article
@@ -127,11 +122,7 @@ export function ProductCard({ product, to }: { product: ProductDTO; to: string }
         <Price product={product} />
       </p>
       <p className="ds-field__hint" style={{ margin: 0 }}>
-        {[
-          categoryLabel(t, product.categoryKey, product.categoryName),
-          product.brand,
-          product.farmName,
-        ]
+        {[productCategoryLabel(product, locale), product.brand, product.farmName]
           .filter(Boolean)
           .join(' · ')}
       </p>

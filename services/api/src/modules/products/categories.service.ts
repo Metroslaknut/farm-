@@ -25,6 +25,7 @@ export async function upsertCategory(
   key: string,
   input: {
     name: string;
+    nameTh?: string | null | undefined;
     description?: string | null | undefined;
     parentKey?: string | null | undefined;
     regulation?: ProductRegulation | undefined;
@@ -45,6 +46,7 @@ export async function upsertCategory(
     const created = await ProductCategory.create({
       key,
       name: input.name,
+      ...(input.nameTh ? { nameTh: input.nameTh } : {}),
       description: input.description ?? null,
       parentKey: input.parentKey ?? null,
       regulation: input.regulation ?? 'none',
@@ -66,6 +68,7 @@ export async function upsertCategory(
     {
       $set: {
         name: input.name,
+        ...(input.nameTh !== undefined ? { nameTh: input.nameTh } : {}),
         ...(input.description !== undefined ? { description: input.description } : {}),
         ...(input.parentKey !== undefined ? { parentKey: input.parentKey } : {}),
         ...(input.regulation !== undefined ? { regulation: input.regulation } : {}),

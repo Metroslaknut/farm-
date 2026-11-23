@@ -268,6 +268,22 @@ function Categories() {
   );
   const [pending, setPending] = useState<{ cat: ProductCategoryDTO; enable: boolean } | null>(null);
   const [reference, setReference] = useState('');
+  // Names (English + Thai) of one category; the API keeps everything else as it is.
+  const [naming, setNaming] = useState<ProductCategoryDTO | null>(null);
+  const [nameEn, setNameEn] = useState('');
+  const [nameTh, setNameTh] = useState('');
+  const openNames = (c: ProductCategoryDTO) => {
+    setNameEn(c.name);
+    setNameTh(c.nameTh ?? '');
+    setNaming(c);
+  };
+  const saveNames = async (reason: string) => {
+    if (!naming) return;
+    await api.request('PUT', `/shop/admin/categories/${naming.key}`, {
+      body: { name: nameEn.trim(), nameTh: nameTh.trim() || null, reason },
+    });
+    setVersion((v) => v + 1);
+  };
 
   const act = async (reason: string, typed: string) => {
     if (!pending) return;
@@ -309,7 +325,8 @@ function Categories() {
             {cats.data?.categories.map((c) => (
               <tr key={c.key}>
                 <td>
-                  {c.name} <small>({c.key})</small>
+                  {c.name}
+                  {c.nameTh && <> · {c.nameTh}</>} <small>({c.key})</small>
                 </td>
                 <td>{cap(label('regulation', c.regulation))}</td>
                 <td>
@@ -325,6 +342,9 @@ function Categories() {
                     : '—'}
                 </td>
                 <td>
+                  <button type="button" className="adm-btn" onClick={() => openNames(c)}>
+                    {t('categories.editNames')}
+                  </button>{' '}
                   {c.salesEnabled ? (
                     <button
                       type="button"
@@ -378,6 +398,27 @@ function Categories() {
         tone="danger"
         onConfirm={act}
         onClose={() => setPending(null)}
+      />
+      <ConfirmActionDialog
+        open={naming !== null}
+        title={naming ? t('categories.namesTitle', { key: naming.key }) : ''}
+        description={
+          <>
+            <p>{t('categories.namesText')}</p>
+            <label className="adm-field">
+              <span>{t('categories.nameEn')}</span>
+              <input value={nameEn} maxLength={80} onChange={(e) => setNameEn(e.target.value)} />
+            </label>
+            <label className="adm-field">
+              <span>{t('categories.nameTh')}</span>
+              <input value={nameTh} maxLength={80} onChange={(e) => setNameTh(e.target.value)} />
+            </label>
+          </>
+        }
+        requireReason
+        confirmLabel={t('categories.saveNames')}
+        onConfirm={saveNames}
+        onClose={() => setNaming(null)}
       />
     </section>
   );
