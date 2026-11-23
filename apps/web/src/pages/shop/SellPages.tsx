@@ -33,6 +33,7 @@ import { useAsync } from '../../lib/useAsync';
 import {
   ProductStatusBadge,
   categoryLabel,
+  productCategoryLabel,
   productStatusLabel,
   useShopT,
   type ShopT,
@@ -99,6 +100,7 @@ export function SellFarmsPage() {
 export function SellProductsPage() {
   const { farmId = '' } = useParams();
   const t = useShopT();
+  const [locale] = useLocale();
   const [status, setStatus] = useState('');
   const list = useAsync(
     (signal) =>
@@ -144,9 +146,7 @@ export function SellProductsPage() {
             <tr key={p.id}>
               <td>
                 <Link to={`/shop/sell/${farmId}/${p.id}`}>{p.title}</Link>
-                <div className="ds-field__hint">
-                  {categoryLabel(t, p.categoryKey, p.categoryName)}
-                </div>
+                <div className="ds-field__hint">{productCategoryLabel(p, locale)}</div>
               </td>
               <td>{formatBaht(p.effectivePriceMinor)}</td>
               <td>
@@ -515,7 +515,7 @@ function Editor({
               <option value="">{t('form.choose')}</option>
               {categories.map((c) => (
                 <option key={c.key} value={c.key} disabled={!c.salesEnabled}>
-                  {categoryLabel(t, c.key, c.name)}
+                  {categoryLabel(c, locale)}
                   {!c.salesEnabled ? t('form.notForSale') : ''}
                 </option>
               ))}

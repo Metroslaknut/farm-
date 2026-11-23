@@ -74,6 +74,8 @@ export type ProductRegulation = (typeof PRODUCT_REGULATIONS)[number];
 export interface ProductCategoryDTO {
   key: string;
   name: string;
+  /** Thai name; absent when none was set (show `name`). */
+  nameTh?: string;
   description: string | null;
   parentKey: string | null;
   regulation: ProductRegulation;
@@ -114,6 +116,8 @@ export interface ProductDTO {
   seller: PublicAuthor;
   categoryKey: string;
   categoryName: string;
+  /** The category's Thai name, when it has one. */
+  categoryNameTh?: string;
   title: string;
   description: string | null;
   brand: string | null;

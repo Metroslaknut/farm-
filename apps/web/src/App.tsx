@@ -2,7 +2,7 @@ import { useContext, useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { CursorPage, ListingDTO, Page, PostDTO, ProductDTO } from '@farmplus/shared-types';
 import { formatDate } from '@farmplus/i18n';
-import { formatBaht } from '@farmplus/shared-utils';
+import { formatBaht, localName } from '@farmplus/shared-utils';
 import { api } from './api';
 import { shopCategories } from './lib/shopCategories';
 import { AuthContext } from './auth/AuthContext';
@@ -235,13 +235,14 @@ function HeroSlider() {
 // ---------------------------------------------------------------------------
 function Categories({ signedIn }: { signedIn: boolean }) {
   const t = useT('home');
+  const [locale] = useLocale();
   const cats = useAsync(() => (signedIn ? shopCategories() : Promise.resolve(null)), [signedIn]);
   const tiles =
     cats.data?.categories
       .filter((c) => c.salesEnabled)
       .map((c) => ({
         to: `/shop?category=${encodeURIComponent(c.key)}`,
-        label: c.name,
+        label: localName(c, locale),
         icon: categoryIcon(c.key),
       })) ?? areas(t);
   return (

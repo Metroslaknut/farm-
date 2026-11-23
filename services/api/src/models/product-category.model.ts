@@ -5,6 +5,8 @@ export interface ProductCategoryAttrs {
   _id: Types.ObjectId;
   key: string;
   name: string;
+  /** Thai display name (optional; clients fall back to `name`). */
+  nameTh?: string | null;
   description?: string | null;
   parentKey?: string | null;
   regulation: ProductRegulation;
@@ -22,6 +24,7 @@ const schema = new Schema<ProductCategoryAttrs>(
   {
     key: { type: String, required: true },
     name: { type: String, required: true },
+    nameTh: { type: String, default: undefined },
     description: { type: String, default: null },
     parentKey: { type: String, default: null },
     regulation: { type: String, enum: PRODUCT_REGULATIONS, default: 'none' },

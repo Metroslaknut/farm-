@@ -9,7 +9,14 @@ import { formatDate, validationMessage } from '@farmplus/i18n';
 import { useLocale } from '../../i18n';
 import { errorMessage } from '../../lib/format';
 import { useAsync } from '../../lib/useAsync';
-import { Price, ProductStatusBadge, Stars, categoryLabel, deliveryLabel, useShopT } from './common';
+import {
+  Price,
+  ProductStatusBadge,
+  Stars,
+  deliveryLabel,
+  productCategoryLabel,
+  useShopT,
+} from './common';
 
 type ReviewPage = CursorPage<ProductReviewDTO> & {
   eligibility: { eligible: boolean; reason?: string; reviewed: boolean };
@@ -119,7 +126,7 @@ export default function ProductPage() {
               ))}
             </p>
             <p className="ds-field__hint">
-              {categoryLabel(t, p.categoryKey, p.categoryName)}
+              {productCategoryLabel(p, locale)}
               {p.brand ? ` · ${p.brand}` : ''}
               {p.sku ? ` · ${t('product.sku', { sku: p.sku })}` : ''} ·{' '}
               {t('product.soldBy', { farm: p.farmName })}
