@@ -162,7 +162,8 @@ test('chicken breeding: parents’ breeds and the suggested breed show at once; 
   );
   expect(chicks).toHaveLength(3);
   await page.goto(`/farms/${farmId}/animals/${chicks[0]}/lineage`);
-  await expect(page.getByText('F1').first()).toBeVisible();
+  // The first "F1" in the DOM can be a hidden copy (responsive table / select option) while the page settles.
+  await expect(page.getByText('F1').locator('visible=true').first()).toBeVisible();
   await expect(page.getByRole('link', { name: /COCK-1/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /HEN-1/ })).toBeVisible();
   await expect(page.getByText(/Burmese \+ Thai/).first()).toBeVisible();

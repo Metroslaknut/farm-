@@ -22,3 +22,10 @@
 - ESM everywhere, `strict` TypeScript with `noUncheckedIndexedAccess`, `verbatimModuleSyntax`.
 - Error responses use `{ "error": { "code", "message" } }` (`ApiErrorResponse`).
 - New env vars: add to the Zod schema in `packages/config/src/server.ts` **and** `.env.example`.
+- **"Today" is the Thai calendar day** (Asia/Bangkok, UTC+7) everywhere — between 00:00 and 07:00 the UTC date is still
+  yesterday. Helpers in `packages/validation/src/dates.ts`: `thaiToday()` (`YYYY-MM-DD`), `thaiDayStart()` (that day at
+  00:00 UTC, to compare with date-only fields such as `weighedOn` and to count whole days), `thaiDayBegins(day)` (the
+  instant a Thai day starts, to filter timestamps such as `createdAt`) and `thaiYymmdd()`. Date-only fields stay stored
+  at 00:00 UTC. Never use `new Date().toISOString().slice(0, 10)` or `setUTCHours(0)` for "today".
+- `pnpm --filter @farmplus/api test:thai-night [HH:MM]` runs the API suite with the clock at that Bangkok time (default
+  00:30); `test/thai-dates.test.ts` covers the date rules at 00:30 and 23:30.

@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
+    "test:thai-night": "node test/support/thai-night.mjs",
     "admin:create": "tsx src/scripts/create-super-admin.ts",
     "media:cleanup": "tsx src/scripts/cleanup-media.ts",
     "db": "tsx src/scripts/db.ts",

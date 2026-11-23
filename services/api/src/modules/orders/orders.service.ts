@@ -14,6 +14,7 @@ import {
   type ShipmentDTO,
   type ShipmentStatus,
 } from '@farmplus/shared-types';
+import { thaiYymmdd } from '@farmplus/validation';
 import type { Actor } from '../../context';
 import { HttpError, notFound } from '../../lib/errors';
 import {
@@ -326,11 +327,9 @@ async function releaseAnimal(order: OrderDoc, reason: string): Promise<void> {
     );
 }
 
-export const newOrderNo = (): string => {
-  const d = new Date();
-  const ymd = `${String(d.getUTCFullYear()).slice(2)}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
-  return `FP-${ymd}-${randomBytes(4).toString('hex').toUpperCase()}`;
-};
+/** `FP-<yymmdd on the Thai calendar>-<random>`: the suffix is random, so the day in it is only for people. */
+export const newOrderNo = (): string =>
+  `FP-${thaiYymmdd()}-${randomBytes(4).toString('hex').toUpperCase()}`;
 
 // ---------------------------------------------------------------------------
 // Create (from an accepted negotiation: the Part 11 hand-off)

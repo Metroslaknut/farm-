@@ -1,9 +1,8 @@
 import { randomBytes } from 'node:crypto';
+import { thaiYymmdd } from '@farmplus/validation';
 
-const stamp = () => {
-  const d = new Date();
-  return `${String(d.getUTCFullYear()).slice(2)}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`;
-};
+/** yymmdd of the Thai calendar day (the random suffix keeps numbers unique). */
+const stamp = () => thaiYymmdd();
 const number = (prefix: string) =>
   `${prefix}-${stamp()}-${randomBytes(4).toString('hex').toUpperCase()}`;
 export const newRefundNo = () => number('RF');

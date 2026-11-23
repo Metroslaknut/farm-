@@ -7,6 +7,7 @@ import {
   type FarmDashboardSection,
   type Granularity,
 } from '@farmplus/shared-types';
+import { thaiDayStart } from '@farmplus/validation';
 import { HttpError } from '../../lib/errors';
 import {
   AiAssessment,
@@ -274,7 +275,8 @@ async function growth(c: FarmCtx): Promise<DashboardSection> {
 async function health(c: FarmCtx): Promise<DashboardSection> {
   const ids = await animalIdsOfType(c);
   const base = { farmId: c.farmId, voided: false, ...(ids ? { animalId: { $in: ids } } : {}) };
-  const today = new Date(c.now.getTime());
+  // Date-only fields (withdrawal end, next due) compare with the Thai calendar day: something due today stays "due".
+  const today = thaiDayStart(c.now.getTime());
   const [byType, issueAnimals, running, due, series] = await Promise.all([
     HealthRecord.aggregate<{ _id: string; n: number }>([
       { $match: { ...base, ...inRange('recordedOn', c.range) } },

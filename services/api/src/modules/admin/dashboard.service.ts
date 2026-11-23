@@ -4,6 +4,7 @@ import {
   type RegistrationStatus,
 } from '@farmplus/shared-types';
 import type { Actor } from '../../context';
+import { thaiDayBegins, thaiToday } from '@farmplus/validation';
 import { AuditLog, Registration, User } from '../../models';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -25,12 +26,15 @@ export async function buildDashboard(actor: Actor): Promise<DashboardResponse> {
         User.aggregate<{ _id: string; count: number }>([
           {
             $match: {
-              createdAt: { $gte: new Date(new Date(now - 13 * DAY).setUTCHours(0, 0, 0, 0)) },
+              // The last 14 Thai calendar days, from midnight in Bangkok.
+              createdAt: { $gte: thaiDayBegins(thaiToday(now - 13 * DAY)) },
             },
           },
           {
             $group: {
-              _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'UTC' } },
+              _id: {
+                $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: 'Asia/Bangkok' },
+              },
               count: { $sum: 1 },
             },
           },
@@ -39,7 +43,7 @@ export async function buildDashboard(actor: Actor): Promise<DashboardResponse> {
     response.users = { total, active, suspended, pendingVerification, newLast7Days };
     const byDate = new Map(signups.map((s) => [s._id, s.count]));
     response.signupsByDay = Array.from({ length: 14 }, (_, i) => {
-      const date = new Date(now - (13 - i) * DAY).toISOString().slice(0, 10);
+      const date = thaiToday(now - (13 - i) * DAY);
       return { date, count: byDate.get(date) ?? 0 };
     });
   }

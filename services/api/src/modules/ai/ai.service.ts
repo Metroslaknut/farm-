@@ -22,6 +22,7 @@ import {
   WeightRecord,
   type AiAssessmentDoc,
 } from '../../models';
+import { thaiDayBegins, thaiDayStart, thaiToday } from '@farmplus/validation';
 import { recordAudit } from '../../services/audit.service';
 import { authorOf, authorsById } from '../community/shared';
 import { computeFee } from '../finance/commission.service';
@@ -50,8 +51,8 @@ export interface AiDeps {
   maxOutputTokens: number;
 }
 
-const startOfUtcDay = (d: Date) =>
-  new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+/** The daily AI budget restarts at midnight in Thailand (not 07:00, when the UTC date changes). */
+const startOfThaiDay = (d: Date) => thaiDayBegins(thaiToday(d.getTime()));
 
 // ---------------------------------------------------------------------------
 // Monitoring: every provider call (or skipped call) is a row with tokens, cost, latency and error code — never any text.
@@ -103,7 +104,7 @@ async function narrativeBudget(
       code: 'disabled',
       reason: 'AI explanations are switched off by the platform',
     };
-  const since = startOfUtcDay(now);
+  const since = startOfThaiDay(now);
   const [platform, mine, platformMax, userMax] = await Promise.all([
     AiUsageLog.countDocuments({ createdAt: { $gte: since }, status: { $ne: 'skipped' } }),
     AiUsageLog.countDocuments({ createdAt: { $gte: since }, status: { $ne: 'skipped' }, userId }),
@@ -188,7 +189,8 @@ export async function createAssessment(
   });
 
   const base: Omit<EngineInput, 'fee'> = {
-    now,
+    // The engine counts whole calendar days against date-only records (birth, weighings, health): use the Thai day.
+    now: thaiDayStart(now.getTime()),
     animal: {
       status: animal.currentStatus,
       sex: animal.sex,
