@@ -113,12 +113,19 @@ async function stubThirdParties(page: Page) {
       },
     ],
   };
-  await page.route('https://api.openadmindata.org/**', (route) =>
-    route.fulfill({
-      json: { data },
-      headers: { 'access-control-allow-origin': '*' },
-    }),
-  );
+  // One file per level, as FarmFormPage reads them (`/api/v1/th/<level>.json` → `{ entities }`).
+  await page.route('https://api.openadmindata.org/**', (route) => {
+    const level = /\/th\/(province|district|subdistrict)\.json$/.exec(
+      new URL(route.request().url()).pathname,
+    )?.[1];
+    return level
+      ? route.fulfill({
+          json: { entities: data[level as keyof typeof data] },
+          headers: { 'access-control-allow-origin': '*' },
+        })
+      : route.fulfill({ status: 404, headers: { 'access-control-allow-origin': '*' } });
+  });
+
   await page.route('https://www.openstreetmap.org/**', (route) =>
     route.fulfill({
       contentType: 'text/html',
@@ -145,6 +152,16 @@ test('farm setup: province → district → sub-district, the map loads and take
   await page.getByLabel('District', { exact: true }).selectOption('เมืองขอนแก่น');
   await page.getByLabel('Sub-district', { exact: true }).selectOption('ในเมือง');
   await expect(page.getByLabel('Postal code')).toHaveValue('40000');
+  // The map zooms to the chosen sub-district (16.43, 102.83): a box of ±0.2° longitude and ±0.15° latitude.
+  const src = await page
+    .locator('iframe[title="Map for selecting farm location"]')
+    .getAttribute('src');
+  const [west, south, east, north] = new URL(src!).searchParams.get('bbox')!.split(',').map(Number);
+  expect([east! - west!, north! - south!].map((v) => v.toFixed(2))).toEqual(['0.40', '0.30']);
+  expect([((west! + east!) / 2).toFixed(2), ((south! + north!) / 2).toFixed(2)]).toEqual([
+    '102.83',
+    '16.43',
+  ]);
   await expect(page.getByText('Address data could not be loaded')).toHaveCount(0);
   await expect(
     page.frameLocator('iframe[title="Map for selecting farm location"]').locator('#osm-stub'),

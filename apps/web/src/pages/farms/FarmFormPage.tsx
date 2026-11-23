@@ -128,13 +128,16 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
   const [pin, setPin] = useState<[number, number] | null>(pinned);
   useEffect(() => {
     let active = true;
-    fetch('https://api.openadmindata.org/api/v1/countries/th.json')
-      .then((response) => {
-        if (!response.ok) throw new Error('Address data unavailable');
-        return response.json() as Promise<{ data: PlaceData }>;
-      })
-      .then(({ data }) => {
-        if (active) setPlaces(data);
+    const loadLevel = async (level: 'province' | 'district' | 'subdistrict') => {
+      const response = await fetch(`https://api.openadmindata.org/api/v1/th/${level}.json`);
+      if (!response.ok) throw new Error('Address data unavailable');
+      const result = (await response.json()) as { entities?: Place[] };
+      if (!Array.isArray(result.entities)) throw new Error('Invalid address data');
+      return result.entities;
+    };
+    Promise.all([loadLevel('province'), loadLevel('district'), loadLevel('subdistrict')])
+      .then(([province, district, subdistrict]) => {
+        if (active) setPlaces({ province, district, subdistrict });
       })
       .catch(() => {
         if (active) setPlaceLoadError(true);
@@ -563,10 +566,10 @@ function MapPinPicker({
 }) {
   const t = useFarmsT();
   const bounds = {
-    north: center[0] + 1.5,
-    south: center[0] - 1.5,
-    east: center[1] + 3,
-    west: center[1] - 3,
+    north: center[0] + 0.15,
+    south: center[0] - 0.15,
+    east: center[1] + 0.2,
+    west: center[1] - 0.2,
   };
   const params = new URLSearchParams({
     bbox: `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`,
