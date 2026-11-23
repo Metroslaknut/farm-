@@ -28,6 +28,7 @@ import {
 import { useLocale } from '../../i18n';
 import { errorMessage, toDateTimeLocal } from '../../lib/format';
 import { useCanSell } from '../../lib/sellEligibility';
+import { SellerRequiredNotice } from '../farms/SellerRequiredNotice';
 import { useAsync } from '../../lib/useAsync';
 import {
   ProductStatusBadge,
@@ -469,7 +470,7 @@ function Editor({
           {t('form.suspended', { reason: product.review.suspendedReason })}
         </Alert>
       )}
-      {!canSell && <Alert tone="warning">{t('form.sellerRequired')}</Alert>}
+      {!canSell && <SellerRequiredNotice message={t('form.sellerRequired')} />}
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
       {product && (
         <div className="ds-row">

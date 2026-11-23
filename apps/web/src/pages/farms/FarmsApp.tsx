@@ -27,6 +27,7 @@ import AnimalHistoryPage from './records/AnimalHistoryPage';
 import AssessmentPage from './AssessmentPage';
 import GrowthPage from './records/GrowthPage';
 import PedigreePage from './records/PedigreePage';
+import SellerRegistrationPage from './SellerRegistrationPage';
 import RecordDetailPage from './records/RecordDetailPage';
 import RecordFormPage from './records/RecordFormPage';
 import RecordListPage from './records/RecordListPage';
@@ -52,6 +53,8 @@ export default function FarmsApp() {
           <Route path="settings" element={<AccountSettingsPage />} />
           {/* Reachable without a farm of one's own: an invitation may be how a person gets their first farm. */}
           <Route path="invitations" element={<MyInvitationsPage />} />
+          {/* Anyone signed in may apply to sell; no farm needed (a seller may only sell products). */}
+          <Route path="seller" element={<SellerRegistrationPage />} />
           <Route element={<RequireFarmSetup />}>
             <Route index element={<FarmIndexPage />} />
             <Route path="list" element={<FarmListPage />} />
