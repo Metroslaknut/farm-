@@ -93,6 +93,7 @@ export const SEED_CATEGORIES = [
   {
     key: 'feed',
     name: 'Animal feed',
+    nameTh: 'อาหารสัตว์',
     regulation: 'none',
     salesEnabled: true,
     sortOrder: 10,
@@ -101,6 +102,7 @@ export const SEED_CATEGORIES = [
   {
     key: 'supplements',
     name: 'Feed supplements & minerals',
+    nameTh: 'อาหารเสริมและแร่ธาตุ',
     regulation: 'none',
     salesEnabled: true,
     sortOrder: 20,
@@ -109,6 +111,7 @@ export const SEED_CATEGORIES = [
   {
     key: 'equipment',
     name: 'Farm equipment',
+    nameTh: 'อุปกรณ์ฟาร์ม',
     regulation: 'none',
     salesEnabled: true,
     sortOrder: 30,
@@ -117,6 +120,7 @@ export const SEED_CATEGORIES = [
   {
     key: 'medicines',
     name: 'Veterinary medicines',
+    nameTh: 'ยาสัตว์',
     regulation: 'regulated',
     salesEnabled: false,
     sortOrder: 40,
@@ -125,6 +129,7 @@ export const SEED_CATEGORIES = [
   {
     key: 'medicated_feed',
     name: 'Medicated feed',
+    nameTh: 'อาหารสัตว์ผสมยา',
     regulation: 'regulated',
     salesEnabled: false,
     sortOrder: 50,

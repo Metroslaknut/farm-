@@ -39,6 +39,7 @@ const err = (status: number, code: string, message: string, path?: string) =>
 export const categoryDTO = (c: ProductCategoryDoc): ProductCategoryDTO => ({
   key: c.key,
   name: c.name,
+  ...(c.nameTh ? { nameTh: c.nameTh } : {}),
   description: c.description ?? null,
   parentKey: c.parentKey ?? null,
   regulation: c.regulation,
@@ -80,6 +81,7 @@ export async function toProductDTOs(
     }),
   ]);
   const names = new Map(cats.map((c) => [c.key, c.name]));
+  const namesTh = new Map(cats.map((c) => [c.key, c.nameTh]));
   const sellerFarms = new Set(members.map((m) => String(m.farmId)));
   return products.map((p) => {
     const price = priceNow(p);
@@ -93,6 +95,7 @@ export async function toProductDTOs(
       seller: authorOf(people, p.sellerId),
       categoryKey: p.categoryKey,
       categoryName: names.get(p.categoryKey) ?? p.categoryKey,
+      ...(namesTh.get(p.categoryKey) ? { categoryNameTh: namesTh.get(p.categoryKey)! } : {}),
       title: p.title,
       description: p.description ?? null,
       brand: p.brand ?? null,

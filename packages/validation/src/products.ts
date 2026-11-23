@@ -265,6 +265,8 @@ export const reviewsQuerySchema = z
 export const upsertCategorySchema = z
   .object({
     name: plain(80).min(2),
+    /** Thai name; `null` clears it. */
+    nameTh: plain(80).min(2).nullable().optional(),
     description: plain(300).nullable().optional(),
     parentKey: key.nullable().optional(),
     regulation: z.enum(['none', 'regulated', 'prohibited']).optional(),
