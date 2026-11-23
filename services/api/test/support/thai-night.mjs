@@ -26,7 +26,7 @@ const result = spawnSync(process.execPath, [vitest, 'run', ...args], {
   },
 });
 if (result.error) {
-  console.error(`test:thai-night could not start Vitest: ${result.error.message}`);
+  process.stderr.write(`test:thai-night could not start Vitest: ${result.error.message}\n`);
   process.exit(1);
 }
 process.exit(result.status ?? 1);
