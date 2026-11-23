@@ -533,15 +533,17 @@
     display: none; /* phones: the sign-in page links to registration */
   }
   .site-main__row {
-    grid-template-columns: auto minmax(0, 1fr);
+    /* Three tracks so the categories button is not as wide as the logo above it (that left the search box no room). */
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      'logo actions'
-      'cats search';
+      'logo logo actions'
+      'cats search search';
     gap: 12px;
     padding-block: 14px;
   }
   .site-logo {
     grid-area: logo;
+    justify-self: start; /* spans two tracks: keep the link only as wide as the logo */
     font-size: 1.5rem;
   }
   .site-actions {
@@ -559,9 +561,18 @@
     height: 46px;
     padding: 0 14px;
   }
+  /* Phones: icon-only (the name stays for screen readers) so the search box keeps room for its hint. */
+  .site-categories__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   .site-search {
     grid-area: search;
-    grid-column: auto;
+    grid-column: search; /* undoes the tablet `1 / -1`; spans both tracks of the search area */
     height: 46px;
   }
   .site-search select {

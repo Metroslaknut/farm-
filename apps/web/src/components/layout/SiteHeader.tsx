@@ -165,7 +165,7 @@ export function SiteHeader() {
               onClick={() => setCatsFor(catsOpen ? null : pathname)}
             >
               <Icon name="grid" size={18} />
-              {t('header.categories')}
+              <span className="site-categories__label">{t('header.categories')}</span>
               <Icon name="chevronDown" size={16} />
             </button>
             <div
