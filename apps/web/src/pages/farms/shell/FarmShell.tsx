@@ -47,6 +47,7 @@ const RESERVED = new Set([
   'new',
   'list',
   'invitations',
+  'seller',
 ]);
 
 const MOBILE = '(max-width: 1023px)';
@@ -123,6 +124,7 @@ function menu(farm: FarmDetail | undefined, canCreateFarm: boolean): Group[] {
         { key: 'shell.settings', to: '/farms/settings' },
         { key: 'shell.allFarms', to: '/farms/list' },
         { key: 'shell.invitations', to: '/farms/invitations' },
+        { key: 'shell.seller', to: '/farms/seller' },
         ...(canCreateFarm ? [{ key: 'shell.newFarm' as const, to: '/farms/new' }] : []),
       ],
     },

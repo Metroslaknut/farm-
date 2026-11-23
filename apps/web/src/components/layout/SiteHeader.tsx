@@ -2,10 +2,11 @@ import { useContext, useEffect, useId, useRef, useState, type FormEvent } from '
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import type { CartDTO } from '@farmplus/shared-types';
 import { api } from '../../api';
+import { localName } from '@farmplus/shared-utils';
 import { shopCategories } from '../../lib/shopCategories';
 import { AuthContext } from '../../auth/AuthContext';
 import { useMinWidth } from '../../hooks/useMediaQuery';
-import { useT, type Translate } from '../../i18n';
+import { useLocale, useT, type Translate } from '../../i18n';
 import { useAsync } from '../../lib/useAsync';
 import { InboxLinks } from '../inbox/InboxLinks';
 import type { NavItem } from './Header';
@@ -56,6 +57,7 @@ export function SiteHeader() {
   const navigate = useNavigate();
   const ids = useId();
   const t = useT('layout');
+  const [locale] = useLocale();
   // Phones (< 768px, the header's own breakpoint): the search box is too narrow for the full hint.
   const wideSearch = useMinWidth('md');
 
@@ -74,7 +76,7 @@ export function SiteHeader() {
       .filter((c) => c.salesEnabled)
       .map((c) => ({
         to: `/shop?category=${encodeURIComponent(c.key)}`,
-        label: c.name,
+        label: localName(c, locale),
         icon: categoryIcon(c.key),
       })) ?? areas(t);
 
@@ -271,6 +273,9 @@ export function SiteHeader() {
                   </Link>
                   <Link to="/farms/settings" role="menuitem" onClick={() => setProfileFor(null)}>
                     {t('header.settings')}
+                  </Link>
+                  <Link to="/farms/seller" role="menuitem" onClick={() => setProfileFor(null)}>
+                    {t('header.becomeSeller')}
                   </Link>
                   <button
                     type="button"

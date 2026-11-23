@@ -209,22 +209,68 @@ describe('Thai names in the market and the shop', () => {
     expect(screen.queryByLabelText('Rabbit')).toBeNull();
   });
 
-  it('the shop category filter uses the Thai name of a built-in category, the stored name otherwise', async () => {
-    setLocale('th');
+  const shopApi = () =>
     request.mockImplementation(async (_m: string, path: string) =>
       path === '/shop/categories'
         ? {
             categories: [
-              { key: 'feed', name: 'Animal feed', salesEnabled: true },
+              { key: 'feed', name: 'Animal feed', nameTh: 'อาหารสัตว์', salesEnabled: true },
               { key: 'custom_x', name: 'Custom category', salesEnabled: true },
             ],
           }
-        : { items: [], total: 0, page: 1, pageSize: 24 },
+        : {
+            items: [
+              {
+                id: 'p1',
+                farmId: 'f1',
+                farmName: 'Happy Farm',
+                seller: { id: 'u2', displayName: 'Somchai' },
+                categoryKey: 'feed',
+                categoryName: 'Animal feed',
+                categoryNameTh: 'อาหารสัตว์',
+                title: 'Layer pellets',
+                brand: null,
+                status: 'ACTIVE',
+                currency: 'THB',
+                priceMinor: 25_000,
+                promotion: null,
+                effectivePriceMinor: 25_000,
+                onSale: false,
+                specs: [],
+                photos: [],
+                deliveryOptions: ['pickup'],
+                minOrderQty: 1,
+                maxOrderQty: null,
+                available: 5,
+                inStock: true,
+                regulatory: null,
+                rating: { average: 0, count: 0 },
+                soldCount: 0,
+                viewer: { isSellerSide: false },
+              },
+            ],
+            total: 1,
+            page: 1,
+            pageSize: 24,
+          },
     );
+
+  it("the shop shows a category's Thai name (nameTh) in Thai mode, its name otherwise", async () => {
+    setLocale('th');
+    shopApi();
     at('/shop', <Route path="/shop" element={<ShopBrowsePage />} />);
     expect(await screen.findByLabelText('อาหารสัตว์')).toBeTruthy();
-    expect(screen.getByLabelText('Custom category')).toBeTruthy();
+    expect(screen.getByLabelText('Custom category')).toBeTruthy(); // no nameTh: falls back
     expect(screen.queryByLabelText('Animal feed')).toBeNull();
+    expect(screen.getByText(/อาหารสัตว์ · Happy Farm/)).toBeTruthy(); // product card
+  });
+
+  it('the shop shows the English names in English mode', async () => {
+    shopApi();
+    at('/shop', <Route path="/shop" element={<ShopBrowsePage />} />);
+    expect(await screen.findByLabelText('Animal feed')).toBeTruthy();
+    expect(screen.queryByLabelText('อาหารสัตว์')).toBeNull();
+    expect(screen.getByText(/Animal feed · Happy Farm/)).toBeTruthy();
   });
 });
 

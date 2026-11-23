@@ -594,6 +594,37 @@ describe('admin: products', () => {
     });
   });
 
+  it("an admin edits a category's English and Thai names with a reason", async () => {
+    request.mockImplementation(async (m: string, path: string) => {
+      if (path === '/shop/categories')
+        return { categories: categories.map((c) => ({ ...c, nameTh: 'อาหารสัตว์' })) };
+      if (m === 'GET') return { items: [], total: 0, page: 1, pageSize: 10 };
+      return { category: {} };
+    });
+    render(
+      <MemoryRouter>
+        <ProductsAdminPage />
+      </MemoryRouter>,
+    );
+    const row = (await screen.findByText(/Animal feed/)).closest('tr')!;
+    expect(row.textContent).toContain('อาหารสัตว์');
+    await userEvent.click(within(row).getByRole('button', { name: 'Edit names' }));
+    const dialog = document.querySelector('dialog[open]') as HTMLElement;
+    const thai = within(dialog).getByLabelText('Thai name') as HTMLInputElement;
+    expect(thai.value).toBe('อาหารสัตว์');
+    await userEvent.clear(thai);
+    await userEvent.type(thai, 'อาหารสัตว์สำเร็จรูป');
+    await userEvent.type(
+      within(dialog).getByLabelText(/Reason/, { selector: 'textarea' }),
+      'Clearer Thai name',
+    );
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save names', hidden: true }));
+    await waitFor(() => expect(calls('PUT', '/shop/admin/categories/feed')).toHaveLength(1));
+    expect(calls('PUT', /categories/)[0]![2]).toEqual({
+      body: { name: 'Animal feed', nameTh: 'อาหารสัตว์สำเร็จรูป', reason: 'Clearer Thai name' },
+    });
+  });
+
   it('opening a regulated category needs the review reference, a reason and the typed phrase', async () => {
     request.mockImplementation(async (m: string, path: string) => {
       if (path === '/shop/categories') return { categories };
