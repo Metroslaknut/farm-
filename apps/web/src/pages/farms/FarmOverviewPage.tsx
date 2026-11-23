@@ -48,7 +48,18 @@ export default function FarmOverviewPage() {
           )}
         </span>
       </div>
-      {farm.status === 'archived' && <Alert tone="warning">{t('common.farmArchived')}</Alert>}
+      {farm.status === 'archived' && (
+        <Alert tone="warning">
+          {t('common.farmArchived')}
+          {/* The owner restores it from the farm settings page (hidden from the menu while archived). */}
+          {can('farm.archive') && (
+            <>
+              {' '}
+              <Link to={`/farms/${farm.id}/edit`}>{t('form.restore')}</Link>
+            </>
+          )}
+        </Alert>
+      )}
       {farm.description && <p>{farm.description}</p>}
 
       <div className="ds-grid ds-grid--2">

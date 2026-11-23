@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { App } from './App';
 import { PublicLayout } from './app/layouts/PublicLayout';
 import { AuthProvider } from './auth/AuthContext';
+import NotFoundPage from './pages/NotFoundPage';
 import './index.css';
 
 // The admin area is a separate lazy chunk: the public bundle does not grow, and the public page at "/"
@@ -115,7 +116,10 @@ createRoot(root).render(
               }
             />
           )}
-          <Route path="*" element={<App />} />
+          {/* Unknown URLs: a "page not found" page in the site layout (not the home page). */}
+          <Route element={<PublicLayout />}>
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>

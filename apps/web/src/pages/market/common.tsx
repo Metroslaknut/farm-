@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatDateTime, validationMessage } from '@farmplus/i18n';
 import type {
   AnimalSex,
+  ListingAnimalSnapshot,
   ListingDTO,
   ListingStatus,
   NegotiationStatus,
@@ -11,10 +12,35 @@ import { formatAge, formatBaht, humanize } from '@farmplus/shared-utils';
 import { Badge, type Tone } from '../../components/ui';
 import { getLocale, useLocale, useT, type Translate } from '../../i18n';
 import messages from '../../i18n/messages/market';
+import { loadAnimalTypes } from '../../lib/animalTypes';
+import { useAsync } from '../../lib/useAsync';
+import { typeName } from '../farms/labels';
 
 export type MarketT = Translate<'market'>;
 type MarketKey = keyof typeof messages.th;
 export const useMarketT = (): MarketT => useT('market');
+
+/**
+ * "Animal type · breed" of a listing's animal in the current language. The listing keeps an English snapshot
+ * (`animalTypeName`, breed key); the names are looked up in the (shared, cached) animal-type catalog by id and key, and
+ * the snapshot is the fallback while it loads or when the type/breed is no longer in the catalog.
+ */
+export function useAnimalLabel(): (animal: ListingAnimalSnapshot) => string {
+  const [locale] = useLocale();
+  const { data } = useAsync(() => loadAnimalTypes(), []);
+  return (animal) => {
+    const type = data?.animalTypes?.find((x) => x.id === animal.animalTypeId);
+    const breed = animal.breed ? type?.breeds?.find((b) => b.key === animal.breed) : undefined;
+    return [
+      type ? typeName(type, locale) : animal.animalTypeName,
+      breed
+        ? (locale === 'th' && breed.nameTh) || breed.name
+        : animal.breed && humanize(animal.breed),
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  };
+}
 
 /** A server code (reason, event type…) shown to people: translated when known, otherwise humanized as before. */
 export function codeLabel(t: MarketT, prefix: string, code: string): string {
@@ -96,6 +122,7 @@ export function ListingCard({
   footer?: ReactNode;
 }) {
   const t = useMarketT();
+  const animalLabel = useAnimalLabel();
   const age = ageLabel(t, formatAge(listing.animal.birthDate ?? undefined));
   const photo = listing.photos[0];
   return (
@@ -132,12 +159,7 @@ export function ListingCard({
         {formatBaht(listing.askingPriceMinor)}
       </p>
       <p className="ds-field__hint" style={{ margin: 0 }}>
-        {[
-          listing.animal.animalTypeName,
-          listing.animal.breed && humanize(listing.animal.breed),
-          sexLabel(t, listing.animal.sex),
-          age,
-        ]
+        {[animalLabel(listing.animal), sexLabel(t, listing.animal.sex), age]
           .filter(Boolean)
           .join(' · ')}
       </p>

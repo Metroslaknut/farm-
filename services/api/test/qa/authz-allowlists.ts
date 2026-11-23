@@ -58,6 +58,8 @@ export const SELF_SERVICE: Set<string> = new Set([
   'GET /api/v1/posts',
   'GET /api/v1/marketplace/listings',
   'GET /api/v1/marketplace/favorites',
+  // Whether the caller may sell: their own roles + one non-sensitive setting, read-only.
+  'GET /api/v1/marketplace/sell-eligibility',
   'DELETE /api/v1/marketplace/listings/:id/favorite',
   'GET /api/v1/marketplace/negotiations',
   'GET /api/v1/shop/categories',

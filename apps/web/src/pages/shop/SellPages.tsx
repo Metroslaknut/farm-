@@ -27,8 +27,15 @@ import {
 } from '../../components/ui';
 import { useLocale } from '../../i18n';
 import { errorMessage, toDateTimeLocal } from '../../lib/format';
+import { useCanSell } from '../../lib/sellEligibility';
 import { useAsync } from '../../lib/useAsync';
-import { ProductStatusBadge, productStatusLabel, useShopT, type ShopT } from './common';
+import {
+  ProductStatusBadge,
+  categoryLabel,
+  productStatusLabel,
+  useShopT,
+  type ShopT,
+} from './common';
 
 const PRODUCT_EVENTS = ['created', 'edited', 'material_edit', 'withdrawn_for_edit'] as const;
 type ProductEventType = (typeof PRODUCT_EVENTS)[number];
@@ -136,7 +143,9 @@ export function SellProductsPage() {
             <tr key={p.id}>
               <td>
                 <Link to={`/shop/sell/${farmId}/${p.id}`}>{p.title}</Link>
-                <div className="ds-field__hint">{p.categoryName}</div>
+                <div className="ds-field__hint">
+                  {categoryLabel(t, p.categoryKey, p.categoryName)}
+                </div>
               </td>
               <td>{formatBaht(p.effectivePriceMinor)}</td>
               <td>
@@ -292,6 +301,8 @@ function Editor({
   const [note, setNote] = useState<boolean>(false);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
   const cat = categories.find((c) => c.key === f.categoryKey);
+  // Only new products need the seller role (the API checks it on create and submit).
+  const canSell = useCanSell(!product);
   const editable =
     !product ||
     ['DRAFT', 'PENDING_REVIEW', 'ACTIVE', 'PAUSED', 'REJECTED'].includes(product.status);
@@ -458,6 +469,7 @@ function Editor({
           {t('form.suspended', { reason: product.review.suspendedReason })}
         </Alert>
       )}
+      {!canSell && <Alert tone="warning">{t('form.sellerRequired')}</Alert>}
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
       {product && (
         <div className="ds-row">
@@ -502,7 +514,7 @@ function Editor({
               <option value="">{t('form.choose')}</option>
               {categories.map((c) => (
                 <option key={c.key} value={c.key} disabled={!c.salesEnabled}>
-                  {c.name}
+                  {categoryLabel(t, c.key, c.name)}
                   {!c.salesEnabled ? t('form.notForSale') : ''}
                 </option>
               ))}
@@ -692,7 +704,7 @@ function Editor({
             )}
           </Card>
           <div className="ds-row" style={{ marginTop: 'var(--ds-space-4)' }}>
-            <Button type="submit" variant="primary" loading={busy}>
+            <Button type="submit" variant="primary" loading={busy} disabled={!canSell}>
               {product ? t('form.save') : t('form.create')}
             </Button>
           </div>

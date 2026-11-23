@@ -26,6 +26,23 @@ export const useShopT = (): ShopT => useT('shop');
 
 export const productStatusLabel = (t: ShopT, status: ProductStatus): string =>
   t(`status.${status}`);
+/** Built-in product category keys that have a name in both languages (`category.<key>`). */
+const KNOWN_CATEGORIES = [
+  'feed',
+  'supplements',
+  'equipment',
+  'medicines',
+  'medicated_feed',
+] as const;
+
+/**
+ * A product category's name in the current language. Categories store one (English) name, so the built-in ones are
+ * translated by their stable key; a category an admin added later shows its stored name.
+ */
+export const categoryLabel = (t: ShopT, key: string | undefined, name: string): string =>
+  (KNOWN_CATEGORIES as readonly string[]).includes(key ?? '')
+    ? t(`category.${key as (typeof KNOWN_CATEGORIES)[number]}`)
+    : name;
 export const deliveryLabel = (t: ShopT, option: DeliveryOption): string => t(`delivery.${option}`);
 
 export function ProductStatusBadge({ status }: { status: ProductStatus }): ReactNode {
@@ -110,7 +127,13 @@ export function ProductCard({ product, to }: { product: ProductDTO; to: string }
         <Price product={product} />
       </p>
       <p className="ds-field__hint" style={{ margin: 0 }}>
-        {[product.categoryName, product.brand, product.farmName].filter(Boolean).join(' · ')}
+        {[
+          categoryLabel(t, product.categoryKey, product.categoryName),
+          product.brand,
+          product.farmName,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
       </p>
       <p style={{ margin: 0 }}>
         <Stars average={product.rating.average} count={product.rating.count} />

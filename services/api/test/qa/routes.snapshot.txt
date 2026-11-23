@@ -103,6 +103,7 @@ GET /api/v1/marketplace/moderation/listings
 GET /api/v1/marketplace/moderation/listings/:id/events
 GET /api/v1/marketplace/negotiations
 GET /api/v1/marketplace/negotiations/:id
+GET /api/v1/marketplace/sell-eligibility
 GET /api/v1/media/dev/files/:id
 GET /api/v1/moderation/:targetType/:id/history
 GET /api/v1/moderation/reports

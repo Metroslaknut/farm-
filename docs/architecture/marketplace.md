@@ -18,6 +18,10 @@ digit-based parsing (no `19.99 * 100` float trap). Only `THB` is supported; the 
 | Review / reject / suspend / restore listings, read negotiations                    | platform permission `listings.moderate` (MFA-protected like every staff permission); a moderator cannot moderate a farm they belong to                                                |
 | See a negotiation                                                                  | its buyer, the farm's owners/managers, and — read-only — moderators. Anyone else: `404`                                                                                               |
 
+`GET /marketplace/sell-eligibility` (any signed-in user, about the caller only) answers `{ canSell, reason? }` with the
+same rule, so the listing and shop product forms can say up front that the account is not an approved seller (and
+disable saving) instead of failing with `SELLER_REQUIRED` after the form is filled in.
+
 Every seller-side lookup includes the farm id (IDOR-safe). A listing that is not public (draft, pending, rejected, paused, …) is `404` for everyone except its seller side and moderators.
 
 ## Listing status machine

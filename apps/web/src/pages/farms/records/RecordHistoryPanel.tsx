@@ -18,7 +18,18 @@ import {
   Textarea,
 } from '../../../components/ui';
 import { errorMessage } from '../../../lib/format';
-import { enumLabel, localizeErrors, useFarmFormat, useFarmsT, type FarmsKey } from '../labels';
+import { formatNumber } from '@farmplus/i18n';
+import { getLocale } from '../../../i18n';
+import {
+  bahtLabel,
+  enumLabel,
+  localizeErrors,
+  useFarmFormat,
+  useFarmsT,
+  type FarmsKey,
+  type FarmsT,
+} from '../labels';
+import type { Field, KindConfig } from './recordConfigs';
 import { PhotoPicker, type PendingPhoto } from '../PhotoPicker';
 
 /** Same cap as the API (a record holds at most 20 files). */
@@ -30,6 +41,61 @@ const show = (v: unknown): string =>
     : typeof v === 'object'
       ? JSON.stringify(v)
       : String(v);
+
+type FieldLookup = Pick<KindConfig, 'fields'>;
+
+/** The form field a stored path belongs to (the first, when a field is declared twice for different steps). */
+const fieldOf = (config: FieldLookup | undefined, path: string): Field | undefined =>
+  config?.fields.find((f) => f.name === path);
+
+/** A changed field's name as on the form ("Amount (THB)"), or the raw name when the form does not know it. */
+export function changeLabel(t: FarmsT, config: FieldLookup | undefined, field: string): string {
+  const own = fieldOf(config, field);
+  if (own) return t(own.label);
+  if (field === 'voided') return t('common.voided');
+  if (field === 'attachments') return t('common.file');
+  return field;
+}
+
+/** A changed value, formatted the way the form field shows it: options, dates, money, numbers, nested groups. */
+export function changeValue(
+  t: FarmsT,
+  fmt: { date: (v: string | undefined | null) => string },
+  config: FieldLookup | undefined,
+  path: string,
+  v: unknown,
+): string {
+  if (v === null || v === undefined || v === '') return '—';
+  const field = fieldOf(config, path);
+  if (typeof v === 'boolean') return v ? t('common.yes') : t('common.no');
+  if (Array.isArray(v)) return v.map((x) => changeValue(t, fmt, config, path, x)).join(', ');
+  if (typeof v === 'object') {
+    const obj = v as Record<string, unknown>;
+    if (path === 'attachments' && typeof obj['kind'] === 'string')
+      return `${enumLabel(t, 'mediaKindRaw', obj['kind'])} ${show(obj['url'])}`;
+    // A nested group (`quantity`, `medication`, …): each part with its own form label.
+    if (config?.fields.some((f) => f.name.startsWith(`${path}.`)))
+      return Object.entries(obj)
+        .filter(([, x]) => x !== null && x !== undefined && x !== '')
+        .map(([k, x]) => {
+          const sub = `${path}.${k}`;
+          return `${changeLabel(t, config, sub)}: ${changeValue(t, fmt, config, sub, x)}`;
+        })
+        .join(', ');
+    return JSON.stringify(v);
+  }
+  if (field?.options) {
+    const option = field.options.find((o) => o.value === String(v));
+    if (option) return t(option.label);
+  }
+  if (typeof v === 'number') {
+    if (field?.money) return bahtLabel(v);
+    return formatNumber(v, getLocale());
+  }
+  if (field?.type === 'date' && typeof v === 'string') return fmt.date(v);
+  return String(v);
+}
+
 const KIND_LABEL: Record<RecordHistoryEntry['kind'], FarmsKey> = {
   correction: 'rec.list.corrected',
   attachment_added: 'rec.hist.attached',
@@ -39,7 +105,14 @@ const KIND_LABEL: Record<RecordHistoryEntry['kind'], FarmsKey> = {
 };
 
 /** Every correction, void, attachment change and status event of a record: who, when, why, and old → new values. */
-export function HistoryList({ history }: { history: RecordHistoryEntry[] }) {
+export function HistoryList({
+  history,
+  config,
+}: {
+  history: RecordHistoryEntry[];
+  /** The record kind's form config: changed fields are named and formatted like on the form. */
+  config?: FieldLookup;
+}) {
   const t = useFarmsT();
   const fmt = useFarmFormat();
   if (history.length === 0) return <p className="ds-field__hint">{t('rec.hist.none')}</p>;
@@ -56,7 +129,9 @@ export function HistoryList({ history }: { history: RecordHistoryEntry[] }) {
             <ul style={{ margin: 'var(--ds-space-1) 0 0', paddingLeft: '1.2rem' }}>
               {h.changes.map((c, j) => (
                 <li key={j}>
-                  <code>{c.field}</code>: <s>{show(c.from)}</s> → <strong>{show(c.to)}</strong>
+                  {changeLabel(t, config, c.field)}:{' '}
+                  <s>{changeValue(t, fmt, config, c.field, c.from)}</s> →{' '}
+                  <strong>{changeValue(t, fmt, config, c.field, c.to)}</strong>
                 </li>
               ))}
             </ul>
@@ -76,6 +151,8 @@ interface Props {
   onChanged: () => void;
   /** Offer uploading photos from the device (`POST <basePath>/:id/photos`), e.g. for breeding records. */
   allowUpload?: boolean;
+  /** The record kind's form config, to name and format the fields in the history. */
+  config?: FieldLookup;
 }
 
 export function RecordHistoryPanel({
@@ -86,6 +163,7 @@ export function RecordHistoryPanel({
   canCorrect,
   onChanged,
   allowUpload = false,
+  config,
 }: Props) {
   const t = useFarmsT();
   const [form, setForm] = useState({ kind: 'document', url: '', caption: '' });
@@ -266,7 +344,7 @@ export function RecordHistoryPanel({
 
       <Card title={t('rec.hist.title')} headingLevel={2}>
         <p className="ds-field__hint">{t('rec.hist.hint', { revision: record.revision })}</p>
-        <HistoryList history={history} />
+        <HistoryList history={history} config={config} />
       </Card>
 
       <Modal

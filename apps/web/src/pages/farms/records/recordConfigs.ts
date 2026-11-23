@@ -22,7 +22,7 @@ import {
   createWeightSchema,
 } from '@farmplus/validation';
 import { getLocale } from '../../../i18n';
-import { enumLabel, type EnumGroup, type FarmsKey, type FarmsT } from '../labels';
+import { bahtLabel, enumLabel, type EnumGroup, type FarmsKey, type FarmsT } from '../labels';
 
 export type Draft = Record<string, string>;
 /** `label` is a catalog key (translated at render time), so the configs can stay module constants. */
@@ -48,6 +48,8 @@ export interface Field {
   animalSex?: 'male' | 'female';
   optionalAnimal?: boolean;
   emptyLabel?: FarmsKey;
+  /** A baht amount: shown as "฿150.00" (e.g. in the correction history). */
+  money?: boolean;
 }
 
 export interface Column {
@@ -645,6 +647,7 @@ const expenses: KindConfig = {
       type: 'number',
       step: '0.01',
       required: true,
+      money: true,
       section: 'rec.expense.sec',
     },
     {
@@ -685,13 +688,13 @@ const expenses: KindConfig = {
     { header: 'rec.category', cell: (r, t) => enumLabel(t, 'expenseCategory', r.category) },
     { header: 'rec.description', cell: (r) => r.description },
     { header: 'common.animal', cell: (r) => animalName(r.animal) },
-    { header: 'rec.expense.amountThb', cell: (r) => r.amount.toFixed(2) },
+    { header: 'rec.expense.amountThb', cell: (r) => bahtLabel(r.amount) },
   ],
   title: (r, t) => `${enumLabel(t, 'expenseCategory', r.category)}: ${r.description}`,
   describe: (r, t, fmt) => [
     [t('rec.category'), enumLabel(t, 'expenseCategory', r.category)],
     [t('rec.date'), fmt.date(r.expenseDate)],
-    [t('rec.expense.amount'), `${r.amount.toFixed(2)} ${r.currency}`],
+    [t('rec.expense.amount'), bahtLabel(r.amount)],
     [t('rec.description'), r.description],
     [t('rec.expense.supplier'), r.supplier],
     [t('common.animal'), animalName(r.animal)],

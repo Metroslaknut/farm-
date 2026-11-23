@@ -182,6 +182,7 @@ export default function RecordDetailPage({ config }: { config: KindConfig }) {
             canCorrect={canCorrect}
             onChanged={refresh}
             allowUpload={config.kind === 'breeding'}
+            config={config}
           />
         </div>
       </div>

@@ -11,7 +11,7 @@ import {
   type ShippingMode,
   type TransportRequirement,
 } from '@farmplus/shared-types';
-import { formatBaht, humanize, parseBahtToMinor } from '@farmplus/shared-utils';
+import { formatBaht, parseBahtToMinor } from '@farmplus/shared-utils';
 import {
   createListingSchema,
   fieldErrorsFromDetails,
@@ -23,8 +23,9 @@ import { api } from '../../api';
 import { Alert, Button, Card, Select, TextField, Textarea } from '../../components/ui';
 import { useLocale } from '../../i18n';
 import { errorMessage } from '../../lib/format';
+import { useCanSell } from '../../lib/sellEligibility';
 import { typeName } from '../farms/labels';
-import { localizeErrors, sexLabel, useMarketT } from './common';
+import { localizeErrors, sexLabel, useAnimalLabel, useMarketT } from './common';
 
 interface PhotoRow {
   url: string;
@@ -49,8 +50,11 @@ export function ListingForm({
   onCancel?: (() => void) | undefined;
 }) {
   const t = useMarketT();
+  const animalLabel = useAnimalLabel();
   const [locale] = useLocale();
   const editing = Boolean(listing);
+  // Only new listings need the seller role (the API checks it on create and submit).
+  const canSell = useCanSell(!editing);
   const [animal, setAnimal] = useState(animalId ?? listing?.animalId ?? '');
   const [animals, setAnimals] = useState<AnimalSummary[]>([]);
   const [title, setTitle] = useState(listing?.title ?? '');
@@ -187,13 +191,12 @@ export function ListingForm({
       noValidate
       aria-label={editing ? t('form.editAria') : t('form.newAria')}
     >
+      {!canSell && <Alert tone="warning">{t('form.sellerRequired')}</Alert>}
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
       <Card title={t('form.animal')} headingLevel={2} style={{ marginBottom: 'var(--ds-space-4)' }}>
         {editing ? (
           <p>
-            {listing!.animal.animalTypeName}
-            {listing!.animal.breed ? ` · ${humanize(listing!.animal.breed)}` : ''} ·{' '}
-            {sexLabel(t, listing!.animal.sex)}
+            {animalLabel(listing!.animal)} · {sexLabel(t, listing!.animal.sex)}
           </p>
         ) : (
           <Select
@@ -435,7 +438,7 @@ export function ListingForm({
         <p className="ds-field__hint">{t('form.photosHint')}</p>
       </Card>
       <div className="ds-row">
-        <Button type="submit" variant="primary" loading={busy}>
+        <Button type="submit" variant="primary" loading={busy} disabled={!canSell}>
           {editing ? t('form.saveChanges') : t('form.saveDraft')}
         </Button>
         {onCancel && <Button onClick={onCancel}>{t('cancel')}</Button>}

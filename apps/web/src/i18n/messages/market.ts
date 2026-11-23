@@ -316,6 +316,8 @@ export default defineMessages({
     'form.photosHint': 'รูปภาพเป็นลิงก์จากที่เก็บสื่อของคุณ FARM+ ไม่ได้จัดเก็บไฟล์',
     'form.saveChanges': 'บันทึกการเปลี่ยนแปลง',
     'form.saveDraft': 'บันทึกเป็นฉบับร่าง',
+    'form.sellerRequired':
+      'เฉพาะผู้ขายที่ได้รับอนุมัติเท่านั้นที่ลงประกาศขายได้ และบัญชีของคุณยังไม่ได้รับอนุมัติเป็นผู้ขาย จึงยังบันทึกประกาศนี้ไม่ได้ กรุณาติดต่อผู้ดูแลแพลตฟอร์มเพื่อสมัครเป็นผู้ขาย',
     'neg.event.offer': 'ยื่นข้อเสนอ',
     'neg.event.counter': 'ต่อรองราคา',
     'neg.event.accept': 'ตอบรับ',
@@ -819,6 +821,8 @@ export default defineMessages({
     'form.photosHint': 'Photos are linked from your media storage; FARM+ does not store the files.',
     'form.saveChanges': 'Save changes',
     'form.saveDraft': 'Save as draft',
+    'form.sellerRequired':
+      'Only approved sellers can list animals, and your account has not been approved as a seller yet, so this listing cannot be saved. Please contact the platform team to register as a seller.',
     'neg.event.offer': 'made an offer',
     'neg.event.counter': 'countered',
     'neg.event.accept': 'accepted',

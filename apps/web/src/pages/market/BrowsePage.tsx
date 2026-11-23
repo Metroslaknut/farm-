@@ -9,6 +9,8 @@ import { useUrlSeed } from '../../lib/useUrlSeed';
 import { usePagedList } from '../community/usePagedList';
 import { ViewToggle, type View } from '../shop/common';
 import { ListingCard, useMarketT } from './common';
+import { useLocale } from '../../i18n';
+import { typeName } from '../farms/labels';
 import '../shop/shop-browse.css';
 
 /** Upper bound of the price slider, in baht. */
@@ -37,6 +39,7 @@ const fromUrl = (search: URLSearchParams): Filters => ({ ...EMPTY, q: search.get
 /** `/market` — animals for sale, laid out like the shop: sidebar filters + result bar + listing grid. */
 export default function BrowsePage() {
   const t = useMarketT();
+  const [locale] = useLocale();
   const [search] = useSearchParams();
   const [draft, setDraft] = useState<Filters>(() => fromUrl(search));
   const [applied, setApplied] = useState<Filters>(() => fromUrl(search));
@@ -48,9 +51,13 @@ export default function BrowsePage() {
   const [error, setError] = useState<string>();
   const types = useAsync(
     (signal) =>
-      api.request<{ animalTypes: { id: string; name: string }[] }>('GET', '/animal-types', {
-        signal,
-      }),
+      api.request<{ animalTypes: { id: string; name: string; nameTh?: string }[] }>(
+        'GET',
+        '/animal-types',
+        {
+          signal,
+        },
+      ),
     [],
   );
 
@@ -161,7 +168,7 @@ export default function BrowsePage() {
               {types.data?.animalTypes.map((type) => (
                 <Checkbox
                   key={type.id}
-                  label={type.name}
+                  label={typeName(type, locale)}
                   checked={applied.animalTypeId === type.id}
                   onChange={(e) => applyNow({ animalTypeId: e.target.checked ? type.id : '' })}
                 />

@@ -9,6 +9,7 @@ import {
   type ListingDTO,
   type ListingEventDTO,
   type ListingStatus,
+  type SellEligibilityDTO,
 } from '@farmplus/shared-types';
 import type { CreateListingInput, UpdateListingInput } from '@farmplus/validation';
 import type { Actor } from '../../context';
@@ -252,9 +253,16 @@ const stateError = (status: ListingStatus, action: string) =>
 // ---------------------------------------------------------------------------
 // Seller side (farm-scoped; every lookup includes the farm id)
 // ---------------------------------------------------------------------------
+/** `GET /marketplace/sell-eligibility`: the rule `assertMaySell` enforces, for the caller only. */
+export async function sellEligibility(actor: Actor): Promise<SellEligibilityDTO> {
+  if (!(await getBooleanSetting('marketplace.requireSellerRole'))) return { canSell: true };
+  return actor.access.roleKeys.includes('seller')
+    ? { canSell: true }
+    : { canSell: false, reason: 'SELLER_REQUIRED' };
+}
+
 async function assertMaySell(actor: Actor): Promise<void> {
-  if (!(await getBooleanSetting('marketplace.requireSellerRole'))) return;
-  if (!actor.access.roleKeys.includes('seller'))
+  if (!(await sellEligibility(actor)).canSell)
     throw forbidden(
       'Only approved sellers can list animals. Submit a seller registration first.',
       'SELLER_REQUIRED',

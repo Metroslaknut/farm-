@@ -43,6 +43,7 @@ import {
   resumeListing,
   restoreListing,
   searchListings,
+  sellEligibility,
   submitListing,
   suspendListing,
   unfavorite,
@@ -77,6 +78,10 @@ export function marketplaceRouter(ctx: AppContext): Router {
   });
   router.get('/listings/:id', async (req, res) => {
     res.json({ listing: await getListing(requireActor(req), id(req)) });
+  });
+  // The caller's own ability to sell (listing and product forms check it before anything is filled in).
+  router.get('/sell-eligibility', async (req, res) => {
+    res.json(await sellEligibility(requireActor(req)));
   });
   router.get('/favorites', async (req, res) => {
     res.json(await listFavorites(requireActor(req), parse(pageQuerySchema, req.query)));

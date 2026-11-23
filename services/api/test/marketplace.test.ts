@@ -184,6 +184,29 @@ describe('who may list animals', () => {
     expect(res.status).toBe(201);
   });
 
+  it('sell-eligibility tells the caller up front whether they may sell, following the setting', async () => {
+    const seller = await sellerUser(['seller']);
+    const farmerOnly = await sellerUser(['farm_owner']);
+    const eligibility = async (who: Session) => {
+      const res = await call('get', who, '/marketplace/sell-eligibility');
+      expect(res.status).toBe(200);
+      return res.body;
+    };
+    expect(await eligibility(seller)).toEqual({ canSell: true });
+    expect(await eligibility(farmerOnly)).toEqual({ canSell: false, reason: 'SELLER_REQUIRED' });
+    await call('patch', root, '/admin/settings', {
+      values: { 'marketplace.requireSellerRole': false },
+      reason: 'test open',
+    });
+    const open = await eligibility(farmerOnly);
+    await call('patch', root, '/admin/settings', {
+      values: { 'marketplace.requireSellerRole': true },
+      reason: 'restore',
+    });
+    expect(open).toEqual({ canSell: true });
+    expect((await request(h.app).get(`${API}/marketplace/sell-eligibility`)).status).toBe(401);
+  });
+
   it('snapshots the animal and farm location; the seller floor stays private', async () => {
     const s = await shop();
     const l = await draft(s, { minOfferMinor: 4_000_000 });

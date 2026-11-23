@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- generic record engine: shape is driven by the per-kind config/schema */
 import { Link, useParams } from 'react-router-dom';
 import type { AnimalSummary, ExpenseSummary, Page } from '@farmplus/shared-types';
-import { intlLocale } from '@farmplus/i18n';
 import { api } from '../../../api';
 import {
   Alert,
@@ -18,7 +17,7 @@ import {
 import { useAsync } from '../../../lib/useAsync';
 import { useListParams } from '../../../lib/useListParams';
 import { NavButton } from '../NavButton';
-import { enumLabel, useFarmFormat, useFarmsT } from '../labels';
+import { bahtLabel, enumLabel, useFarmFormat, useFarmsT } from '../labels';
 import { useFarm } from '../useFarmAccess';
 import type { KindConfig } from './recordConfigs';
 
@@ -26,8 +25,7 @@ const PAGE_SIZE = 15;
 
 function SpendingSummary({ farmId, params }: { farmId: string; params: Record<string, string> }) {
   const t = useFarmsT();
-  const { locale } = useFarmFormat();
-  const money = (n: number) => n.toLocaleString(intlLocale(locale), { minimumFractionDigits: 2 });
+  const money = bahtLabel;
   const { data } = useAsync(
     (signal) =>
       api.request<{ summary: ExpenseSummary }>('GET', `/farms/${farmId}/expenses/summary`, {
@@ -60,9 +58,7 @@ function SpendingSummary({ farmId, params }: { farmId: string; params: Record<st
       {s.byMonth.length > 0 && (
         <p className="ds-field__hint">
           {t('rec.list.byMonth', {
-            months: s.byMonth
-              .map((m) => `${m.month} ${m.total.toLocaleString(intlLocale(locale))}`)
-              .join(' · '),
+            months: s.byMonth.map((m) => `${m.month} ${money(m.total)}`).join(' · '),
           })}
         </p>
       )}

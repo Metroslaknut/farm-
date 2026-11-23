@@ -87,6 +87,16 @@ export interface ListingAnimalSnapshot {
   birthDateEstimated: boolean;
 }
 
+/**
+ * `GET /marketplace/sell-eligibility`: may the caller list animals or sell products right now? The same rule the
+ * create/submit endpoints enforce (`marketplace.requireSellerRole` + the seller role), so forms can say so up front.
+ */
+export interface SellEligibilityDTO {
+  canSell: boolean;
+  /** Why not (an API error code clients already translate). */
+  reason?: 'SELLER_REQUIRED';
+}
+
 export interface ListingDTO {
   id: string;
   farmId: string;

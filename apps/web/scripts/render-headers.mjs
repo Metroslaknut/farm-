@@ -10,12 +10,19 @@ import { fileURLToPath } from 'node:url';
  *
  * Content-Security-Policy highlights:
  *  - `script-src 'self'` plus the SHA-256 of each inline script in index.html (the theme bootstrap) — no 'unsafe-inline' for scripts;
- *  - `connect-src` is this site, the API origin (https + the matching wss for Socket.IO) and the streaming/CDN hosts;
+ *  - `connect-src` is this site, the API origin (https + the matching wss for Socket.IO), the streaming/CDN hosts and
+ *    the Thai address dataset the farm form loads (`THIRD_PARTY_CONNECT`, a code dependency, not a media host);
+ *  - `frame-src` allows only the OpenStreetMap embed used by the farm form's map pin picker (`THIRD_PARTY_FRAMES`);
  *  - `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `upgrade-insecure-requests`.
  * Inline STYLES are allowed ('unsafe-inline' for style-src only): the design system sets style attributes. That is a
  * conscious, documented trade-off (docs/ops/deployment.md) — styles cannot execute code.
  */
 const DEFAULT_MEDIA_HOSTS = ['https://*.cloudflarestream.com'];
+/** Fixed third-party origins the web code itself calls (independent of WEB_MEDIA_HOSTS). */
+// Province / district / subdistrict lists for the farm address selects (FarmFormPage).
+export const THIRD_PARTY_CONNECT = ['https://api.openadmindata.org'];
+// Map embed behind the farm location pin picker (FarmFormPage).
+export const THIRD_PARTY_FRAMES = ['https://www.openstreetmap.org'];
 
 const hostList = (value) =>
   String(value ?? '')
@@ -51,6 +58,7 @@ export function buildCsp({ apiOrigin, mediaHosts = DEFAULT_MEDIA_HOSTS, scriptHa
     "'self'",
     ...(apiOrigin ? [apiOrigin, apiOrigin.replace(/^http/, 'ws')] : []),
     ...mediaHosts,
+    ...THIRD_PARTY_CONNECT,
   ];
   return [
     "default-src 'self'",
@@ -60,6 +68,7 @@ export function buildCsp({ apiOrigin, mediaHosts = DEFAULT_MEDIA_HOSTS, scriptHa
     `img-src 'self' data: blob: ${[...(apiOrigin ? [apiOrigin] : []), ...mediaHosts].join(' ')}`.trim(),
     `media-src 'self' blob: ${mediaHosts.join(' ')}`.trim(),
     `connect-src ${connect.join(' ')}`,
+    `frame-src ${THIRD_PARTY_FRAMES.join(' ')}`,
     "worker-src 'self' blob:",
     "font-src 'self'",
     "object-src 'none'",

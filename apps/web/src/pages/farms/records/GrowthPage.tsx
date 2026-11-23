@@ -8,14 +8,21 @@ import type {
   GrowthStandardSource,
   GrowthStatus,
 } from '@farmplus/shared-types';
+import { formatNumber } from '@farmplus/i18n';
 import { api } from '../../../api';
 import { Alert, Badge, Card, Table, type Tone } from '../../../components/ui';
 import { useAsync } from '../../../lib/useAsync';
+import { getLocale } from '../../../i18n';
 import { NavButton } from '../NavButton';
 import { ageDaysLabel, useFarmFormat, useFarmsT, type FarmsT } from '../labels';
 import { useFarm } from '../useFarmAccess';
 
 const fmt = (n: number | undefined, d = 1) => (n === undefined ? '—' : n.toFixed(d));
+/**
+ * Weights and weight changes at the precision they were recorded (1.85 stays 1.85, 2 stays 2; at most 3 decimals,
+ * no trailing zeros), so they agree with the per-day gain that the API computes from the exact values.
+ */
+const kg = (n: number | undefined) => (n === undefined ? '—' : formatNumber(n, getLocale()));
 
 const STATUS_TONE: Record<GrowthStatus, Tone> = {
   below: 'danger',
@@ -79,7 +86,7 @@ function Chart({ data }: { data: GrowthResponse }) {
     t('growth.pointTooltip', {
       date: formatDate(p.date),
       age: ageDaysLabel(t, p.ageDays) ?? '—',
-      kg: fmt(p.weightKg),
+      kg: kg(p.weightKg),
       status: t(`growth.status.${p.evaluation.status}`),
     });
   return (
@@ -88,8 +95,8 @@ function Chart({ data }: { data: GrowthResponse }) {
         viewBox={`0 0 ${W} ${H}`}
         role="img"
         aria-label={t(byAge ? 'growth.chartAgeAria' : 'growth.chartAria', {
-          lo: fmt(lo),
-          hi: fmt(hi),
+          lo: kg(lo),
+          hi: kg(hi),
         })}
         style={{ width: '100%', height: 'auto', color: 'var(--ds-text-muted)' }}
       >
@@ -110,10 +117,10 @@ function Chart({ data }: { data: GrowthResponse }) {
         <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" opacity="0.4" />
         <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" opacity="0.4" />
         <text x={4} y={y(hi) + 4} fontSize="11" fill="var(--ds-text)">
-          {t('common.kg', { value: fmt(hi) })}
+          {t('common.kg', { value: kg(hi) })}
         </text>
         <text x={4} y={y(lo) + 4} fontSize="11" fill="var(--ds-text)">
-          {t('common.kg', { value: fmt(lo) })}
+          {t('common.kg', { value: kg(lo) })}
         </text>
         <text x={pad} y={H - 8} fontSize="11" fill="var(--ds-text)">
           {xLabel(points[0]!)}
@@ -310,20 +317,18 @@ export default function GrowthPage() {
             <dt>{t('growth.first')}</dt>
             <dd style={{ margin: 0 }}>
               {s.firstKg !== undefined
-                ? `${t('common.kg', { value: fmt(s.firstKg) })} · ${formatDate(s.firstDate!)}`
+                ? `${t('common.kg', { value: kg(s.firstKg) })} · ${formatDate(s.firstDate!)}`
                 : '—'}
             </dd>
             <dt>{t('growth.latest')}</dt>
             <dd style={{ margin: 0 }}>
               {s.latestKg !== undefined
-                ? `${t('common.kg', { value: fmt(s.latestKg) })} · ${formatDate(s.latestDate!)}`
+                ? `${t('common.kg', { value: kg(s.latestKg) })} · ${formatDate(s.latestDate!)}`
                 : '—'}
             </dd>
             <dt>{t('growth.totalChange')}</dt>
             <dd style={{ margin: 0 }}>
-              {s.totalChangeKg === undefined
-                ? '—'
-                : t('common.kg', { value: fmt(s.totalChangeKg) })}
+              {s.totalChangeKg === undefined ? '—' : t('common.kg', { value: kg(s.totalChangeKg) })}
             </dd>
             <dt>{t('growth.avgPerDay')}</dt>
             <dd style={{ margin: 0 }}>
@@ -360,7 +365,7 @@ export default function GrowthPage() {
             header: t('growth.col.age'),
             cell: (p) => ageDaysLabel(t, p.ageDays) ?? '—',
           },
-          { key: 'w', header: t('rec.weight.kg'), cell: (p) => fmt(p.weightKg) },
+          { key: 'w', header: t('rec.weight.kg'), cell: (p) => kg(p.weightKg) },
           { key: 'h', header: t('growth.col.height'), cell: (p) => fmt(p.heightCm) },
           { key: 'l', header: t('growth.col.length'), cell: (p) => fmt(p.lengthCm) },
           {
@@ -376,7 +381,7 @@ export default function GrowthPage() {
             header: t('growth.col.status'),
             cell: (p) => <StatusBadge status={p.evaluation.status} />,
           },
-          { key: 'c', header: t('growth.col.change'), cell: (p) => fmt(p.changeKg) },
+          { key: 'c', header: t('growth.col.change'), cell: (p) => kg(p.changeKg) },
           { key: 'g', header: t('growth.col.perDay'), cell: (p) => fmt(p.gainKgPerDay, 3) },
         ]}
       />

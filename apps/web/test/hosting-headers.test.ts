@@ -44,6 +44,18 @@ describe('static hosting security headers', () => {
     expect(buildCsp({ apiOrigin: null }).includes('https://*.cloudflarestream.com')).toBe(true); // default stream host
   });
 
+  it("allows the farm form's address dataset and OpenStreetMap embed without relying on WEB_MEDIA_HOSTS", () => {
+    for (const mediaHosts of [undefined, ['https://cdn.example.com']]) {
+      const { csp } = buildHeaders({ html, apiBase: 'https://api.example.com', mediaHosts });
+      expect(csp).toMatch(/connect-src [^;]*https:\/\/api\.openadmindata\.org/);
+      expect(csp).toContain('frame-src https://www.openstreetmap.org');
+    }
+    // Only that one frame origin — everything else still falls back to default-src 'self'.
+    expect(buildCsp({ apiOrigin: null })).toMatch(
+      /frame-src https:\/\/www\.openstreetmap\.org(;|$)/,
+    );
+  });
+
   it('emits the other headers, long-lived caching for hashed assets, and the SPA fallback', () => {
     const out = buildHeaders({ html, apiBase: 'https://api.example.com' });
     for (const line of [

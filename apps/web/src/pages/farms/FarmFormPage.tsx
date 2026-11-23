@@ -15,6 +15,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Modal,
   Select,
   TextField,
   Textarea,
@@ -250,7 +251,12 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
       {!editing && (
         <>
           <p>{t('setup.intro')}</p>
-          <ol className="ds-row" aria-label={t('setup.step', { n: step + 1, total: STEPS.length })}>
+          {/* The badges carry the step numbers, so the list's own markers are hidden (no "1. 1."). */}
+          <ol
+            className="ds-row"
+            style={{ listStyle: 'none' }}
+            aria-label={t('setup.step', { n: step + 1, total: STEPS.length })}
+          >
             {STEPS.map((s, i) => (
               <li key={s.card} aria-current={i === step ? 'step' : undefined}>
                 <Badge tone={i < step ? 'success' : i === step ? 'info' : 'neutral'}>
@@ -262,6 +268,7 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
           <p role="status">{t('setup.step', { n: step + 1, total: STEPS.length })}</p>
         </>
       )}
+      {farm?.status === 'archived' && <Alert tone="warning">{t('common.farmArchived')}</Alert>}
       {saved && <Alert tone="success">{t('form.saved')}</Alert>}
       <form onSubmit={submit} noValidate>
         {show('profile') && (
@@ -449,7 +456,89 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
           )}
         </div>
       </form>
+      {farm && farm.access.permissions.includes('farm.archive') && (
+        <ArchiveFarmCard farm={farm} onRestored={onSaved} />
+      )}
     </>
+  );
+}
+
+/**
+ * Archive (or restore) the farm — owners only (`farm.archive`; the API checks it again). Archiving asks for
+ * confirmation first, like archiving an animal, then opens the farm, which shows it as archived and read-only.
+ */
+function ArchiveFarmCard({ farm, onRestored }: { farm: FarmDetail; onRestored?: () => void }) {
+  const t = useFarmsT();
+  const navigate = useNavigate();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const [restored, setRestored] = useState(false);
+  const archived = farm.status === 'archived';
+  const run = async (action: 'archive' | 'restore') => {
+    setBusy(true);
+    setError(undefined);
+    try {
+      await api.request<{ farm: FarmSummary }>('POST', `/farms/${farm.id}/${action}`);
+      if (action === 'archive') {
+        setConfirming(false);
+        navigate(`/farms/${farm.id}`);
+      } else {
+        setRestored(true);
+        onRestored?.();
+      }
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card
+      title={t('form.archiveTitle')}
+      headingLevel={2}
+      style={{ marginTop: 'var(--ds-space-4)' }}
+    >
+      {restored && <Alert tone="success">{t('form.restored')}</Alert>}
+      {archived ? (
+        <>
+          <p>{t('form.restoreHint')}</p>
+          {error && <Alert tone="danger">{error}</Alert>}
+          <Button loading={busy} onClick={() => void run('restore')}>
+            {t('form.restore')}
+          </Button>
+        </>
+      ) : (
+        <>
+          <p>{t('form.archiveHint')}</p>
+          <Button
+            variant="danger"
+            onClick={() => {
+              setError(undefined);
+              setConfirming(true);
+            }}
+          >
+            {t('form.archive')}
+          </Button>
+        </>
+      )}
+      <Modal
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        title={t('form.archiveConfirmTitle', { name: farm.name })}
+        footer={
+          <>
+            <Button onClick={() => setConfirming(false)}>{t('common.cancel')}</Button>
+            <Button variant="danger" loading={busy} onClick={() => void run('archive')}>
+              {t('form.archive')}
+            </Button>
+          </>
+        }
+      >
+        <p>{t('form.archiveConfirm')}</p>
+        {error && <Alert tone="danger">{error}</Alert>}
+      </Modal>
+    </Card>
   );
 }
 

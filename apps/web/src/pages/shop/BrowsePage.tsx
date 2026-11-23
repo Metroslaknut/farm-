@@ -12,7 +12,7 @@ import { shopCategories } from '../../lib/shopCategories';
 import { Alert, Button, Checkbox, Select, TextField } from '../../components/ui';
 import { useAsync } from '../../lib/useAsync';
 import { useUrlSeed } from '../../lib/useUrlSeed';
-import { ProductCard, useShopT, ViewToggle, type View } from './common';
+import { ProductCard, categoryLabel, useShopT, ViewToggle, type View } from './common';
 import './shop-browse.css';
 
 /** Upper bound of the price slider, in baht. Adjust to your catalogue. */
@@ -177,7 +177,7 @@ export default function ShopBrowsePage() {
                 .map((c) => (
                   <Checkbox
                     key={c.key}
-                    label={c.name}
+                    label={categoryLabel(t, c.key, c.name)}
                     checked={applied.category === c.key}
                     onChange={(e) => applyNow({ category: e.target.checked ? c.key : '' })}
                   />
