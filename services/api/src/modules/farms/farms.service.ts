@@ -8,7 +8,7 @@ import type {
   FarmSummary,
   Page,
 } from '@farmplus/shared-types';
-import type { CreateFarmInput, UpdateFarmInput } from '@farmplus/validation';
+import { thaiDayStart, type CreateFarmInput, type UpdateFarmInput } from '@farmplus/validation';
 import type { Actor } from '../../context';
 import { HttpError, conflict, forbidden } from '../../lib/errors';
 import {
@@ -356,7 +356,8 @@ export async function farmAnimalSummary(access: FarmAccess): Promise<FarmAnimalS
       ? WeightRecord.distinct('animalId', {
           farmId,
           voided: false,
-          weighedOn: { $gte: new Date(Date.now() - growthCheckDays * DAY_MS) },
+          // Weighed after the day N days ago, counted on the Thai calendar (weighedOn is date-only).
+          weighedOn: { $gt: new Date(thaiDayStart().getTime() - growthCheckDays * DAY_MS) },
         })
       : Promise.resolve([]),
     AnimalType.find({ _id: { $in: [...typeIds] } }).select('key name nameTh'),

@@ -1,6 +1,7 @@
 import type { Types } from 'mongoose';
 import type { HistoryEvent, HistoryEventType, Page } from '@farmplus/shared-types';
 import { humanize } from '@farmplus/shared-utils';
+import { thaiToday } from '@farmplus/validation';
 import { notFound } from '../../lib/errors';
 import {
   Animal,
@@ -287,9 +288,12 @@ export async function animalHistory(
     const by = actor ? actors.get(String(actor)) : undefined;
     // Audit events carry full timestamps, and one breeding record carries several dated events (breeding, delivery,
     // failure, birth); both are filtered per event by the same date window as the records.
+    // Audit timestamps count on the Thai calendar day they happened (UTC would put 00:00–07:00 on the day before).
+    const eventDay =
+      event.type === 'animal' ? thaiToday(Date.parse(event.date)) : event.date.slice(0, 10);
     if (
       (event.type === 'animal' || event.type === 'breeding') &&
-      ((q.from && event.date.slice(0, 10) < q.from) || (q.to && event.date.slice(0, 10) > q.to))
+      ((q.from && eventDay < q.from) || (q.to && eventDay > q.to))
     )
       continue;
     events.push(by ? { ...event, by } : event);

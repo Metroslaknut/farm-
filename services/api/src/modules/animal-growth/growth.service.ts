@@ -6,7 +6,7 @@ import type {
   Page,
   WeightRecordDTO,
 } from '@farmplus/shared-types';
-import { createWeightSchema, type CreateWeightInput } from '@farmplus/validation';
+import { createWeightSchema, thaiDayStart, type CreateWeightInput } from '@farmplus/validation';
 import { HttpError, conflict, notFound } from '../../lib/errors';
 import {
   Animal,
@@ -242,7 +242,8 @@ export async function growthFor(
           ageEstimated: latest.evaluation.ageEstimated,
         }))
     : [];
-  const now = new Date();
+  // Today on the Thai calendar (birth dates are date-only): ages are whole days and do not lag until 07:00.
+  const now = thaiDayStart();
   const todayAge = ageInDays(animal, now);
   const breeding = ageWindow(standards, animal, 'breeding_age', now);
   const sale = ageWindow(standards, animal, 'sale_age', now);

@@ -7,6 +7,29 @@ export const thaiToday = (now: number = Date.now()): string =>
   new Date(now + THAILAND_OFFSET_MS).toISOString().slice(0, 10);
 
 /**
+ * Midnight (00:00 UTC) of the Thai calendar day `now` falls on: the same shape as the date-only values the API stores
+ * (`weighedOn`, `birthDate`, …), so "today" can be compared with them and day counts come out whole. Between 00:00 and
+ * 07:00 in Thailand the UTC date is still yesterday; this is not.
+ */
+export const thaiDayStart = (now: number = Date.now()): Date =>
+  new Date(`${thaiToday(now)}T00:00:00.000Z`);
+
+/**
+ * The instant a Thai calendar day (`YYYY-MM-DD`) begins (00:00 in Bangkok = 17:00 UTC the day before). For filtering
+ * timestamps (`createdAt`, `at`) by Thai day: `[thaiDayBegins(from), thaiDayBegins(to + 1 day))`.
+ */
+export const thaiDayBegins = (day: string): Date =>
+  new Date(new Date(`${day}T00:00:00.000Z`).getTime() - THAILAND_OFFSET_MS);
+
+/** Next calendar day of a `YYYY-MM-DD` date. */
+export const nextDay = (day: string): string =>
+  new Date(new Date(`${day}T00:00:00.000Z`).getTime() + 86_400_000).toISOString().slice(0, 10);
+
+/** `yymmdd` of the Thai calendar day (order, refund and withdrawal numbers). */
+export const thaiYymmdd = (now: number = Date.now()): string =>
+  thaiToday(now).slice(2).replaceAll('-', '');
+
+/**
  * Estimated birth date for an animal whose age is only known approximately ("about 2 years 3 months"): today minus the
  * given years and months (day of month clamped, e.g. 31 May − 3 months = 28/29 Feb). Callers must store it with
  * `birthDateEstimated: true` so it is never shown as an exact date. `null` when the age is not a sensible whole number.

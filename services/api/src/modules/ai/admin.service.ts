@@ -9,6 +9,7 @@ import {
   AnimalType,
   type AiCriteriaDoc,
 } from '../../models';
+import { thaiDayBegins, thaiToday } from '@farmplus/validation';
 import { recordAudit } from '../../services/audit.service';
 import { authorOf, authorsById } from '../community/shared';
 import { getNumberSetting } from '../settings/settings.service';
@@ -235,7 +236,7 @@ export async function usageSummary(
     t.estimatedCostMicros += r.costMicros;
     if (r.status === 'ok' || r.status === 'error') latencies.push(r.latencyMs);
     if (r.errorCode) codes.set(r.errorCode, (codes.get(r.errorCode) ?? 0) + 1);
-    const day = r.createdAt.toISOString().slice(0, 10);
+    const day = thaiToday(r.createdAt.getTime()); // usage per Thai calendar day
     const d = byDay.get(day) ?? {
       day,
       calls: 0,
@@ -255,9 +256,8 @@ export async function usageSummary(
   }
   latencies.sort((a, b) => a - b);
   const attempted = t.ok + t.errors + t.rejected;
-  const startOfDay = new Date(
-    Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()),
-  );
+  // "Used today" counts from midnight in Thailand, like the per-call budget check.
+  const startOfDay = thaiDayBegins(thaiToday());
   const [limit, usedToday, inRate, outRate] = await Promise.all([
     getNumberSetting('ai.dailyNarrativeLimit', 0, 1_000_000),
     AiUsageLog.countDocuments({ createdAt: { $gte: startOfDay }, status: { $ne: 'skipped' } }),
