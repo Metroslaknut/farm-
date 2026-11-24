@@ -2,12 +2,13 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as RegistryModule from '../src/tours/registry';
 
 const request = vi.hoisted(() => vi.fn());
 vi.mock('../src/api', () => ({ api: { request }, publicApi: { request } }));
 // A test tour on a test page; the real tours are checked by the content test at the bottom.
 vi.mock('../src/tours/registry', async (orig) => {
-  const real = await orig<typeof import('../src/tours/registry')>();
+  const real = await orig<typeof RegistryModule>();
   const test = {
     id: 'help-centre', // reuses real catalog keys
     version: 2,

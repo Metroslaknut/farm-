@@ -21,6 +21,16 @@ interface Props {
 type Box = { top: number; left: number; width: number; height: number };
 const PAD = 8;
 const GAP = 12;
+/** An element taller than this share of the screen is shown from its top, with the card in a corner. */
+const TALL = 0.5;
+
+/** Height of the page's sticky header (site header or farm shell top bar), so a scrolled-to element is not under it. */
+function stickyHeaderHeight(): number {
+  const header = document.querySelector<HTMLElement>('.site-header, .fd-topbar');
+  if (!header) return 0;
+  const pos = getComputedStyle(header).position;
+  return pos === 'sticky' || pos === 'fixed' ? header.offsetHeight : 0;
+}
 
 /**
  * One step of a guided tour: a spotlight around the pointed element and a card next to it (a bottom sheet on phones).
@@ -52,7 +62,12 @@ export default function TourOverlay({
   useEffect(() => {
     const el = anchorEl(step.anchor);
     if (!el) return;
-    el.scrollIntoView?.({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+    const behavior = reduceMotion ? 'auto' : 'smooth';
+    const r0 = el.getBoundingClientRect();
+    if (r0.height > window.innerHeight * TALL) {
+      // Taller than half the screen: show its top (its heading), just below a sticky header.
+      window.scrollTo?.({ top: r0.top + window.scrollY - stickyHeaderHeight() - GAP, behavior });
+    } else el.scrollIntoView?.({ block: 'center', behavior });
     let frame = 0;
     const measure = () => {
       cancelAnimationFrame(frame);
@@ -78,7 +93,7 @@ export default function TourOverlay({
 
   // On phones the card is a bottom sheet: keep the element above it.
   useEffect(() => {
-    if (wide || !box) return;
+    if (wide || !box || box.height > window.innerHeight * TALL) return;
     const covered = box.top + box.height + PAD - (window.innerHeight - cardSize.h - GAP);
     if (covered > 0) window.scrollBy({ top: covered, behavior: reduceMotion ? 'auto' : 'smooth' });
   }, [wide, box, cardSize.h, reduceMotion]);
@@ -101,7 +116,13 @@ export default function TourOverlay({
 
   // Desktop: below the element when there is room, otherwise above; kept on screen.
   let cardStyle: React.CSSProperties | undefined;
-  if (wide && box) {
+  if (wide && box && box.height > window.innerHeight * TALL) {
+    // A tall element: the card waits in the bottom-right corner instead of covering it.
+    cardStyle = {
+      top: window.innerHeight - cardSize.h - GAP,
+      left: window.innerWidth - cardSize.w - GAP,
+    };
+  } else if (wide && box) {
     const below = box.top + box.height + PAD + GAP;
     const roomBelow = window.innerHeight - below;
     const preferTop =
