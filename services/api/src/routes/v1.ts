@@ -27,6 +27,7 @@ import { adminAiRouter } from '../modules/ai/ai.routes';
 import { shopRouter } from '../modules/products/products.routes';
 import { ordersRouter, shippingRouter } from '../modules/orders/orders.routes';
 import { farmsRouter } from '../modules/farms/farms.routes';
+import { helpRouter } from '../modules/help/help.routes';
 import { myFarmInvitationsRouter } from '../modules/farms/invitations.routes';
 import { registrationsRouter } from '../modules/registrations/registrations.routes';
 import { adminRouter } from './admin';
@@ -42,6 +43,7 @@ export function v1Router(ctx: AppContext, auth: AuthService): Router {
   router.use('/ready', readinessRouter());
   router.use('/auth/oauth', oauthRouter(ctx, auth)); // before /auth: its routes are public
   router.use('/auth', authRouter(ctx, auth));
+  router.use('/help', helpRouter(ctx)); // public: the help centre needs no account
   router.use('/users', usersRouter(ctx));
   router.use('/registrations', registrationsRouter(ctx));
   router.use('/farms', farmsRouter(ctx));

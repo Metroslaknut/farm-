@@ -273,6 +273,7 @@ POST /api/v1/farms/:farmId/weights/:id/attachments/:attachmentId/remove
 POST /api/v1/farms/:farmId/weights/:id/corrections
 POST /api/v1/farms/:farmId/weights/:id/void
 POST /api/v1/growth-standards
+POST /api/v1/help/feedback
 POST /api/v1/live
 POST /api/v1/live/:id/end
 POST /api/v1/live/:id/ingest

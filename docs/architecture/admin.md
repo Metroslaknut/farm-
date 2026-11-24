@@ -57,6 +57,7 @@ when they do they must expose their own audited workflows and be mounted in `adm
 - Refresh token in `sessionStorage` is readable by XSS; an httpOnly cookie is the stronger follow-up.
 - Existing databases: users created before this Part lack the new status fields until saved; filtering by them only matches new/updated users (no migration script was added).
 - Applicants submit and follow **seller** and **identity** registrations on the web at `/farms/seller` (linked from the
-  account menu, the farm menu and the "approved sellers only" notices on the listing/product forms). `farm_owner`
-  registrations still have no applicant UI.
+  account menu, the farm menu and the "approved sellers only" notices on the listing/product forms). **farm_owner**
+  requests have their own page, `/farms/owner-request`, linked from the "cannot create a farm yet" message (profile)
+  and the empty farm list. An account that can already create farms is sent to the farm setup instead.
 - No automated visual-regression tests; UI was verified with the component tests plus a scripted real-browser run (see report).

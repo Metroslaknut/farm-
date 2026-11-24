@@ -1,0 +1,32 @@
+name: Help screenshots
+
+# Manual: regenerates the help-centre pictures (apps/web/public/help/img) from the real app — local API on an in-memory
+# MongoDB, made-up example data, e-mail/SMS captured from the development console (nothing real is contacted).
+# Run it after UI changes, download the artifact and commit the pictures in a PR. CI only checks that every picture an
+# article references exists (apps/web/test/help-content.test.ts); it does not retake them.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @farmplus/e2e exec playwright install --with-deps chromium
+      - run: sudo apt-get install -y fonts-noto-core fonts-thai-tlwg
+      - run: pnpm help:screenshots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: help-screenshots
+          path: apps/web/public/help/img/
+          retention-days: 14

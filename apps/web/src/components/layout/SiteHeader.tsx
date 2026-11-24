@@ -277,6 +277,9 @@ export function SiteHeader() {
                   <Link to="/farms/seller" role="menuitem" onClick={() => setProfileFor(null)}>
                     {t('header.becomeSeller')}
                   </Link>
+                  <Link to="/help" role="menuitem" onClick={() => setProfileFor(null)}>
+                    {t('header.help')}
+                  </Link>
                   <button
                     type="button"
                     role="menuitem"

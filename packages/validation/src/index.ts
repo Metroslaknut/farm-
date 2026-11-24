@@ -16,3 +16,4 @@ export * from './ai';
 export * from './analytics';
 export * from './chat';
 export * from './dates';
+export * from './help';

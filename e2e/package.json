@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "e2e": "playwright test",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "help:screenshots": "playwright test -c help-screenshots/playwright.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

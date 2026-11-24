@@ -29,6 +29,8 @@ export const PUBLIC_ANONYMOUS: Record<string, string> = {
     'development mock provider only (absent in production, see ops tests)',
   'GET /api/v1/media/dev/files/:id':
     'development mock provider only (absent in production, see ops tests)',
+  'POST /api/v1/help/feedback':
+    'help centre "was this helpful?": anonymous counters only (slug, locale, yes/no), returns nothing, rate limited',
   'GET /api/v1/animal-photos/:key':
     'device-uploaded animal photo for <img> tags (no token possible); the 192-bit random key is the capability, images only',
 };

@@ -40,6 +40,7 @@ const COLUMNS: { title: Key; links: { to: string; label: Key }[] }[] = [
       { to: '/videos', label: 'footer.videos' },
       { to: '/live', label: 'footer.live' },
       { to: '/messages', label: 'footer.messages' },
+      { to: '/help', label: 'footer.helpCentre' },
     ],
   },
 ];

@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { MongoMemoryServer } from 'mongodb-memory-server';
@@ -32,10 +33,15 @@ function start(
     env: { PATH: process.env['PATH'] ?? '', ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
-  child.stdout?.on(
-    'data',
-    (d: Buffer) => process.env['E2E_VERBOSE'] && process.stdout.write(`[${name}] ${d}`),
-  );
+  child.stdout?.on('data', (d: Buffer) => {
+    if (process.env['E2E_VERBOSE']) process.stdout.write(`[${name}] ${d}`);
+    // Test "mailbox": the development notifier prints each e-mail / SMS (with its link token or code) to stdout.
+    // E2E_NOTIFY_LOG collects those lines for scripts that need them (the help screenshots); nothing real is sent.
+    const sink = process.env['E2E_NOTIFY_LOG'];
+    if (sink)
+      for (const line of String(d).split('\n'))
+        if (line.includes('[notify:dev]')) appendFileSync(sink, `${line.trim()}\n`);
+  });
   child.stderr?.on(
     'data',
     (d: Buffer) => process.env['E2E_VERBOSE'] && process.stderr.write(`[${name}] ${d}`),
@@ -65,7 +71,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       PAYMENT_WEBHOOK_SECRET: randomBytes(24).toString('hex'),
       RATE_LIMIT_ENABLED: 'false', // many sign-ins from one address
       // Pinned here: the API also reads the developer's .env, which may turn verification on for local testing.
-      AUTH_REQUIRE_VERIFICATION: 'false',
+      AUTH_REQUIRE_VERIFICATION:
+        process.env['E2E_REQUIRE_VERIFICATION'] === 'true' ? 'true' : 'false',
       // Social sign-in through the mock provider: it bounces straight back to the API callback, then to the web page.
       OAUTH_MOCK: 'true',
       API_PUBLIC_URL: `http://localhost:${API_PORT}`,

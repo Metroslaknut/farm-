@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { publicApi } from '../../api';
 import { useAuth } from '../../auth/AuthContext';
 import { Alert, Button, Card, PasswordField, TextField } from '../../components/ui';
 import { useT } from '../../i18n';
 import { errorMessage } from '../../lib/format';
+import { errorCode } from './auth/messages';
 import { SocialButtons } from './auth/SocialButtons';
 import './auth/auth.css';
 
@@ -20,6 +22,10 @@ export default function SignInPage() {
   const [needsCode, setNeedsCode] = useState(state?.mfa === true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  // ACCOUNT_NOT_VERIFIED: offer to send the verification link / code again from here (POST /auth/verify/resend).
+  const [unverified, setUnverified] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [notice, setNotice] = useState<string>();
 
   if (status === 'authenticated') return <Navigate to={from} replace />;
 
@@ -27,6 +33,8 @@ export default function SignInPage() {
     event.preventDefault();
     setBusy(true);
     setError(undefined);
+    setNotice(undefined);
+    setUnverified(false);
     try {
       if (needsCode) await verifyMfa(code.trim());
       else if ((await login(identifier.trim(), password)) === 'mfa_required')
@@ -34,8 +42,26 @@ export default function SignInPage() {
       navigate(from, { replace: true });
     } catch (e) {
       setError(errorMessage(e));
+      setUnverified(errorCode(e) === 'ACCOUNT_NOT_VERIFIED');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    setResending(true);
+    setNotice(undefined);
+    try {
+      await publicApi.request('POST', '/auth/verify/resend', {
+        body: { identifier: identifier.trim() },
+      });
+      setError(undefined);
+      setUnverified(false);
+      setNotice(t('signIn.resent'));
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -73,7 +99,20 @@ export default function SignInPage() {
             />
           </>
         )}
-        {error && <Alert tone="danger">{error}</Alert>}
+        {error && (
+          <Alert tone="danger">
+            {error}
+            {unverified && (
+              <>
+                {' '}
+                <Button size="sm" loading={resending} onClick={() => void resend()}>
+                  {t('checkEmail.resend')}
+                </Button>
+              </>
+            )}
+          </Alert>
+        )}
+        {notice && <Alert tone="success">{notice}</Alert>}
         <Button
           type="submit"
           variant="primary"
@@ -88,7 +127,13 @@ export default function SignInPage() {
         <>
           <SocialButtons next={from} />
           <p className="auth-footnote">
+            <Link to="/farms/forgot-password">{t('signIn.forgot')}</Link>
+          </p>
+          <p className="auth-footnote">
             {t('signIn.noAccount')} <Link to="/farms/register">{t('signIn.register')}</Link>
+          </p>
+          <p className="auth-footnote">
+            <Link to="/help/sign-in">{t('help.link')}</Link>
           </p>
         </>
       )}

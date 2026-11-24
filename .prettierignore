@@ -8,3 +8,5 @@ pnpm-lock.yaml
 apps/mobile/assets
 # Written by services/api/test/acceptance/journey.test.ts on every test run (JSON.stringify layout)
 docs/acceptance/evidence/
+# Help articles use their own Markdown subset (apps/web/src/help/parse.ts); Prettier would rewrite the frontmatter.
+apps/web/src/help/content/

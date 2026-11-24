@@ -83,3 +83,4 @@ export {
   type OAuthProviderId,
   type OAuthFlowDoc,
 } from './oauth.model';
+export { HelpFeedback, type HelpFeedbackAttrs, type HelpFeedbackDoc } from './help-feedback.model';

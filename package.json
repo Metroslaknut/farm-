@@ -23,7 +23,8 @@
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "qa:audit": "node scripts/qa/audit-policy.mjs",
     "e2e": "pnpm --filter @farmplus/e2e e2e",
-    "load": "node e2e/load/load-test.mjs"
+    "load": "node e2e/load/load-test.mjs",
+    "help:screenshots": "pnpm --filter @farmplus/e2e help:screenshots"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

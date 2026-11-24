@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import type {
+  FarmSetupDTO,
   RegistrationStatus,
   RegistrationSummary,
   RegistrationType,
@@ -84,6 +85,9 @@ export default function SellerRegistrationPage() {
     <>
       <h1>{t('seller.title')}</h1>
       <p>{t('seller.intro')}</p>
+      <p className="ds-field__hint">
+        <Link to="/help/verify-identity-seller">{t('help.read')}</Link>
+      </p>
       {notice && <Alert tone="success">{notice}</Alert>}
 
       <Card title={t('seller.applicationTitle')} headingLevel={2}>
@@ -116,6 +120,92 @@ export default function SellerRegistrationPage() {
           )}
         </Card>
       )}
+    </>
+  );
+}
+
+/**
+ * `/farms/owner-request`: ask for the farm-owner role (registration type `farm_owner`, same API as the seller page),
+ * which creating a farm needs while the setting `farms.requireFarmOwnerRole` is on. Accounts that can already create
+ * farms (`canCreateFarm`) are sent to the farm setup instead of being asked to apply.
+ */
+export function FarmOwnerRequestPage() {
+  const t = useFarmsT();
+  const [version, setVersion] = useState(0);
+  const [notice, setNotice] = useState<string>();
+  const { data, loading, error, reload } = useAsync(
+    async (signal) => {
+      const [mine, setup] = await Promise.all([
+        loadMyRegistrations(signal),
+        api.request<FarmSetupDTO>('GET', '/farms/me', { signal }),
+      ]);
+      return { registrations: mine.registrations, canCreateFarm: setup.canCreateFarm };
+    },
+    [version],
+  );
+  const submitted = () => {
+    setNotice(t('ownerRequest.submitted'));
+    forgetRecent(); // the onboarding guard reads /farms/me through the shared cache
+    setVersion((v) => v + 1);
+  };
+
+  if (error)
+    return (
+      <>
+        <h1>{t('ownerRequest.title')}</h1>
+        <Alert tone="danger">
+          {error}{' '}
+          <button type="button" onClick={reload}>
+            {t('common.tryAgain')}
+          </button>
+        </Alert>
+      </>
+    );
+  if (loading && !data) return <p role="status">{t('common.loading')}</p>;
+  const request = latestOf(data?.registrations, 'farm_owner');
+
+  return (
+    <>
+      <h1>{t('ownerRequest.title')}</h1>
+      <p>{t('ownerRequest.intro')}</p>
+      {notice && <Alert tone="success">{notice}</Alert>}
+      <Card title={t('ownerRequest.cardTitle')} headingLevel={2}>
+        {data?.canCreateFarm && request?.status !== 'SUSPENDED' ? (
+          <>
+            <p>{t('ownerRequest.canCreate')}</p>
+            <p>
+              <Link to="/farms/new">{t('ownerRequest.createFarm')}</Link>
+            </p>
+          </>
+        ) : !request ? (
+          <>
+            <p>{t('ownerRequest.none')}</p>
+            <RegistrationForm type="farm_owner" onSubmitted={submitted} />
+          </>
+        ) : (
+          <>
+            <RegistrationStatusLine registration={request} />
+            {(request.status === 'PENDING' || request.status === 'UNDER_REVIEW') && (
+              <p>{t('ownerRequest.waiting')}</p>
+            )}
+            {request.status === 'APPROVED' && (
+              <p>
+                <Link to="/farms/new">{t('ownerRequest.createFarm')}</Link>
+              </p>
+            )}
+            {request.status === 'SUSPENDED' && <p>{t('seller.suspendedHelp')}</p>}
+            {request.status === 'REJECTED' && (
+              <>
+                <p>{t('ownerRequest.rejected')}</p>
+                <RegistrationForm type="farm_owner" onSubmitted={submitted} again />
+              </>
+            )}
+          </>
+        )}
+      </Card>
+      <p className="ds-field__hint" style={{ marginTop: 'var(--ds-space-4)' }}>
+        <Link to="/help/request-farm-owner">{t('help.read')}</Link>
+      </p>
     </>
   );
 }
@@ -182,13 +272,16 @@ function SellerStatus({
 
 type DocDraft = { kind: string; url: string };
 
-/** Application form (`submitRegistrationSchema`): business name (sellers), a note and https links to documents. */
-function RegistrationForm({
+/**
+ * Application form (`submitRegistrationSchema`): business name (sellers, farm owners), a note and https links to
+ * documents. Used for seller, identity and farm-owner registrations.
+ */
+export function RegistrationForm({
   type,
   onSubmitted,
   again = false,
 }: {
-  type: 'seller' | 'identity';
+  type: 'seller' | 'identity' | 'farm_owner';
   onSubmitted: () => void;
   again?: boolean;
 }) {
@@ -204,7 +297,7 @@ function RegistrationForm({
     event.preventDefault();
     const parsed = submitRegistrationSchema.safeParse({
       type,
-      ...(type === 'seller' && businessName.trim() ? { businessName: businessName.trim() } : {}),
+      ...(type !== 'identity' && businessName.trim() ? { businessName: businessName.trim() } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
       documents: docs
         .filter((d) => d.kind.trim() || d.url.trim())
@@ -231,11 +324,13 @@ function RegistrationForm({
   return (
     <form onSubmit={submit} noValidate aria-label={t(`seller.form.${type}`)}>
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
-      {type === 'seller' && (
+      {type !== 'identity' && (
         <TextField
           id={`${prefix}-business`}
-          label={t('seller.businessName')}
-          hint={t('seller.businessNameHint')}
+          label={t(type === 'farm_owner' ? 'ownerRequest.businessName' : 'seller.businessName')}
+          hint={t(
+            type === 'farm_owner' ? 'ownerRequest.businessNameHint' : 'seller.businessNameHint',
+          )}
           value={businessName}
           onChange={(e) => setBusinessName(e.target.value)}
           error={errors['businessName']}
@@ -244,7 +339,7 @@ function RegistrationForm({
       )}
       <Textarea
         id={`${prefix}-note`}
-        label={t(type === 'seller' ? 'seller.note' : 'seller.identityNote')}
+        label={t(type === 'identity' ? 'seller.identityNote' : 'seller.note')}
         value={note}
         onChange={(e) => setNote(e.target.value)}
         error={errors['note']}
@@ -297,9 +392,13 @@ function RegistrationForm({
           {t(
             type === 'identity'
               ? 'seller.submitIdentity'
-              : again
-                ? 'seller.submitAgain'
-                : 'seller.submit',
+              : type === 'farm_owner'
+                ? again
+                  ? 'ownerRequest.submitAgain'
+                  : 'ownerRequest.submit'
+                : again
+                  ? 'seller.submitAgain'
+                  : 'seller.submit',
           )}
         </Button>
       </div>

@@ -196,6 +196,9 @@ export default function RegisterPage() {
               {t('verifyPhone.resend')}
             </button>
           </p>
+          <p className="auth-footnote">
+            <Link to="/help/register-phone">{t('help.link')}</Link>
+          </p>
         </section>
       </div>
     );
@@ -220,6 +223,9 @@ export default function RegisterPage() {
           </div>
           <p className="auth-footnote">
             {t('checkEmail.verified')} <Link to="/farms/sign-in">{t('checkEmail.signIn')}</Link>
+          </p>
+          <p className="auth-footnote">
+            <Link to="/help/register-email">{t('help.link')}</Link>
           </p>
         </section>
       </div>
@@ -315,6 +321,11 @@ export default function RegisterPage() {
         <SocialButtons next="/farms" />
         <p className="auth-footnote">
           {t('register.haveAccount')} <Link to="/farms/sign-in">{t('register.signIn')}</Link>
+        </p>
+        <p className="auth-footnote">
+          <Link to={method === 'phone' ? '/help/register-phone' : '/help/register-email'}>
+            {t('help.link')}
+          </Link>
         </p>
       </section>
       <aside className="auth-panel" aria-labelledby="register-benefits">
