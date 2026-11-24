@@ -18,6 +18,8 @@ const LiveApp = lazy(() => import('./pages/live/LiveApp'));
 const MarketApp = lazy(() => import('./pages/market/MarketApp'));
 const InboxApp = lazy(() => import('./pages/inbox/InboxApp'));
 const ShopApp = lazy(() => import('./pages/shop/ShopApp'));
+// The help centre and its articles are their own chunk: nothing of it loads on other pages.
+const HelpApp = lazy(() => import('./pages/help/HelpApp'));
 
 // The design-system preview is an internal page: on in development, opt-in elsewhere.
 const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DESIGN_PREVIEW === 'true';
@@ -90,6 +92,17 @@ createRoot(root).render(
               </Suspense>
             }
           />
+          {/* Public: no sign-in needed (how to register and sign in is part of it). */}
+          <Route element={<PublicLayout />}>
+            <Route
+              path="/help/*"
+              element={
+                <Suspense fallback={<p role="status">Loading…</p>}>
+                  <HelpApp />
+                </Suspense>
+              }
+            />
+          </Route>
           <Route
             path="/notifications/*"
             element={

@@ -36,6 +36,8 @@ export const rateLimits = (env: ApiEnv) => ({
   /** Video & live (Part 10). */
   upload: limiter(env, { windowMs: 60 * MINUTE, limit: 20 }),
   view: limiter(env, { windowMs: 60 * MINUTE, limit: 1200 }),
+  // Help centre "was this helpful?" (public, anonymous): enough for one reader, not for stuffing the counters.
+  helpFeedback: limiter(env, { windowMs: 60 * MINUTE, limit: 30 }),
   playback: limiter(env, { windowMs: 60 * MINUTE, limit: 1200 }),
   // processing-status polls from the upload screens: one every 3 s for their whole polling window
   videoRefresh: limiter(env, { windowMs: 15 * MINUTE, limit: 300 }),

@@ -27,7 +27,9 @@ import AnimalHistoryPage from './records/AnimalHistoryPage';
 import AssessmentPage from './AssessmentPage';
 import GrowthPage from './records/GrowthPage';
 import PedigreePage from './records/PedigreePage';
-import SellerRegistrationPage from './SellerRegistrationPage';
+import SellerRegistrationPage, { FarmOwnerRequestPage } from './SellerRegistrationPage';
+import ForgotPasswordPage from './ForgotPasswordPage';
+import ResetPasswordPage from './ResetPasswordPage';
 import RecordDetailPage from './records/RecordDetailPage';
 import RecordFormPage from './records/RecordFormPage';
 import RecordListPage from './records/RecordListPage';
@@ -41,6 +43,8 @@ export default function FarmsApp() {
         <Route path="sign-in" element={<SignInPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="oauth-callback" element={<OAuthCallbackPage />} />
         <Route element={<RequireSignIn />}>
           <Route path="new" element={<FarmFormPage />} />
@@ -55,6 +59,8 @@ export default function FarmsApp() {
           <Route path="invitations" element={<MyInvitationsPage />} />
           {/* Anyone signed in may apply to sell; no farm needed (a seller may only sell products). */}
           <Route path="seller" element={<SellerRegistrationPage />} />
+          {/* Creating farms needs an approved farm-owner request (setting farms.requireFarmOwnerRole). */}
+          <Route path="owner-request" element={<FarmOwnerRequestPage />} />
           <Route element={<RequireFarmSetup />}>
             <Route index element={<FarmIndexPage />} />
             <Route path="list" element={<FarmListPage />} />

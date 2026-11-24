@@ -89,9 +89,13 @@ Then sign in and enrol TOTP; admin permissions only become active after that.
 
 - Email/SMS delivery is an interface (`Notifier`); dev logs to console, production default drops messages
   until a provider is wired. Verification-required mode (`AUTH_REQUIRE_VERIFICATION`) is only usable once delivery exists.
+  **As of 24 Nov 2026 staging runs with it on and no provider**: e-mail/phone sign-ups cannot complete there (Google works).
 - Rate-limit counters are in-memory per API instance; use a shared store (Redis) when scaling out.
 - Refresh tokens are returned in the JSON body for both clients. For Web, an `httpOnly` cookie is stronger — revisit with the Web auth UI.
 - Audit writes are not transactional with the change they describe (standalone MongoDB in tests; use a replica set + transactions for strict atomicity).
 - `register` returns 409 for an existing email/phone (account enumeration is mitigated only by rate limiting).
 - No concurrent-refresh grace window: two simultaneous refreshes with the same token log the user out.
-- No UI was added for any of this (UI protection rule); Web/Mobile only gain typed `api-client` methods.
+- Web UI: sign-in (with "send the link again" when the API answers `ACCOUNT_NOT_VERIFIED`), register, check-email,
+  verify-phone, `/farms/verify-email?token=`, `/farms/forgot-password` and `/farms/reset-password?token=` (the token is
+  removed from the address bar on arrival). A real e-mail provider must build its links to exactly these two paths.
+  Mobile has no forgot/reset screens yet.

@@ -240,7 +240,7 @@ describe('site header and footer', () => {
     const hrefs = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
     expect(hrefs).toContain('/market/orders');
     for (const href of hrefs)
-      expect(href).toMatch(/^\/(shop|market|farms|community|videos|live|messages)/);
+      expect(href).toMatch(/^\/(shop|market|farms|community|videos|live|messages|help)/);
   });
 });
 

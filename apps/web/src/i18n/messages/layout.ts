@@ -45,6 +45,7 @@ export default defineMessages({
     'header.profile': 'โปรไฟล์',
     'header.settings': 'ตั้งค่า',
     'header.becomeSeller': 'สมัครเป็นผู้ขาย',
+    'header.help': 'ช่วยเหลือ',
     'header.signOut': 'ออกจากระบบ',
     'header.account': 'บัญชี',
     'header.signIn': 'เข้าสู่ระบบ',
@@ -91,6 +92,7 @@ export default defineMessages({
     'footer.videos': 'วิดีโอ',
     'footer.live': 'ไลฟ์',
     'footer.messages': 'ข้อความ',
+    'footer.helpCentre': 'ช่วยเหลือ',
     'footer.about':
       'แพลตฟอร์มสำหรับคนทำฟาร์ม บันทึกข้อมูลฟาร์มและปศุสัตว์ ซื้อขายสัตว์และสินค้าเกษตร และแลกเปลี่ยนความรู้กับชุมชน',
     'footer.help': 'มีคำถาม? ส่งข้อความหาผู้ขายได้จากหน้าประกาศหรือหน้าสินค้า',
@@ -218,6 +220,7 @@ export default defineMessages({
     'header.profile': 'Profile',
     'header.settings': 'Settings',
     'header.becomeSeller': 'Become a seller',
+    'header.help': 'Help',
     'header.signOut': 'Sign out',
     'header.account': 'Account',
     'header.signIn': 'Sign in',
@@ -264,6 +267,7 @@ export default defineMessages({
     'footer.videos': 'Videos',
     'footer.live': 'Live',
     'footer.messages': 'Messages',
+    'footer.helpCentre': 'Help',
     'footer.about':
       'The platform for farmers: keep farm and livestock records, buy and sell animals and farm supplies, and share know-how with the community.',
     'footer.help': 'Questions? Message the seller from any listing or product page.',

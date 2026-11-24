@@ -4,6 +4,7 @@ import auth from './messages/auth';
 import common from './messages/common';
 import community from './messages/community';
 import farms from './messages/farms';
+import help from './messages/help';
 import home from './messages/home';
 import inbox from './messages/inbox';
 import layout from './messages/layout';
@@ -18,6 +19,7 @@ const catalogs = {
   common,
   layout,
   home,
+  help,
   auth,
   farms,
   market,

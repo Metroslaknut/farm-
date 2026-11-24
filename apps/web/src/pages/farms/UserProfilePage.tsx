@@ -82,7 +82,12 @@ function ProfileFarms() {
               {t('profile.setupFarm')}
             </NavButton>
           ) : (
-            <p>{t('setup.notAllowed')}</p>
+            <>
+              <p>{t('setup.notAllowed')}</p>
+              <NavButton to="/farms/owner-request" variant="primary">
+                {t('ownerRequest.link')}
+              </NavButton>
+            </>
           )}
         </>
       )}

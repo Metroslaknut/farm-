@@ -1,0 +1,158 @@
+/* Help centre (/help). Scoped to .help* classes; loaded only with the help chunk. Uses design-system tokens only. */
+.help {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+.help__lead {
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-lg);
+}
+.help-section {
+  margin-top: var(--ds-space-6);
+}
+.help-search {
+  margin-top: var(--ds-space-4);
+}
+.help-search__label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--ds-space-2);
+}
+.help-search__input {
+  flex: 1;
+  min-width: 0;
+}
+.help-linkbtn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ds-primary);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+.help-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--ds-space-3);
+}
+.help-list__link {
+  display: grid;
+  gap: var(--ds-space-1);
+  padding: var(--ds-space-4);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  text-decoration: none;
+}
+.help-list__link:hover,
+.help-list__link:focus-visible {
+  border-color: var(--ds-primary);
+}
+.help-list__link span {
+  color: var(--ds-text-muted);
+}
+.help-actions {
+  margin: var(--ds-space-4) 0;
+}
+.help-toc {
+  padding: var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-2);
+}
+.help-toc h2 {
+  margin-top: 0;
+  font-size: var(--ds-text-md);
+}
+.help-steps {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--ds-space-6);
+  margin: var(--ds-space-5) 0;
+}
+.help-step__text {
+  display: flex;
+  gap: var(--ds-space-3);
+  align-items: flex-start;
+  font-size: var(--ds-text-lg);
+}
+.help-step__no {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--ds-radius-full);
+  background: var(--ds-primary);
+  color: var(--ds-on-primary);
+  font-weight: 700;
+}
+.help-step__img {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-2);
+  cursor: zoom-in;
+  overflow: hidden;
+}
+.help-step__img img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.help-zoom {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.help-box {
+  margin: var(--ds-space-4) 0;
+  padding: var(--ds-space-4);
+  border: 1px solid var(--ds-info-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-info-bg);
+}
+.help-box--trouble,
+.help-box--warning {
+  border-color: var(--ds-warning-border);
+  background: var(--ds-warning-bg);
+}
+.help-box__kicker {
+  margin: 0;
+  font-size: var(--ds-text-sm);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+}
+.help-box__title {
+  margin: var(--ds-space-1) 0 var(--ds-space-2);
+  font-size: var(--ds-text-md);
+}
+.help-box > :last-child {
+  margin-bottom: 0;
+}
+.help-feedback {
+  margin-top: var(--ds-space-6);
+  padding-top: var(--ds-space-4);
+  border-top: 1px solid var(--ds-border);
+}
+
+@media print {
+  /* Only when a help article is on the page: print the article, not the site around it. */
+  body:has(.help-article) .site-header,
+  body:has(.help-article) .site-footer,
+  body:has(.help-article) .ds-skip,
+  .help-noprint {
+    display: none !important;
+  }
+  .help-step {
+    break-inside: avoid;
+  }
+  .help-step__img {
+    border: 0;
+  }
+}

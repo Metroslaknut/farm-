@@ -6,6 +6,7 @@ import { NavButton } from './NavButton';
 import { useAsync } from '../../lib/useAsync';
 import { useListParams } from '../../lib/useListParams';
 import { roleLabel, useFarmsT } from './labels';
+import { useFarmSetup } from './useFarmSetup';
 
 const DEFAULTS = { q: '', owned: '1', managed: '1' };
 
@@ -22,6 +23,7 @@ function FarmSection({
   onPage: (p: number) => void;
 }) {
   const t = useFarmsT();
+  const setup = useFarmSetup();
   const { data, loading, error, reload } = useAsync(
     (signal) =>
       api.request<Page<FarmSummary>>('GET', '/farms', {
@@ -45,6 +47,11 @@ function FarmSection({
       {data && data.items.length === 0 && relation === 'owned' && (
         <Card title={t('list.emptyTitle')}>
           <p>{q ? t('list.noMatch') : t('list.emptyHint')}</p>
+          {!q && setup.data && !setup.data.canCreateFarm && (
+            <p>
+              <Link to="/farms/owner-request">{t('ownerRequest.link')}</Link>
+            </p>
+          )}
         </Card>
       )}
       {data && data.items.length === 0 && relation === 'managed' && (

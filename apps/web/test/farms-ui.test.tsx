@@ -165,9 +165,9 @@ describe('FarmListPage', () => {
     const managed = within(screen.getByRole('region', { name: 'Farms I help run' }));
     expect(await managed.findByRole('link', { name: 'Neighbour Farm' })).toBeTruthy();
     expect(managed.getByText('Manager')).toBeTruthy();
-    expect(new Set(request.mock.calls.map((c) => c[2]?.query?.relation))).toEqual(
-      new Set(['managed', 'owned']),
-    );
+    // (The empty state also reads /farms/me to decide whether to offer the farm-owner request link.)
+    const lists = request.mock.calls.filter((c) => c[1] === '/farms');
+    expect(new Set(lists.map((c) => c[2]?.query?.relation))).toEqual(new Set(['managed', 'owned']));
   });
 
   it('surfaces API failures with a retry', async () => {
