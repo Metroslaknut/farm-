@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { thaiDayBegins, thaiDayStart, thaiToday, thaiYymmdd } from '@farmplus/validation';
+import { AuditLog } from '../src/models';
 import { newOrderNo } from '../src/modules/orders/orders.service';
 import { newRefundNo, newWithdrawalNo } from '../src/modules/finance/refunds.numbers';
 import {
@@ -98,7 +99,12 @@ describe.each(TIMES)('at %s in Bangkok', (_label, instant) => {
     expect(endedYesterday.body.record.active).toBe(false);
     expect(startsToday.body.record.active).toBe(true);
 
-    // Timeline: the animal was registered "today" in Thailand, whatever the UTC date.
+    // Timeline: the animal was registered "today" in Thailand, whatever the UTC date. The audit model's
+    // `default: Date.now` holds the REAL clock (bound before the fake one), so pin the event to the faked instant.
+    await AuditLog.updateMany(
+      { targetType: 'animal', targetId: animal.id },
+      { $set: { createdAt: new Date(instant) } },
+    );
     const history = (q: string) =>
       api().get(`/api/v1/farms/${f.farmId}/animals/${animal.id}/history${q}`).set(f.owner.auth);
     const yesterday = (await history('?to=2026-11-22')).body.items;
