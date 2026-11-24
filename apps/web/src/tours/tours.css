@@ -1,0 +1,85 @@
+/* Guided tours (loaded with the tour overlay chunk). Design-system tokens only; no layout change to the pages. */
+.tour-spot {
+  position: fixed;
+  z-index: calc(var(--ds-z-dropdown) + 10);
+  border-radius: var(--ds-radius-md);
+  outline: 3px solid var(--ds-primary);
+  outline-offset: 0;
+  /* Dims the rest of the page without covering it: clicks still reach the page (it is not locked). */
+  box-shadow: 0 0 0 9999px color-mix(in srgb, var(--ds-text) 28%, transparent);
+  pointer-events: none;
+}
+/* "Look only" steps: the pointed element cannot be pressed while the step is shown. */
+.tour-spot--block {
+  pointer-events: auto;
+}
+.tour-card {
+  position: fixed;
+  z-index: calc(var(--ds-z-dropdown) + 11);
+  box-sizing: border-box;
+  padding: var(--ds-space-4);
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  box-shadow: var(--ds-shadow-md);
+}
+.tour-card--float {
+  width: min(22rem, calc(100vw - 2 * var(--ds-space-4)));
+  border-radius: var(--ds-radius-lg);
+}
+/* Phones: a bottom sheet across the screen. */
+.tour-card--sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--ds-radius-lg) var(--ds-radius-lg) 0 0;
+  padding-bottom: calc(var(--ds-space-4) + env(safe-area-inset-bottom, 0px));
+}
+.tour-card__count {
+  margin: 0;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-text-muted);
+}
+.tour-card__title {
+  margin: var(--ds-space-1) 0 var(--ds-space-2);
+  font-size: var(--ds-text-lg);
+}
+.tour-card__body {
+  margin: 0 0 var(--ds-space-2);
+}
+.tour-card__more {
+  margin: 0 0 var(--ds-space-2);
+  font-size: var(--ds-text-sm);
+}
+.tour-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-3);
+}
+.tour-card__nav {
+  display: flex;
+  gap: var(--ds-space-2);
+}
+.tour-card__never {
+  margin-top: var(--ds-space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ds-text-muted);
+  font: inherit;
+  font-size: var(--ds-text-sm);
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tour-card,
+  .tour-spot {
+    transition:
+      top 0.15s ease-out,
+      left 0.15s ease-out,
+      width 0.15s ease-out,
+      height 0.15s ease-out;
+  }
+}

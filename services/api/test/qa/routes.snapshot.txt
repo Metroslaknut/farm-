@@ -104,6 +104,7 @@ GET /api/v1/marketplace/moderation/listings/:id/events
 GET /api/v1/marketplace/negotiations
 GET /api/v1/marketplace/negotiations/:id
 GET /api/v1/marketplace/sell-eligibility
+GET /api/v1/me/tours
 GET /api/v1/media/dev/files/:id
 GET /api/v1/moderation/:targetType/:id/history
 GET /api/v1/moderation/reports
@@ -335,6 +336,7 @@ POST /api/v1/webhooks/payments
 POST /api/v1/webhooks/shipping
 POST /api/v1/webhooks/video
 PUT /api/v1/farms/:farmId/members/:memberId/permissions
+PUT /api/v1/me/tours/:tourId
 PUT /api/v1/notifications/preferences
 PUT /api/v1/roles/:key/permissions
 PUT /api/v1/shop/admin/categories/:key

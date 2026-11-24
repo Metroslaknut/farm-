@@ -6,6 +6,7 @@ import { localName } from '@farmplus/shared-utils';
 import { shopCategories } from '../../lib/shopCategories';
 import { AuthContext } from '../../auth/AuthContext';
 import { useMinWidth } from '../../hooks/useMediaQuery';
+import { useTours } from '../../tours/TourProvider';
 import { useLocale, useT, type Translate } from '../../i18n';
 import { useAsync } from '../../lib/useAsync';
 import { InboxLinks } from '../inbox/InboxLinks';
@@ -57,6 +58,8 @@ export function SiteHeader() {
   const navigate = useNavigate();
   const ids = useId();
   const t = useT('layout');
+  const tt = useT('tours');
+  const tours = useTours();
   const [locale] = useLocale();
   // Phones (< 768px, the header's own breakpoint): the search box is too narrow for the full hint.
   const wideSearch = useMinWidth('md');
@@ -280,6 +283,18 @@ export function SiteHeader() {
                   <Link to="/help" role="menuitem" onClick={() => setProfileFor(null)}>
                     {t('header.help')}
                   </Link>
+                  {tours.toursHere[0] && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setProfileFor(null);
+                        tours.start(tours.toursHere[0]!.id);
+                      }}
+                    >
+                      {tt('ui.showAgain')}
+                    </button>
+                  )}
                   <button
                     type="button"
                     role="menuitem"

@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { App } from './App';
 import { PublicLayout } from './app/layouts/PublicLayout';
 import { AuthProvider } from './auth/AuthContext';
+import { TourProvider } from './tours/TourProvider';
 import NotFoundPage from './pages/NotFoundPage';
 import './index.css';
 
@@ -32,108 +33,111 @@ createRoot(root).render(
     <BrowserRouter>
       {/* One session for the whole site: moving between areas must not re-check the sign-in. */}
       <AuthProvider>
-        <Routes>
-          <Route element={<PublicLayout wide />}>
-            <Route path="/" element={<App />} />
-          </Route>
-          <Route
-            path="/admin/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <AdminApp />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/farms/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <FarmsApp />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/community/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <CommunityApp />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/videos/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <VideosApp />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/live/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <LiveApp />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/shop/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <ShopApp />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/market/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <MarketApp />
-              </Suspense>
-            }
-          />
-          {/* Public: no sign-in needed (how to register and sign in is part of it). */}
-          <Route element={<PublicLayout />}>
+        {/* Guided tours on any page (the overlay itself loads only when a tour is shown). */}
+        <TourProvider>
+          <Routes>
+            <Route element={<PublicLayout wide />}>
+              <Route path="/" element={<App />} />
+            </Route>
             <Route
-              path="/help/*"
+              path="/admin/*"
               element={
                 <Suspense fallback={<p role="status">Loading…</p>}>
-                  <HelpApp />
+                  <AdminApp />
                 </Suspense>
               }
             />
-          </Route>
-          <Route
-            path="/notifications/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <InboxApp area="notifications" />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/messages/*"
-            element={
-              <Suspense fallback={<p role="status">Loading…</p>}>
-                <InboxApp area="messages" />
-              </Suspense>
-            }
-          />
-          {previewEnabled && (
             <Route
-              path="/design-system/*"
+              path="/farms/*"
               element={
                 <Suspense fallback={<p role="status">Loading…</p>}>
-                  <DesignSystem />
+                  <FarmsApp />
                 </Suspense>
               }
             />
-          )}
-          {/* Unknown URLs: a "page not found" page in the site layout (not the home page). */}
-          <Route element={<PublicLayout />}>
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
+            <Route
+              path="/community/*"
+              element={
+                <Suspense fallback={<p role="status">Loading…</p>}>
+                  <CommunityApp />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/videos/*"
+              element={
+                <Suspense fallback={<p role="status">Loading…</p>}>
+                  <VideosApp />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/live/*"
+              element={
+                <Suspense fallback={<p role="status">Loading…</p>}>
+                  <LiveApp />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/shop/*"
+              element={
+                <Suspense fallback={<p role="status">Loading…</p>}>
+                  <ShopApp />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/market/*"
+              element={
+                <Suspense fallback={<p role="status">Loading…</p>}>
+                  <MarketApp />
+                </Suspense>
+              }
+            />
+            {/* Public: no sign-in needed (how to register and sign in is part of it). */}
+            <Route element={<PublicLayout />}>
+              <Route
+                path="/help/*"
+                element={
+                  <Suspense fallback={<p role="status">Loading…</p>}>
+                    <HelpApp />
+                  </Suspense>
+                }
+              />
+            </Route>
+            <Route
+              path="/notifications/*"
+              element={
+                <Suspense fallback={<p role="status">Loading…</p>}>
+                  <InboxApp area="notifications" />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/messages/*"
+              element={
+                <Suspense fallback={<p role="status">Loading…</p>}>
+                  <InboxApp area="messages" />
+                </Suspense>
+              }
+            />
+            {previewEnabled && (
+              <Route
+                path="/design-system/*"
+                element={
+                  <Suspense fallback={<p role="status">Loading…</p>}>
+                    <DesignSystem />
+                  </Suspense>
+                }
+              />
+            )}
+            {/* Unknown URLs: a "page not found" page in the site layout (not the home page). */}
+            <Route element={<PublicLayout />}>
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </TourProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

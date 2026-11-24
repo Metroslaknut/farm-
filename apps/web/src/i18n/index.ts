@@ -11,6 +11,7 @@ import layout from './messages/layout';
 import live from './messages/live';
 import market from './messages/market';
 import shop from './messages/shop';
+import tours from './messages/tours';
 import videos from './messages/videos';
 import { getLocale, useLocale } from './locale';
 
@@ -29,6 +30,7 @@ const catalogs = {
   live,
   inbox,
   admin,
+  tours,
 };
 export type Area = keyof typeof catalogs;
 type KeyOf<A extends Area> = (typeof catalogs)[A] extends Catalog<infer K> ? K : never;

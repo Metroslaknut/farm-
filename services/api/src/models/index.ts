@@ -84,3 +84,8 @@ export {
   type OAuthFlowDoc,
 } from './oauth.model';
 export { HelpFeedback, type HelpFeedbackAttrs, type HelpFeedbackDoc } from './help-feedback.model';
+export {
+  UserTourProgress,
+  type UserTourProgressAttrs,
+  type UserTourProgressDoc,
+} from './user-tour-progress.model';

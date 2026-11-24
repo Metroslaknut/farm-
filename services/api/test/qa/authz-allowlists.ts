@@ -49,6 +49,9 @@ export const SELF_SERVICE: Set<string> = new Set([
   'GET /api/v1/auth/me',
   'GET /api/v1/auth/oauth/providers',
   'GET /api/v1/users/me',
+  // The caller's own guided-tour progress (scoped to userId from the token; nothing about other people).
+  'GET /api/v1/me/tours',
+  'PUT /api/v1/me/tours/:tourId',
   'DELETE /api/v1/users/:id/follow',
   'GET /api/v1/registrations/mine',
   'GET /api/v1/farms',

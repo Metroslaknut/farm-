@@ -12,6 +12,7 @@ import { useAsync } from '../../../lib/useAsync';
 import { useFarmsT, type FarmsKey } from '../labels';
 import { useFarm } from '../useFarmAccess';
 import { useFarmSetup } from '../useFarmSetup';
+import { useTours } from '../../../tours/TourProvider';
 import '../../../styles/index.css';
 import './shell.css';
 // Same self-hosted fonts as the public layout (the CSP allows fonts from this origin only).
@@ -230,6 +231,8 @@ function Notifications() {
 
 function AccountMenu() {
   const t = useFarmsT();
+  const tt = useT('tours');
+  const tours = useTours();
   const auth = useAuth();
   const navigate = useNavigate();
   const [open, setOpen, panel, trigger] = usePopover();
@@ -284,6 +287,18 @@ function AccountMenu() {
           <Icon name="shield" size={18} />
           {t('shell.settings')}
         </Link>
+        {tours.toursHere[0] && (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              tours.start(tours.toursHere[0]!.id);
+            }}
+          >
+            {tt('ui.showAgain')}
+          </button>
+        )}
         <div className="fd-menu__theme">
           <span>{t('shell.theme')}</span>
           <ThemeToggle />

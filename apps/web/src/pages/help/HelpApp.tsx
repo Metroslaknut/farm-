@@ -14,6 +14,7 @@ import {
   type Inline,
 } from '../../help/parse';
 import { search } from '../../help/search';
+import { useTours } from '../../tours/TourProvider';
 import NotFoundPage from '../NotFoundPage';
 import './help.css';
 
@@ -47,7 +48,7 @@ function HelpIndexPage() {
     <div className="help">
       <h1>{t('index.title')}</h1>
       <p className="help__lead">{t('index.lead')}</p>
-      <form role="search" className="help-search" onSubmit={submit}>
+      <form role="search" className="help-search" onSubmit={submit} data-tour="help-search">
         <label htmlFor="help-q" className="help-search__label">
           {t('index.search')}
         </label>
@@ -88,12 +89,43 @@ function HelpIndexPage() {
       )}
 
       {byCategory(locale).map(({ category, items }) => (
-        <section key={category} aria-labelledby={`help-${category}`} className="help-section">
+        <section
+          key={category}
+          aria-labelledby={`help-${category}`}
+          className="help-section"
+          data-tour={category === 'getting-started' ? 'help-getting-started' : undefined}
+        >
           <h2 id={`help-${category}`}>{t(`category.${category}`)}</h2>
           <ArticleList items={items} />
         </section>
       ))}
+      <TourList />
     </div>
+  );
+}
+
+/** Every guided tour this person can start from here (guests too: they have no account menu). */
+function TourList() {
+  const t = useT('tours');
+  const { startable, start } = useTours();
+  if (startable.length === 0) return null;
+  return (
+    <section aria-labelledby="help-tours" className="help-section" data-tour="help-tours">
+      <h2 id="help-tours">{t('ui.listTitle')}</h2>
+      <p className="ds-field__hint">{t('ui.listLead')}</p>
+      <ul className="help-list">
+        {startable.map((tour) => (
+          <li key={tour.id} className="help-list__link">
+            <strong>{t(`name.${tour.id}` as never)}</strong>
+            <span>
+              <Button size="sm" onClick={() => start(tour.id)}>
+                {t('ui.start')}
+              </Button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
