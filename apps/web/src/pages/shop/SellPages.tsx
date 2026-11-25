@@ -87,12 +87,18 @@ export function SellFarmsPage() {
           headingLevel={2}
           style={{ marginBottom: 'var(--ds-space-3)' }}
         >
-          <Link to={`/shop/sell/${f.id}`} className="ds-btn ds-btn--primary">
+          <Link
+            to={`/shop/sell/${f.id}`}
+            className="ds-btn ds-btn--primary"
+            data-tour="shop-sell-farm"
+          >
             {t('sell.openProducts')}
           </Link>
         </Card>
       ))}
-      {!farms.loading && mine.length === 0 && <p>{t('sell.noFarms')}</p>}
+      {!farms.loading && mine.length === 0 && (
+        <p data-tour="shop-sell-no-farms">{t('sell.noFarms')}</p>
+      )}
     </>
   );
 }
@@ -439,8 +445,13 @@ function Editor({
     }
   };
 
-  const field = (k: keyof Form, label: string, props: { hint?: string; type?: string } = {}) => (
+  const field = (
+    k: keyof Form,
+    label: string,
+    props: { hint?: string; type?: string; tour?: string } = {},
+  ) => (
     <TextField
+      data-tour={props.tour}
       label={label}
       value={String(f[k])}
       onChange={(e) => set(k, e.target.value as never)}
@@ -470,7 +481,9 @@ function Editor({
           {t('form.suspended', { reason: product.review.suspendedReason })}
         </Alert>
       )}
-      {!canSell && <SellerRequiredNotice message={t('form.sellerRequired')} />}
+      {!canSell && (
+        <SellerRequiredNotice message={t('form.sellerRequired')} data-tour="shop-become-seller" />
+      )}
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
       {product && (
         <div className="ds-row">
@@ -505,8 +518,10 @@ function Editor({
             title={t('form.cardProduct')}
             headingLevel={2}
             style={{ marginTop: 'var(--ds-space-4)' }}
+            data-tour="shop-product-details"
           >
             <Select
+              data-tour="shop-category"
               label={t('form.category')}
               value={f.categoryKey}
               onChange={(e) => set('categoryKey', e.target.value)}
@@ -520,7 +535,7 @@ function Editor({
                 </option>
               ))}
             </Select>
-            {field('title', t('form.title'))}
+            {field('title', t('form.title'), { tour: 'shop-name' })}
             <Textarea
               label={t('form.description')}
               rows={4}
@@ -547,8 +562,9 @@ function Editor({
             title={t('form.cardPrice')}
             headingLevel={2}
             style={{ marginTop: 'var(--ds-space-4)' }}
+            data-tour="shop-price-stock"
           >
-            {field('price', t('form.price'))}
+            {field('price', t('form.price'), { tour: 'shop-price' })}
             {field('promoPrice', t('form.promoPrice'))}
             {f.promoPrice && (
               <>
@@ -559,7 +575,7 @@ function Editor({
             {errors['promotion'] && <Alert tone="danger">{errors['promotion']}</Alert>}
             {field('minQty', t('form.minQty'), { type: 'number' })}
             {field('maxQty', t('form.maxQty'), { type: 'number' })}
-            {!product && field('stock', t('form.stock'), { type: 'number' })}
+            {!product && field('stock', t('form.stock'), { type: 'number', tour: 'shop-stock' })}
             {field('lowStock', t('form.lowStock'), { type: 'number' })}
           </Card>
           <Card
@@ -610,6 +626,7 @@ function Editor({
             title={t('form.cardPhotos')}
             headingLevel={2}
             style={{ marginTop: 'var(--ds-space-4)' }}
+            data-tour="shop-photos"
           >
             {f.photos.map((u, i) => (
               <TextField
@@ -705,7 +722,13 @@ function Editor({
             )}
           </Card>
           <div className="ds-row" style={{ marginTop: 'var(--ds-space-4)' }}>
-            <Button type="submit" variant="primary" loading={busy} disabled={!canSell}>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={busy}
+              disabled={!canSell}
+              data-tour="shop-save"
+            >
               {product ? t('form.save') : t('form.create')}
             </Button>
           </div>

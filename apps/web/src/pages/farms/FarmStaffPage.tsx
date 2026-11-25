@@ -186,7 +186,7 @@ export default function FarmStaffPage() {
       header: t('common.actions'),
       cell: (m) =>
         manage && m.role !== 'owner' ? (
-          <span className="ds-row">
+          <span className="ds-row" data-tour="staff-member-actions">
             <Button size="sm" onClick={() => setEditing(m)}>
               {t('staff.editPermissions')}
             </Button>
@@ -247,7 +247,7 @@ export default function FarmStaffPage() {
             {t('inv.cancel')}
           </Button>
         ) : (
-          <span className="ds-row">
+          <span className="ds-row" data-tour="staff-request-actions">
             <Button size="sm" variant="primary" onClick={() => setApproving(i)}>
               {t('inv.approve')}
             </Button>
@@ -318,7 +318,7 @@ export default function FarmStaffPage() {
               refresh();
             }}
           />
-          <Card title={t('staff.joinLinkTitle')} headingLevel={2}>
+          <Card title={t('staff.joinLinkTitle')} headingLevel={2} data-tour="staff-join-link">
             <p className="ds-field__hint">{t('staff.joinLinkHint')}</p>
             <TextField label={t('staff.joinLink')} value={joinLink} readOnly />
             <Button
@@ -334,7 +334,7 @@ export default function FarmStaffPage() {
       )}
 
       {can('members.manage') && (
-        <section style={{ marginTop: 'var(--ds-space-4)' }}>
+        <section style={{ marginTop: 'var(--ds-space-4)' }} data-tour="staff-invitations">
           <div className="ds-row" style={{ justifyContent: 'space-between', alignItems: 'end' }}>
             <h2>{t('staff.invitations')}</h2>
             <Select
@@ -457,7 +457,7 @@ function InviteForm({ farmId, onSent }: { farmId: string; onSent: () => void }) 
   };
 
   return (
-    <Card title={t('inv.inviteTitle')} headingLevel={2}>
+    <Card title={t('inv.inviteTitle')} headingLevel={2} data-tour="staff-invite">
       <form onSubmit={submit} noValidate>
         <p className="ds-field__hint">{t('inv.inviteHint')}</p>
         {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
@@ -480,6 +480,7 @@ function InviteForm({ farmId, onSent }: { farmId: string; onSent: () => void }) 
         />
         <Select
           label={t('staff.col.role')}
+          data-tour="staff-invite-role"
           value={role}
           onChange={(e) => {
             const next = e.target.value as Assignable;
@@ -495,6 +496,7 @@ function InviteForm({ farmId, onSent }: { farmId: string; onSent: () => void }) 
         </Select>
         <Checkbox
           label={t('staff.customise')}
+          data-tour="staff-invite-permissions"
           checked={custom}
           onChange={(e) => setCustom(e.target.checked)}
         />

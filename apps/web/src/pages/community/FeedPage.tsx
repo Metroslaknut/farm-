@@ -32,7 +32,7 @@ export default function FeedPage() {
   return (
     <>
       <h1>{t('feed.title')}</h1>
-      <Card style={{ marginBottom: 'var(--ds-space-4)' }}>
+      <Card style={{ marginBottom: 'var(--ds-space-4)' }} data-tour="community-composer">
         <PostComposer
           submitLabel={t('feed.post')}
           onSubmit={async (value) => {
@@ -43,7 +43,11 @@ export default function FeedPage() {
         />
       </Card>
 
-      <div className="ds-row" style={{ marginBottom: 'var(--ds-space-3)' }}>
+      <div
+        className="ds-row"
+        style={{ marginBottom: 'var(--ds-space-3)' }}
+        data-tour="community-feed-filters"
+      >
         <Select
           label={t('feed.show')}
           value={scope}
@@ -76,7 +80,7 @@ export default function FeedPage() {
           </button>
         </Alert>
       )}
-      <div aria-live="polite">
+      <div aria-live="polite" data-tour="community-feed">
         {feed.items.map((p) => (
           <PostCard key={p.id} post={p} onChange={feed.replaceItem} onRemoved={feed.removeItem} />
         ))}

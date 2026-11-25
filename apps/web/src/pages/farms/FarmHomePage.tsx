@@ -293,7 +293,7 @@ function AnimalTypes({ farmId, data }: { farmId: string; data: FarmAnimalSummary
   const t = useFarmsT();
   const [locale] = useLocale();
   return (
-    <section className="fd-card" aria-labelledby="fd-types">
+    <section className="fd-card" aria-labelledby="fd-types" data-tour="farm-animal-types-card">
       <div className="fd-card__head">
         <div>
           <h2 id="fd-types">{t('myFarm.byType')}</h2>
@@ -578,7 +578,7 @@ export default function FarmHomePage() {
     <>
       <div className="fd-page-head">
         <div>
-          <h1>{t('home.title')}</h1>
+          <h1 data-tour="farm-home-title">{t('home.title')}</h1>
           <p className="fd-sub">{farm.name}</p>
         </div>
         <select
@@ -625,7 +625,7 @@ export default function FarmHomePage() {
       )}
       {main.loading && !main.data && <p role="status">{t('home.loading')}</p>}
       {totals && (totals.needsGrowthCheck || totals.outsideStandard) ? (
-        <Alert tone="warning">
+        <Alert tone="warning" data-tour="farm-growth-alert">
           {totals.needsGrowthCheck ? (
             <span className="fd-alert-line">
               <strong>
@@ -646,7 +646,7 @@ export default function FarmHomePage() {
         </Alert>
       ) : null}
       {kpis.length > 0 && (
-        <dl className="fd-kpis">
+        <dl className="fd-kpis" data-tour="farm-kpis">
           {kpis.map((k) => (
             <KpiCard key={k.key} kpi={k} />
           ))}

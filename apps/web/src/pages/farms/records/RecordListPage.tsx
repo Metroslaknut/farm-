@@ -41,6 +41,7 @@ function SpendingSummary({ farmId, params }: { farmId: string; params: Record<st
       title={t('rec.list.spending')}
       headingLevel={2}
       style={{ marginBottom: 'var(--ds-space-4)' }}
+      data-tour="records-spending"
     >
       <p>
         <strong style={{ fontSize: 'var(--ds-text-xl)' }}>
@@ -136,13 +137,21 @@ export default function RecordListPage({ config }: { config: KindConfig }) {
       <div className="ds-row" style={{ justifyContent: 'space-between' }}>
         <h1>{t(config.plural)}</h1>
         {canWrite && (
-          <NavButton to={`/farms/${farmId}/${config.path}/new`} variant="primary">
+          <NavButton
+            to={`/farms/${farmId}/${config.path}/new`}
+            variant="primary"
+            data-tour="records-add"
+          >
             {t('rec.list.add', { singular: t(config.singular) })}
           </NavButton>
         )}
       </div>
       {config.kind === 'expense' && <SpendingSummary farmId={farmId} params={params} />}
-      <form className="ds-grid ds-grid--3" onSubmit={(e) => e.preventDefault()}>
+      <form
+        className="ds-grid ds-grid--3"
+        onSubmit={(e) => e.preventDefault()}
+        data-tour="records-filters"
+      >
         <Select
           label={config.kind === 'breeding' ? t('detail.dam') : t('common.animal')}
           value={params['animalId']}
@@ -188,6 +197,7 @@ export default function RecordListPage({ config }: { config: KindConfig }) {
         <div className="ds-row" style={{ alignSelf: 'end', marginBottom: 'var(--ds-space-4)' }}>
           <Checkbox
             label={t('rec.list.showVoided')}
+            data-tour="records-show-voided"
             checked={params['includeVoided'] === 'true'}
             onChange={(e) => setParams({ includeVoided: e.target.checked ? 'true' : 'false' })}
           />

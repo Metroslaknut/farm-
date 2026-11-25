@@ -257,6 +257,7 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
           {/* The badges carry the step numbers, so the list's own markers are hidden (no "1. 1."). */}
           <ol
             className="ds-row"
+            data-tour="farm-setup-steps"
             style={{ listStyle: 'none' }}
             aria-label={t('setup.step', { n: step + 1, total: STEPS.length })}
           >
@@ -278,6 +279,7 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
           <Card title={t('form.profile')} headingLevel={2}>
             <TextField
               label={t('form.name')}
+              data-tour="farm-name"
               value={draft.name}
               onChange={set('name')}
               error={f('name')}
@@ -290,7 +292,11 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
               error={f('description')}
               rows={3}
             />
-            <fieldset className="ds-field" style={{ border: 0, padding: 0, margin: 0 }}>
+            <fieldset
+              className="ds-field"
+              style={{ border: 0, padding: 0, margin: 0 }}
+              data-tour="farm-animal-types"
+            >
               <legend className="ds-field__label">{t('form.animalTypes')}</legend>
               <p className="ds-field__hint">{t('form.animalTypesHint')}</p>
               {types.error && <p role="alert">{t('form.animalTypesLoadError')}</p>}
@@ -314,7 +320,7 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
             headingLevel={2}
             style={{ marginTop: 'var(--ds-space-4)' }}
           >
-            <div className="ds-grid ds-grid--2">
+            <div className="ds-grid ds-grid--2" data-tour="farm-location">
               <Select
                 label={t('form.province')}
                 value={draft.province}
@@ -407,6 +413,7 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
         {show('contact') && (
           <Card
             title={t('form.contact')}
+            data-tour="farm-contact"
             headingLevel={2}
             style={{ marginTop: 'var(--ds-space-4)' }}
           >
@@ -451,7 +458,7 @@ function FarmForm({ farm, onSaved }: { farm?: FarmDetail; onSaved?: () => void }
               {t('setup.back')}
             </Button>
           )}
-          <Button type="submit" variant="primary" loading={busy}>
+          <Button type="submit" variant="primary" loading={busy} data-tour="farm-setup-submit">
             {editing ? t('form.save') : last ? t('setup.finish') : t('setup.next')}
           </Button>
           {!required && (
@@ -587,6 +594,7 @@ function MapPinPicker({
   };
   return (
     <div
+      data-tour="farm-map-pin"
       onClick={pick}
       role="button"
       tabIndex={0}

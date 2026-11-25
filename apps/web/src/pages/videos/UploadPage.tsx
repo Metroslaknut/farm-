@@ -146,12 +146,17 @@ export default function UploadPage() {
       <h1>{t('upload.title')}</h1>
       {limits.error && <Alert tone="danger">{limits.error}</Alert>}
       {/* VIDEO_PROVIDER=none: say so up front instead of failing after the form is filled in. */}
-      {disabled && <Alert tone="info">{t('upload.unavailable')}</Alert>}
+      {disabled && (
+        <Alert tone="info" data-tour="video-unavailable">
+          {t('upload.unavailable')}
+        </Alert>
+      )}
       {phase === 'form' && !disabled && (
         <form onSubmit={submit} noValidate>
           {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
           <Card>
             <TextField
+              data-tour="video-file"
               label={t('upload.file')}
               type="file"
               accept={limits.data?.mimeTypes.join(',')}
@@ -169,6 +174,7 @@ export default function UploadPage() {
               }
             />
             <TextField
+              data-tour="video-title"
               label={t('common.title')}
               value={title}
               maxLength={120}
@@ -176,6 +182,7 @@ export default function UploadPage() {
               error={errors['title']}
             />
             <Textarea
+              data-tour="video-caption"
               label={t('upload.caption')}
               rows={2}
               maxLength={500}
@@ -184,6 +191,7 @@ export default function UploadPage() {
               error={errors['caption']}
             />
             <Select
+              data-tour="video-visibility"
               label={t('common.whoCanWatch')}
               value={visibility}
               onChange={(e) => setVisibility(e.target.value as PostVisibility)}
@@ -194,7 +202,12 @@ export default function UploadPage() {
                 </option>
               ))}
             </Select>
-            <Button type="submit" variant="primary" disabled={!limits.data}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!limits.data}
+              data-tour="video-upload"
+            >
               {t('common.upload')}
             </Button>
           </Card>

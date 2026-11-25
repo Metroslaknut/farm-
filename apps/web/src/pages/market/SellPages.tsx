@@ -45,7 +45,9 @@ export function SellFarmsPage() {
       </p>
       <h1>{t('sell.title')}</h1>
       <p>
-        <Link to="/market/wallet">{t('sell.earnings')}</Link>
+        <Link to="/market/wallet" data-tour="market-sell-earnings">
+          {t('sell.earnings')}
+        </Link>
       </p>
       {farms.error && <Alert tone="danger">{farms.error}</Alert>}
       <p>{t('sell.intro')}</p>
@@ -56,12 +58,18 @@ export function SellFarmsPage() {
           headingLevel={2}
           style={{ marginBottom: 'var(--ds-space-3)' }}
         >
-          <Link to={`/farms/${f.id}/listings`} className="ds-btn ds-btn--primary">
+          <Link
+            to={`/farms/${f.id}/listings`}
+            className="ds-btn ds-btn--primary"
+            data-tour="market-sell-farm"
+          >
             {t('sell.openListings')}
           </Link>
         </Card>
       ))}
-      {!farms.loading && mine.length === 0 && <p>{t('sell.noFarms')}</p>}
+      {!farms.loading && mine.length === 0 && (
+        <p data-tour="market-sell-no-farms">{t('sell.noFarms')}</p>
+      )}
     </>
   );
 }
@@ -121,7 +129,9 @@ export function NewListingPage() {
   return (
     <>
       <p>
-        <Link to={`/farms/${farmId}/listings`}>{t('nav.listings')}</Link>
+        <Link to={`/farms/${farmId}/listings`} data-tour="listing-back-to-listings">
+          {t('nav.listings')}
+        </Link>
       </p>
       <h1>{t('newListing.title')}</h1>
       <ListingForm

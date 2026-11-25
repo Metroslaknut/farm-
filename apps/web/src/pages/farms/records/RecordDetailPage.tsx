@@ -106,6 +106,7 @@ export default function RecordDetailPage({ config }: { config: KindConfig }) {
         {canCorrect && (
           <Button
             variant="danger"
+            data-tour="record-void"
             onClick={() => {
               setVoiding(true);
               setVoidError(undefined);
