@@ -34,6 +34,7 @@ import RecordDetailPage from './records/RecordDetailPage';
 import RecordFormPage from './records/RecordFormPage';
 import RecordListPage from './records/RecordListPage';
 import { KIND_LIST } from './records/recordConfigs';
+import NotFoundPage from '../NotFoundPage';
 
 /** Everything under /farms: sign-in and farm setup (public layout), then farm management in the dashboard layout. */
 export default function FarmsApp() {
@@ -86,25 +87,27 @@ export default function FarmsApp() {
               <Route
                 key={`${c.path}-l`}
                 path={`:farmId/${c.path}`}
-                element={<RecordListPage config={c} />}
+                element={<RecordListPage key={c.kind} config={c} />}
               />,
               <Route
                 key={`${c.path}-n`}
                 path={`:farmId/${c.path}/new`}
-                element={<RecordFormPage config={c} />}
+                element={<RecordFormPage key={`${c.kind}-new`} config={c} />}
               />,
               <Route
                 key={`${c.path}-d`}
                 path={`:farmId/${c.path}/:id`}
-                element={<RecordDetailPage config={c} />}
+                element={<RecordDetailPage key={c.kind} config={c} />}
               />,
               <Route
                 key={`${c.path}-e`}
                 path={`:farmId/${c.path}/:id/edit`}
-                element={<RecordFormPage config={c} />}
+                element={<RecordFormPage key={`${c.kind}-edit`} config={c} />}
               />,
             ])}
           </Route>
+          {/* Unknown paths under /farms show "not found" inside the farm shell instead of a blank page. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>
     </Routes>

@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { RouteErrorBoundary } from '../../components/layout/RouteErrorBoundary';
 import { Container } from '../../components/layout';
 import { SiteFooter } from '../../components/layout/SiteFooter';
 import { SiteHeader } from '../../components/layout/SiteHeader';
@@ -31,13 +32,15 @@ export function PublicLayout({ wide = false }: { wide?: boolean }) {
         <SiteHeader />
         {/* `wide`: the page lays out its own full-width bands (home); other pages keep the reading width. */}
         <main id="main" tabIndex={-1} className={wide ? 'site-main-wide' : 'ds-main'}>
-          {wide ? (
-            <Outlet />
-          ) : (
-            <Container>
+          <RouteErrorBoundary>
+            {wide ? (
               <Outlet />
-            </Container>
-          )}
+            ) : (
+              <Container>
+                <Outlet />
+              </Container>
+            )}
+          </RouteErrorBoundary>
         </main>
         <SiteFooter />
       </div>

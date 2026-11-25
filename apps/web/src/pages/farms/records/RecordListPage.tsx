@@ -90,9 +90,10 @@ export default function RecordListPage({ config }: { config: KindConfig }) {
     [farmId],
   );
   const filterKey = config.animalFilterName ?? 'animalId';
-  const { data, loading, error, reload } = useAsync(
-    (signal) =>
-      api.request<Page<any>>('GET', `/farms/${farmId}/${config.path}`, {
+  const list = useAsync(
+    async (signal) => ({
+      kind: config.kind,
+      page: await api.request<Page<any>>('GET', `/farms/${farmId}/${config.path}`, {
         query: {
           ...Object.fromEntries(Object.entries(params).filter(([k]) => k !== 'animalId')),
           [filterKey]: params['animalId'],
@@ -101,8 +102,13 @@ export default function RecordListPage({ config }: { config: KindConfig }) {
         },
         signal,
       }),
+    }),
     [farmId, params, config.path],
   );
+  // useAsync keeps the previous result while the next one loads: never show one kind's rows with another kind's
+  // columns (the routes also remount this page per kind; this is the second guard).
+  const data = list.data?.kind === config.kind ? list.data.page : undefined;
+  const { loading, error, reload } = list;
   const canWrite = can(config.permissions.write) && farm?.status === 'active';
 
   const columns: TableColumn<any>[] = [
