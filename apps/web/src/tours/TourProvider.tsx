@@ -38,20 +38,37 @@ interface TourApi {
 const Ctx = createContext<TourApi>({ toursHere: [], startable: [], start: () => undefined });
 export const useTours = (): TourApi => useContext(Ctx);
 
-export const anchorEl = (anchor: string): HTMLElement | null =>
-  // Anchors are code-defined (lower-case words and hyphens; checked by test/tours.test.tsx).
-  document.querySelector<HTMLElement>(`[data-tour="${anchor}"]`);
+/**
+ * Whether an element can be seen: not `display:none` / `hidden` (e.g. the desktop menu on a phone, a closed dropdown)
+ * and not parked off the side of the screen (an off-canvas drawer). Browsers without `checkVisibility` (and jsdom,
+ * which has no layout) count the element as visible.
+ */
+function visible(el: HTMLElement): boolean {
+  if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true })) return false;
+  const r = el.getBoundingClientRect();
+  return !(r.width > 0 && (r.right <= 0 || r.left >= window.innerWidth));
+}
 
+/** The first visible element marked `data-tour="<anchor>"`. */
+export const anchorEl = (anchor: string): HTMLElement | null => {
+  // Anchors are code-defined (lower-case words and hyphens; checked by test/tours.test.tsx).
+  const all = document.querySelectorAll<HTMLElement>(`[data-tour="${anchor}"]`);
+  for (const el of all) if (visible(el)) return el;
+  return null;
+};
+
+const matches = (patterns: string[] | undefined, path: string) =>
+  (patterns ?? []).some((r) => matchPath({ path: r, end: true }, path) !== null);
 const onRoute = (tour: TourDefinition, path: string) =>
-  tour.routes.some((r) => matchPath({ path: r, end: true }, path) !== null);
+  matches(tour.routes, path) && !matches(tour.notOn, path);
 
 const allowed = (tour: TourDefinition, ctx: TourContext) =>
   (tour.audience === 'guest' ? !ctx.signedIn : tour.audience === 'member' ? ctx.signedIn : true) &&
   (tour.when ? tour.when(ctx) : true);
 
-/** The steps whose element is on the page right now (optional ones without it are skipped). */
+/** The steps whose element is on the page right now, plus `later` ones (their element comes with the next screen). */
 const presentSteps = (tour: TourDefinition) =>
-  tour.steps.filter((s) => anchorEl(s.anchor) !== null);
+  tour.steps.filter((s) => s.later || anchorEl(s.anchor) !== null);
 
 /** Waits (up to `ms`) until the page has its first step's element and no other dialog is open. */
 function whenReady(tour: TourDefinition, signal: AbortSignal, ms = 8000): Promise<boolean> {
@@ -99,6 +116,19 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const pending = useRef<string | null>(null); // a tour asked for on another page
   const returnFocus = useRef<HTMLElement | null>(null); // where focus goes back when the tour closes
   const ctx = useMemo<TourContext>(() => ({ signedIn, can }), [signedIn, can]);
+  // A `later` step waits for its element (until the person moves the page on): re-render when it appears.
+  const [, setAppeared] = useState(0);
+  const activeAnchor = active ? active.steps[active.index]!.anchor : null;
+  useEffect(() => {
+    if (!activeAnchor) return;
+    let id = 0;
+    const check = () => {
+      if (anchorEl(activeAnchor)) setAppeared((n) => n + 1);
+      else id = window.setTimeout(check, 250);
+    };
+    id = window.setTimeout(check, 0);
+    return () => window.clearTimeout(id);
+  }, [activeAnchor, active]);
 
   useEffect(() => {
     if (!signedIn || !userId) return;
@@ -186,14 +216,19 @@ export function TourProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={api}>
       {children}
-      {active && (
+      {active && activeAnchor && anchorEl(activeAnchor) && (
         <Suspense fallback={null}>
           <TourOverlay
             key={active.tour.id}
             tour={active.tour}
             steps={active.steps}
             index={active.index}
-            onBack={() => setActive({ ...active, index: Math.max(0, active.index - 1) })}
+            onBack={() => {
+              // Back to the nearest earlier step still on the page (a wizard's previous screen is gone).
+              let i = active.index - 1;
+              while (i >= 0 && !anchorEl(active.steps[i]!.anchor)) i--;
+              if (i >= 0) setActive({ ...active, index: i });
+            }}
             onNext={() =>
               active.index + 1 < active.steps.length
                 ? setActive({ ...active, index: active.index + 1 })
