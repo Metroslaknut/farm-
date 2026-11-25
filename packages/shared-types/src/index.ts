@@ -158,3 +158,4 @@ export * from './products';
 export * from './ai';
 export * from './analytics';
 export * from './notifications';
+export * from './tours';
