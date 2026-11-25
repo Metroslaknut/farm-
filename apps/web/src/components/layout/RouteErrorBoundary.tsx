@@ -3,14 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button, Card } from '../ui';
 import { useT } from '../../i18n';
 
-function PageErrorFallback() {
+function PageErrorFallback({ onRetry }: { onRetry: () => void }) {
   const t = useT('layout');
   return (
     <div role="alert">
       <Card title={t('pageError.title')} headingLevel={1}>
         <p>{t('pageError.body')}</p>
         <p>
-          <Button onClick={() => window.location.reload()}>{t('pageError.reload')}</Button>{' '}
+          <Button onClick={onRetry}>{t('pageError.retry')}</Button>{' '}
           <Link to="/">{t('pageError.home')}</Link>
         </p>
       </Card>
@@ -46,8 +46,15 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
     console.error('Page crashed', error, info.componentStack);
   }
 
+  /** Renders the page again (a passing problem, e.g. data that has loaded since); it shows this again if it fails. */
+  retry = () => this.setState({ failedAt: null });
+
   override render() {
-    return this.state.failedAt !== null ? <PageErrorFallback /> : this.props.children;
+    return this.state.failedAt !== null ? (
+      <PageErrorFallback onRetry={this.retry} />
+    ) : (
+      this.props.children
+    );
   }
 }
 

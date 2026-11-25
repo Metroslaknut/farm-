@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { Link, MemoryRouter, Outlet } from 'react-router-dom';
+import { Link, MemoryRouter, Outlet, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { humanize } from '@farmplus/shared-utils';
 
@@ -30,6 +30,9 @@ vi.mock('../src/pages/farms/RequireFarmSetup', () => ({ default: () => <Outlet /
 
 import FarmsApp from '../src/pages/farms/FarmsApp';
 import { RouteErrorBoundary } from '../src/components/layout/RouteErrorBoundary';
+import { bahtLabel } from '../src/pages/farms/labels';
+import RecordListPage from '../src/pages/farms/records/RecordListPage';
+import { KINDS } from '../src/pages/farms/records/recordConfigs';
 
 const farm = {
   farm: {
@@ -141,13 +144,70 @@ describe('route error boundary', () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole('heading', { name: 'Something went wrong on this page' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Reload the page' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'fix' }));
-    // Still on the same path: the message stays until the user leaves (or reloads).
+    // Still on the same path: the message stays until the user tries again or leaves.
     expect(screen.queryByText('page ok')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(screen.getByText('page ok')).toBeTruthy();
+    spy.mockRestore();
+  });
+
+  it('"Try again" shows the message again while the page still fails; leaving the page clears it', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/broken']}>
+        <Harness />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(screen.getByRole('heading', { name: 'Something went wrong on this page' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'fix' }));
     await user.click(screen.getByRole('link', { name: 'elsewhere' }));
     await waitFor(() => expect(screen.getByText('page ok')).toBeTruthy());
     spy.mockRestore();
+  });
+});
+
+describe('record list: second guard and labels', () => {
+  /** One element for every kind WITHOUT a key (as before the fix): the list itself must not mix kinds. */
+  function Unkeyed() {
+    const { kind = 'weights' } = useParams();
+    return <RecordListPage config={KINDS[kind as keyof typeof KINDS]} />;
+  }
+
+  it('without a remount, switching kind never renders the old rows with the new columns', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/farms/f1/weights']}>
+        <Link to="/farms/f1/health">to health</Link>
+        <Routes>
+          <Route path="/farms/:farmId/:kind" element={<Unkeyed />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('250')).toBeTruthy();
+    // Hold the health list back, to look at the page while it loads.
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((r) => (release = r));
+    const serve = request.getMockImplementation()!;
+    request.mockImplementation(async (method: string, path: string, ...rest: unknown[]) => {
+      if (path === '/farms/f1/health') await held;
+      return serve(method, path, ...rest);
+    });
+    await user.click(screen.getByRole('link', { name: 'to health' }));
+    expect(await screen.findByRole('heading', { name: 'Health records' })).toBeTruthy();
+    // The weight row (animal A-1) is not drawn as a health row while health loads.
+    expect(screen.queryByText('A-1')).toBeNull();
+    release();
+    expect(await screen.findByText('FMD shot')).toBeTruthy();
+  });
+
+  it('money labels show a dash for a missing amount', () => {
+    expect(bahtLabel(undefined)).toBe('—');
+    expect(bahtLabel(null)).toBe('—');
+    expect(bahtLabel(120)).toContain('120');
   });
 });

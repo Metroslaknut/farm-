@@ -93,7 +93,9 @@ export function ageDaysLabel(t: FarmsT, days: number | undefined): string | unde
 }
 
 /** Record amounts are baht with up to 2 decimals (the API keeps satang): "฿150.00", like the rest of the app. */
-export const bahtLabel = (baht: number): string => formatBaht(Math.round(baht * 100));
+/** Baht amount; a dash when missing (a label must never crash a page). */
+export const bahtLabel = (baht: number | null | undefined): string =>
+  baht == null || !Number.isFinite(baht) ? '—' : formatBaht(Math.round(baht * 100));
 
 /** Dates in the current language (Thai: Buddhist calendar). A dash when missing or invalid. */
 export function useFarmFormat() {
