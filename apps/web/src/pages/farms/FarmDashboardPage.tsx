@@ -101,7 +101,17 @@ export default function FarmDashboardPage() {
             params={params}
             sections={exportable}
           />
-          <DashboardView scope="farm" data={data} order={FARM_DASHBOARD_SECTIONS} />
+          <DashboardView
+            scope="farm"
+            data={data}
+            order={FARM_DASHBOARD_SECTIONS}
+            animalTypeLabel={(nameOrKey) => {
+              const type = types.data?.animalTypes?.find(
+                (x) => x.name === nameOrKey || x.key === nameOrKey,
+              );
+              return type ? typeName(type, locale) : nameOrKey;
+            }}
+          />
         </>
       )}
     </>
