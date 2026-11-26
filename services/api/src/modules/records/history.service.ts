@@ -96,6 +96,13 @@ export async function animalHistory(
           date: r.createdAt.toISOString(),
           title: AUDIT_TITLES[r.action]!,
           ...(fields ? { summary: `Changed: ${fields}` } : {}),
+          detail: {
+            kind: 'audit',
+            action: r.action,
+            ...(Array.isArray(r.metadata?.['fields'])
+              ? { fields: r.metadata!['fields'] as string[] }
+              : {}),
+          },
         },
         r.createdAt.toISOString(),
         r.actorId,
@@ -139,6 +146,21 @@ export async function animalHistory(
             date: day(r.breedingDate)!,
             title: `Breeding (${humanize(r.method)})`,
             summary: `${partner} · ${humanize(r.status)}`,
+            detail: {
+              kind: 'breeding',
+              method: r.method,
+              status: r.status,
+              partner: isDam
+                ? {
+                    role: 'sire',
+                    ...(r.sireId
+                      ? { code: code(r.sireId) }
+                      : r.sireExternal?.name
+                        ? { name: r.sireExternal.name }
+                        : {}),
+                  }
+                : { role: 'dam', ...(r.damId ? { code: code(r.damId) } : {}) },
+            },
             role: isDam ? 'dam' : 'sire',
           },
           `${day(r.breedingDate)}T00:00:00.000Z`,
@@ -151,6 +173,7 @@ export async function animalHistory(
               key: `breeding:${r._id}:delivery`,
               date: day(r.delivery.date)!,
               title: `Delivery (${r.delivery.offspring.length} recorded)`,
+              detail: { kind: 'delivery', offspring: r.delivery.offspring.length },
               role: 'dam',
             },
             `${day(r.delivery.date)}T00:00:00.000Z`,
@@ -164,6 +187,10 @@ export async function animalHistory(
               date: day(r.failedOn)!,
               title: 'Breeding did not result in a birth',
               ...(r.failureReason ? { summary: r.failureReason } : {}),
+              detail: {
+                kind: 'breedingFailed',
+                ...(r.failureReason ? { reason: r.failureReason } : {}),
+              },
               role: 'dam',
             },
             `${day(r.failedOn)}T00:00:00.000Z`,
@@ -180,6 +207,11 @@ export async function animalHistory(
             date: day(r.delivery.date)!,
             title: 'Born',
             summary: `dam ${code(r.damId)}${r.sireId ? ` · sire ${code(r.sireId)}` : ''}`,
+            detail: {
+              kind: 'born',
+              ...(r.damId ? { damCode: code(r.damId) } : {}),
+              ...(r.sireId ? { sireCode: code(r.sireId) } : {}),
+            },
             role: 'offspring',
           },
           `${day(r.delivery.date)}T00:00:00.000Z`,
@@ -208,6 +240,15 @@ export async function animalHistory(
           date: day(r.recordedOn)!,
           title: `${humanize(r.type)}: ${r.title}`,
           ...(bits.length ? { summary: bits.join(' · ') } : {}),
+          detail: {
+            kind: 'health',
+            healthType: r.type,
+            title: r.title,
+            ...(r.condition ? { condition: r.condition } : {}),
+            ...(r.condition && r.conditionStatedBy ? { statedBy: r.conditionStatedBy } : {}),
+            ...(r.medication?.name ? { medication: r.medication.name } : {}),
+            ...(r.vaccine?.name ? { vaccine: r.vaccine.name } : {}),
+          },
           recordId: String(r._id),
           ...(r.voided ? { voided: true } : {}),
         },
@@ -230,6 +271,13 @@ export async function animalHistory(
           date: day(r.date)!,
           title: `${r.kind === 'schedule' ? 'Feeding schedule' : 'Fed'}: ${r.feedName}`,
           summary: `${r.quantity.amount} ${r.quantity.unit}`,
+          detail: {
+            kind: 'feeding',
+            schedule: r.kind === 'schedule',
+            feedName: r.feedName,
+            amount: r.quantity.amount,
+            unit: r.quantity.unit,
+          },
           recordId: String(r._id),
           ...(r.voided ? { voided: true } : {}),
         },
@@ -252,6 +300,7 @@ export async function animalHistory(
           date: day(r.weighedOn)!,
           title: `Weighed ${r.weightKg} kg`,
           summary: humanize(r.method),
+          detail: { kind: 'weight', weightKg: r.weightKg, method: r.method },
           recordId: String(r._id),
           ...(r.voided ? { voided: true } : {}),
         },
@@ -274,6 +323,12 @@ export async function animalHistory(
           date: day(r.expenseDate)!,
           title: `${humanize(r.category)}: ${r.description}`,
           summary: `${(r.amountMinor / 100).toFixed(2)} THB`,
+          detail: {
+            kind: 'expense',
+            category: r.category,
+            description: r.description,
+            amountMinor: r.amountMinor,
+          },
           recordId: String(r._id),
           ...(r.voided ? { voided: true } : {}),
         },
