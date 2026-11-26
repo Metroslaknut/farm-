@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { Link, NavLink, Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
+import { RouteErrorBoundary } from '../../../components/layout/RouteErrorBoundary';
 import type { FarmDetail, NotificationPage } from '@farmplus/shared-types';
 import { api } from '../../../api';
 import { useAuth } from '../../../auth/AuthContext';
@@ -569,7 +570,9 @@ function Shell() {
           </div>
         </header>
         <main id="main" tabIndex={-1} className="fd-main">
-          <Outlet />
+          <RouteErrorBoundary>
+            <Outlet />
+          </RouteErrorBoundary>
         </main>
         <footer className="fd-footer">
           <p>{t('shell.copyright', { year: new Date().getFullYear() })}</p>

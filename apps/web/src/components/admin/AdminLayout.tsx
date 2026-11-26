@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { RouteErrorBoundary } from '../layout/RouteErrorBoundary';
 import { AdminHeader } from './AdminHeader';
 import { AdminSidebar } from './AdminSidebar';
 import './admin.css';
@@ -23,7 +24,9 @@ export function AdminLayout() {
           <div className="adm-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
         )}
         <main className="adm-main" id="adm-main">
-          <Outlet />
+          <RouteErrorBoundary>
+            <Outlet />
+          </RouteErrorBoundary>
         </main>
       </div>
     </div>

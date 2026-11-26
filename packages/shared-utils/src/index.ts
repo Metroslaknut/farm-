@@ -8,8 +8,9 @@ export function assertNever(value: never): never {
   throw new Error(`Unexpected value: ${String(value)}`);
 }
 
-/** `for_sale` → `For sale`. */
-export function humanize(value: string): string {
+/** `for_sale` → `For sale`. Missing values give "" (a label must never crash a page). */
+export function humanize(value: string | null | undefined): string {
+  if (!value) return '';
   const text = value.replace(/_/g, ' ');
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
