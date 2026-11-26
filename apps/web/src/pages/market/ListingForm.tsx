@@ -23,7 +23,7 @@ import { api } from '../../api';
 import { Alert, Button, Card, Select, TextField, Textarea } from '../../components/ui';
 import { useLocale } from '../../i18n';
 import { errorMessage } from '../../lib/format';
-import { useCanSell } from '../../lib/sellEligibility';
+import { useSellEligibility } from '../../lib/sellEligibility';
 import { SellerRequiredNotice } from '../farms/SellerRequiredNotice';
 import { typeName } from '../farms/labels';
 import { localizeErrors, sexLabel, useAnimalLabel, useMarketT } from './common';
@@ -55,7 +55,7 @@ export function ListingForm({
   const [locale] = useLocale();
   const editing = Boolean(listing);
   // Only new listings need the seller role (the API checks it on create and submit).
-  const canSell = useCanSell(!editing);
+  const { canSell, checked: sellChecked } = useSellEligibility(!editing);
   const [animal, setAnimal] = useState(animalId ?? listing?.animalId ?? '');
   const [animals, setAnimals] = useState<AnimalSummary[]>([]);
   const [title, setTitle] = useState(listing?.title ?? '');
@@ -203,7 +203,8 @@ export function ListingForm({
         title={t('form.animal')}
         headingLevel={2}
         style={{ marginBottom: 'var(--ds-space-4)' }}
-        data-tour="listing-animal"
+        // The tour starts once seller status is known, so non-sellers first see "apply to become a seller".
+        data-tour={sellChecked ? 'listing-animal' : undefined}
       >
         {editing ? (
           <p>

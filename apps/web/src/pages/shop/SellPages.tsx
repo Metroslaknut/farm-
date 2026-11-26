@@ -27,7 +27,7 @@ import {
 } from '../../components/ui';
 import { useLocale } from '../../i18n';
 import { errorMessage, toDateTimeLocal } from '../../lib/format';
-import { useCanSell } from '../../lib/sellEligibility';
+import { useSellEligibility } from '../../lib/sellEligibility';
 import { SellerRequiredNotice } from '../farms/SellerRequiredNotice';
 import { useAsync } from '../../lib/useAsync';
 import {
@@ -309,7 +309,7 @@ function Editor({
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
   const cat = categories.find((c) => c.key === f.categoryKey);
   // Only new products need the seller role (the API checks it on create and submit).
-  const canSell = useCanSell(!product);
+  const { canSell, checked: sellChecked } = useSellEligibility(!product);
   const editable =
     !product ||
     ['DRAFT', 'PENDING_REVIEW', 'ACTIVE', 'PAUSED', 'REJECTED'].includes(product.status);
@@ -521,7 +521,8 @@ function Editor({
             data-tour="shop-product-details"
           >
             <Select
-              data-tour="shop-category"
+              // The tour starts once seller status is known (non-sellers first see "apply to become a seller").
+              data-tour={sellChecked ? 'shop-category' : undefined}
               label={t('form.category')}
               value={f.categoryKey}
               onChange={(e) => set('categoryKey', e.target.value)}
