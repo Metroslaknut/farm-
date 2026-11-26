@@ -65,7 +65,6 @@ async function walk(
   const shown: string[] = [];
   await expect(card(page)).toBeVisible({ timeout: 15_000 });
   for (let guard = 0; guard < 12; guard++) {
-    if ((await card(page).count()) === 0) break;
     const title = (await card(page).getByRole('heading').textContent())!.trim();
     const step = tour.steps.find(
       (s, i) => text(locale, s.titleKey) === title && !shown.includes(`${i}`),
@@ -77,22 +76,28 @@ async function walk(
     const target = page.locator(`[data-tour="${step!.anchor}"]`).locator('visible=true').first();
     await expect(target, `${tourId}: ${step!.anchor} on screen`).toBeVisible();
     await act(step!.anchor);
+    const done = card(page).getByRole('button', { name: text(locale, 'ui.done') });
+    if (!step!.advanceOnClick && (await done.count())) {
+      await done.click();
+      break; // the last step
+    }
     if (step!.advanceOnClick) {
       await expect(card(page).getByRole('button', { name: text(locale, 'ui.next') })).toHaveCount(
         0,
       );
       await target.click();
-    } else {
-      const done = card(page).getByRole('button', { name: text(locale, 'ui.done') });
-      const next = card(page).getByRole('button', { name: text(locale, 'ui.next') });
-      await ((await done.count()) ? done : next).click();
-    }
-    // The next card (or none): wait until the heading changes.
+    } else
+      await card(page)
+        .getByRole('button', { name: text(locale, 'ui.next') })
+        .click();
+    // The next card. After the form's own Next, the card is hidden for a moment while the next screen appears.
     await expect
-      .poll(async () =>
-        (await card(page).count()) ? await card(page).getByRole('heading').textContent() : '',
+      .poll(
+        async () =>
+          (await card(page).count()) ? await card(page).getByRole('heading').textContent() : '',
+        { timeout: 15_000 },
       )
-      .not.toBe(title);
+      .not.toMatch(new RegExp(`^(${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})?$`));
   }
   await expect(card(page)).toHaveCount(0);
   return shown.map((i) => tour.steps[Number(i)]!.anchor);
