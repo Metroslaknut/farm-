@@ -13,6 +13,7 @@ import { api } from '../../api';
 import { Alert, Badge, Button, Card, Select, Table, type Tone } from '../../components/ui';
 import { useT } from '../../i18n';
 import { useAsync } from '../../lib/useAsync';
+import { useAnimalLabel } from '../market/common';
 import { NavButton } from './NavButton';
 import { useFarmFormat, useFarmsT, type FarmsKey } from './labels';
 import { useFarm } from './useFarmAccess';
@@ -71,6 +72,7 @@ function usePaged<T>(
  */
 export default function TradesPage() {
   const t = useFarmsT();
+  const animalLabel = useAnimalLabel();
   const tm = useT('market');
   const { date } = useFarmFormat();
   const { farmId = '' } = useParams();
@@ -185,9 +187,7 @@ export default function TradesPage() {
               key: 'animal',
               header: t('trades.col.animal'),
               cell: (l) => (
-                <Link to={`/farms/${farmId}/animals/${l.animalId}`}>
-                  {[l.animal.animalTypeName, l.animal.breed].filter(Boolean).join(' · ')}
-                </Link>
+                <Link to={`/farms/${farmId}/animals/${l.animalId}`}>{animalLabel(l.animal)}</Link>
               ),
             },
             {

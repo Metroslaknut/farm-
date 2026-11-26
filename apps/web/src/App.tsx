@@ -355,10 +355,14 @@ function ListingsSection() {
 
 function BestSellersSection() {
   const t = useT('home');
+  const [locale] = useLocale();
   const cats = useAsync(() => shopCategories(), []);
   const tabs = [
     { key: '', name: t('best.all') },
-    ...(cats.data?.categories.filter((c) => c.salesEnabled).slice(0, 4) ?? []),
+    ...(cats.data?.categories
+      .filter((c) => c.salesEnabled)
+      .slice(0, 4)
+      .map((c) => ({ key: c.key, name: localName(c, locale) })) ?? []),
   ];
   const [active, setActive] = useState('');
   const list = useAsync(
