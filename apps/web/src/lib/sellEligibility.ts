@@ -9,7 +9,12 @@ import { useAsync } from './useAsync';
  * usable and the API still decides. `check = false` (e.g. editing an existing item) skips the request.
  */
 export function useCanSell(check = true): boolean {
-  const { data } = useAsync(
+  return useSellEligibility(check).canSell;
+}
+
+/** `useCanSell` plus whether the answer is known yet (`checked`: the request settled, or was not needed). */
+export function useSellEligibility(check = true): { canSell: boolean; checked: boolean } {
+  const { data, loading } = useAsync(
     () =>
       check
         ? sharedRecent('/marketplace/sell-eligibility', () =>
@@ -18,5 +23,5 @@ export function useCanSell(check = true): boolean {
         : Promise.resolve(undefined),
     [check],
   );
-  return data?.canSell !== false;
+  return { canSell: data?.canSell !== false, checked: !loading };
 }

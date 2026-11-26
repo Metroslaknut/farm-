@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { useState } from 'react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,11 +31,40 @@ vi.mock('../src/tours/registry', async (orig) => {
       },
     ],
   };
+  // A form wizard: a hidden element is skipped, the form's own button moves the tour on, the next screen's step waits.
+  const wizard = {
+    id: 'farm-setup', // reuses real catalog keys
+    version: 1,
+    routes: ['/wizard/:x'],
+    notOn: ['/wizard/other'],
+    steps: [
+      { anchor: 'w-name', titleKey: 'farm-setup.1.title', bodyKey: 'farm-setup.1.body' },
+      {
+        anchor: 'w-hidden',
+        titleKey: 'farm-setup.2.title',
+        bodyKey: 'farm-setup.2.body',
+        optional: true,
+      },
+      {
+        anchor: 'w-next',
+        titleKey: 'farm-setup.3.title',
+        bodyKey: 'farm-setup.3.body',
+        advanceOnClick: true,
+      },
+      {
+        anchor: 'w-location',
+        titleKey: 'farm-setup.4.title',
+        bodyKey: 'farm-setup.4.body',
+        later: true,
+      },
+    ],
+  };
+  const all = [test, wizard];
   return {
     ...real,
     REAL: real.TOURS,
-    TOURS: [test],
-    tourById: (id: string) => (id === test.id ? test : undefined),
+    TOURS: all,
+    tourById: (id: string) => all.find((t) => t.id === id),
   };
 });
 
@@ -220,6 +250,83 @@ describe('guided tour engine', () => {
   });
 });
 
+function Wizard() {
+  const [screenNo, setScreenNo] = useState(1);
+  return (
+    <form onSubmit={(e) => e.preventDefault()}>
+      {screenNo === 1 ? (
+        <input data-tour="w-name" aria-label="Farm name" />
+      ) : (
+        <input data-tour="w-location" aria-label="Province" />
+      )}
+      <span data-tour="w-hidden" hidden>
+        Only on wide screens
+      </span>
+      <button data-tour="w-next" onClick={() => setScreenNo(2)}>
+        Form next
+      </button>
+    </form>
+  );
+}
+
+function renderWizard(path: string) {
+  const value = withHelpers(
+    { status: 'anonymous', permissions: [], mfaRequired: false },
+    {
+      login: async () => 'authenticated',
+      completeSignIn: async () => 'authenticated',
+      verifyMfa: async () => undefined,
+      logout: async () => undefined,
+      reload: async () => undefined,
+    },
+  );
+  return render(
+    <AuthContext.Provider value={value}>
+      <MemoryRouter initialEntries={[path]}>
+        <TourProvider>
+          <Routes>
+            <Route path="/wizard/:x" element={<Wizard />} />
+          </Routes>
+        </TourProvider>
+      </MemoryRouter>
+    </AuthContext.Provider>,
+  );
+}
+
+describe('tours that follow a form wizard', () => {
+  beforeAll(() => {
+    // jsdom has no layout: say "not visible" for `hidden` elements, as browsers do.
+    HTMLElement.prototype.checkVisibility = function (this: HTMLElement) {
+      return !this.closest('[hidden]');
+    };
+  });
+
+  it("skips a hidden element, waits for the form's own Next, then shows the next screen's step", async () => {
+    const user = userEvent.setup();
+    renderWizard('/wizard/new');
+    const d = within(await card());
+    expect(d.getByText('Step 1 of 3')).toBeTruthy(); // the hidden step is left out; the later one is kept
+    expect(d.getByRole('heading', { name: 'Name your farm' })).toBeTruthy();
+    await user.click(d.getByRole('button', { name: 'Next' }));
+    const d2 = within(await card());
+    expect(d2.getByRole('heading', { name: 'Go to the next step' })).toBeTruthy();
+    expect(d2.queryByRole('button', { name: 'Next' })).toBeNull(); // the form's own button moves it on
+    await user.click(screen.getByRole('button', { name: 'Form next' }));
+    const d3 = within(await card());
+    await waitFor(() => expect(d3.getByRole('heading', { name: 'Farm location' })).toBeTruthy());
+    expect(d3.getByText('Step 3 of 3')).toBeTruthy();
+    await user.click(d3.getByRole('button', { name: 'Done' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(local()['farm-setup']).toMatchObject({ status: 'completed' });
+  });
+
+  it('does not run on a path listed in notOn', async () => {
+    renderWizard('/wizard/other');
+    await new Promise((r) => setTimeout(r, 600));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
 describe('the real tours', () => {
   const real = (registry as unknown as { REAL: typeof registry.TOURS }).REAL;
   const slugs = new Set(articles('th').map((a) => a.slug));
@@ -240,6 +347,11 @@ describe('the real tours', () => {
           expect(tours.en, key).toHaveProperty([key]);
         }
         if (s.helpSlug) expect(slugs.has(s.helpSlug), `${tour.id} → ${s.helpSlug}`).toBe(true);
+      }
+      // Each card must be recognisable: no two steps of a tour share a title.
+      for (const locale of ['th', 'en'] as const) {
+        const titles = tour.steps.map((s) => (tours[locale] as Record<string, string>)[s.titleKey]);
+        expect(new Set(titles).size, `${tour.id} ${locale} titles`).toBe(titles.length);
       }
     }
   });

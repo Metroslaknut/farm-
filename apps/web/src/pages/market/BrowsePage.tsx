@@ -114,7 +114,11 @@ export default function BrowsePage() {
       <h1 className="ds-sr-only">{t('browse.title')}</h1>
       <div className="shop-layout">
         {/* ───────── Sidebar ───────── */}
-        <aside className="shop-sidebar" aria-label={t('browse.filterAria')}>
+        <aside
+          className="shop-sidebar"
+          aria-label={t('browse.filterAria')}
+          data-tour="market-filters"
+        >
           <section className="shop-widget">
             <h2 className="shop-widget__title">{t('browse.priceFilter')}</h2>
             <form className="shop-widget__body" onSubmit={applyPrice} noValidate>
@@ -196,13 +200,13 @@ export default function BrowsePage() {
           <section className="shop-widget">
             <h2 className="shop-widget__title">{t('browse.shortcuts')}</h2>
             <div className="shop-widget__body">
-              <Link to="/market/favorites" className="ds-btn">
+              <Link to="/market/favorites" className="ds-btn" data-tour="market-favorites">
                 {t('browse.saved')}
               </Link>
-              <Link to="/market/offers" className="ds-btn">
+              <Link to="/market/offers" className="ds-btn" data-tour="market-my-offers">
                 {t('browse.myOffers')}
               </Link>
-              <Link to="/market/sell" className="ds-btn ds-btn--primary">
+              <Link to="/market/sell" className="ds-btn ds-btn--primary" data-tour="market-sell">
                 {t('browse.sell')}
               </Link>
             </div>
@@ -215,7 +219,7 @@ export default function BrowsePage() {
             <span role="status" className="shop-bar__count">
               {list.loading ? t('loading') : t('browse.showing', { count: list.items.length })}
             </span>
-            <div className="shop-bar__tools">
+            <div className="shop-bar__tools" data-tour="market-search">
               <TextField
                 label={t('browse.search')}
                 type="search"
@@ -253,7 +257,10 @@ export default function BrowsePage() {
             <p className="shop-empty">{t('browse.empty')}</p>
           )}
 
-          <div className={view === 'grid' ? 'shop-grid' : 'shop-grid shop-grid--list'}>
+          <div
+            className={view === 'grid' ? 'shop-grid' : 'shop-grid shop-grid--list'}
+            data-tour="market-results"
+          >
             {list.items.map((l) => (
               <ListingCard key={l.id} listing={l} to={`/market/listing/${l.id}`} />
             ))}

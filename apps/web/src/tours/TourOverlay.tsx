@@ -100,8 +100,19 @@ export default function TourOverlay({
 
   // Focus into the card when the tour opens; keep it inside when a button disappears (e.g. "Back" on step 1).
   useEffect(() => {
-    if (!card.current?.contains(document.activeElement)) nextButton.current?.focus();
+    // A step without the tour's Next (the page's own button moves it on) focuses the card's first button.
+    if (!card.current?.contains(document.activeElement))
+      (nextButton.current ?? card.current?.querySelector('button'))?.focus();
   }, [index]);
+
+  // "Press the form's own Next": pressing the pointed element moves the tour on.
+  useEffect(() => {
+    if (!step.advanceOnClick) return;
+    const el = anchorEl(step.anchor);
+    if (!el) return;
+    el.addEventListener('click', onNext);
+    return () => el.removeEventListener('click', onNext);
+  }, [step.advanceOnClick, step.anchor, onNext]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -181,9 +192,11 @@ export default function TourOverlay({
                 {t('ui.back')}
               </Button>
             )}
-            <Button ref={nextButton} variant="primary" size="sm" onClick={onNext}>
-              {last ? t('ui.done') : t('ui.next')}
-            </Button>
+            {!step.advanceOnClick && (
+              <Button ref={nextButton} variant="primary" size="sm" onClick={onNext}>
+                {last ? t('ui.done') : t('ui.next')}
+              </Button>
+            )}
           </span>
         </div>
         <button type="button" className="tour-card__never" onClick={onDismissForever}>

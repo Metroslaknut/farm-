@@ -36,6 +36,15 @@ const APP_ROUTES = new Set([
   '/admin/account/security',
   '/market',
   '/shop',
+  '/farms/list',
+  '/market/sell',
+  '/market/offers',
+  '/market/orders',
+  '/market/wallet',
+  '/shop/sell',
+  '/community',
+  '/videos/upload',
+  '/live/host',
 ]);
 
 function load(locale: 'th' | 'en'): Article[] {

@@ -141,8 +141,12 @@ export function SiteHeader() {
           </p>
           <nav aria-label={t('header.quickLinks')} className="site-topbar__links">
             <a href="/#about">{t('header.about')}</a>
-            <Link to="/market/orders">{t('header.trackOrders')}</Link>
-            <Link to="/market/wallet">{t('header.wallet')}</Link>
+            <Link to="/market/orders" data-tour="header-orders">
+              {t('header.trackOrders')}
+            </Link>
+            <Link to="/market/wallet" data-tour="header-wallet">
+              {t('header.wallet')}
+            </Link>
           </nav>
           <LanguageToggle />
           <ThemeToggle />
@@ -249,6 +253,7 @@ export function SiteHeader() {
                   ref={profileButton}
                   type="button"
                   className="site-action site-profile-menu__trigger"
+                  data-tour="account-menu"
                   aria-label={t('header.myAccount')}
                   aria-haspopup="menu"
                   aria-expanded={profileOpen}
@@ -280,7 +285,12 @@ export function SiteHeader() {
                   <Link to="/farms/seller" role="menuitem" onClick={() => setProfileFor(null)}>
                     {t('header.becomeSeller')}
                   </Link>
-                  <Link to="/help" role="menuitem" onClick={() => setProfileFor(null)}>
+                  <Link
+                    to="/help"
+                    role="menuitem"
+                    data-tour="header-help"
+                    onClick={() => setProfileFor(null)}
+                  >
                     {t('header.help')}
                   </Link>
                   {tours.toursHere[0] && (
@@ -333,6 +343,7 @@ export function SiteHeader() {
             ref={menuButton}
             type="button"
             className="site-navbar__toggle"
+            data-tour="main-menu-toggle"
             aria-expanded={menuOpen}
             aria-controls={`${ids}-nav`}
             onClick={() => setMenuFor(menuOpen ? null : pathname)}
@@ -344,12 +355,17 @@ export function SiteHeader() {
             id={`${ids}-nav`}
             aria-label={t('header.mainMenu')}
             className="site-navbar__nav"
+            data-tour="main-menu"
             data-open={menuOpen}
           >
             <ul>
               {items.map((item) => (
                 <li key={item.to}>
-                  <NavLink to={item.to} end={item.end}>
+                  <NavLink
+                    to={item.to}
+                    end={item.end}
+                    data-tour={item.to === '/farms' ? 'nav-my-farm' : undefined}
+                  >
                     {item.label}
                   </NavLink>
                 </li>

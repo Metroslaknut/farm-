@@ -158,12 +158,14 @@ export function PostComposer({
       {errors['media'] && <Alert tone="danger">{errors['media']}</Alert>}
       <div className="ds-row" style={{ marginTop: 'var(--ds-space-3)' }}>
         <Button
+          data-tour={initial ? undefined : 'community-add-media'}
           disabled={rows.length >= POST_LIMITS.media}
           onClick={() => setRows((all) => [...all, { kind: 'image', url: '', caption: '' }])}
         >
           {t('composer.addMedia')}
         </Button>
         <Select
+          data-tour={initial ? undefined : 'community-visibility'}
           label={t('composer.visibility')}
           value={visibility}
           onChange={(e) => setVisibility(e.target.value as PostVisibility)}
@@ -175,7 +177,12 @@ export function PostComposer({
             </option>
           ))}
         </Select>
-        <Button type="submit" variant="primary" loading={busy}>
+        <Button
+          type="submit"
+          variant="primary"
+          loading={busy}
+          data-tour={initial ? undefined : 'community-post'}
+        >
           {submitLabel}
         </Button>
         {onCancel && <Button onClick={onCancel}>{t('common.cancel')}</Button>}

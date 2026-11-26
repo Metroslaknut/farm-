@@ -55,6 +55,13 @@ const RESERVED = new Set([
   'reset-password',
 ]);
 
+/** Guided-tour anchors (`data-tour`) of the sidebar groups a tour points at. */
+const GROUP_TOUR_ANCHORS: Partial<Record<FarmsKey, string>> = {
+  'shell.group.animals': 'farm-menu-animals',
+  'shell.group.records': 'farm-menu-records',
+  'shell.group.trade': 'farm-menu-trades',
+};
+
 const MOBILE = '(max-width: 1023px)';
 const isMobile = () => typeof window !== 'undefined' && window.matchMedia?.(MOBILE).matches;
 
@@ -190,6 +197,7 @@ function Notifications() {
         type="button"
         className="fd-icon-btn"
         aria-label={t('shell.notifications', { count: n })}
+        data-tour="farm-notifications"
         aria-expanded={open}
         aria-controls={`${ids}-list`}
         onClick={() => setOpen(!open)}
@@ -253,6 +261,7 @@ function AccountMenu() {
         ref={trigger}
         type="button"
         className="fd-account"
+        data-tour="farm-account-menu"
         aria-label={t('shell.account')}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -339,6 +348,7 @@ function SearchBox({ farmId }: { farmId: string | undefined }) {
         type="button"
         className="fd-icon-btn"
         aria-label={t('shell.search')}
+        data-tour="farm-search"
         aria-expanded={open}
         aria-controls={`${ids}-search`}
         onClick={() => setOpen(!open)}
@@ -435,7 +445,7 @@ function Sidebar({
           </select>
         </div>
       )}
-      <nav aria-label={t('myFarm.menu')} className="fd-nav">
+      <nav aria-label={t('myFarm.menu')} className="fd-nav" data-tour="farm-sidebar-menu">
         <ul>
           {groups.map((g) => {
             if (g.items.length === 1 && g.items[0]!.key === g.key) {
@@ -464,6 +474,7 @@ function Sidebar({
                   aria-expanded={open}
                   aria-controls={sub}
                   data-current={contains(g) || undefined}
+                  data-tour={GROUP_TOUR_ANCHORS[g.key]}
                   onClick={() => setToggled((s) => ({ ...s, [g.key]: !open }))}
                 >
                   <Icon name={g.icon} />
@@ -545,6 +556,7 @@ function Shell() {
             type="button"
             className="fd-icon-btn fd-icon-btn--plain"
             aria-label={t('shell.toggleMenu')}
+            data-tour="farm-menu-toggle"
             aria-controls="fd-sidebar"
             onClick={() => setToggled(!toggled)}
           >

@@ -45,11 +45,13 @@ function FarmSection({
       )}
       {loading && !data && <p role="status">{t('list.loading')}</p>}
       {data && data.items.length === 0 && relation === 'owned' && (
-        <Card title={t('list.emptyTitle')}>
+        <Card title={t('list.emptyTitle')} data-tour="farm-list-empty">
           <p>{q ? t('list.noMatch') : t('list.emptyHint')}</p>
           {!q && setup.data && !setup.data.canCreateFarm && (
             <p>
-              <Link to="/farms/owner-request">{t('ownerRequest.link')}</Link>
+              <Link to="/farms/owner-request" data-tour="farm-owner-request">
+                {t('ownerRequest.link')}
+              </Link>
             </p>
           )}
         </Card>
@@ -99,7 +101,7 @@ export default function FarmListPage() {
         <h1>{t('list.title')}</h1>
         <span className="ds-row">
           <NavButton to="/farms/invitations">{t('shell.invitations')}</NavButton>
-          <NavButton to="/farms/new" variant="primary">
+          <NavButton to="/farms/new" variant="primary" data-tour="farm-create">
             {t('list.create')}
           </NavButton>
         </span>

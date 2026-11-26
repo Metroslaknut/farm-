@@ -327,6 +327,7 @@ export default function AnimalFormPage() {
             <div className="fd-form-grid">
               <TextField
                 label={t('animalForm.code')}
+                data-tour="animal-code"
                 hint={editing ? t('animalForm.codeLocked') : t('animalForm.codeHint')}
                 disabled={editing}
                 error={field('animalCode')}
@@ -335,6 +336,7 @@ export default function AnimalFormPage() {
               <TextField label={t('animals.col.name')} error={field('name')} {...text('name')} />
               <Select
                 label={t('dashboard.animalType')}
+                data-tour="animal-type"
                 required
                 disabled={editing}
                 error={field('animalTypeId')}
@@ -397,6 +399,7 @@ export default function AnimalFormPage() {
               )}
               <Select
                 label={t('animalForm.breed')}
+                data-tour="animal-breed"
                 error={field('breed')}
                 value={draft.breed}
                 onChange={(e) => {
@@ -463,7 +466,13 @@ export default function AnimalFormPage() {
                   )}
                 </div>
               )}
-              <Select label={t('animals.col.sex')} required error={field('sex')} {...text('sex')}>
+              <Select
+                label={t('animals.col.sex')}
+                data-tour="animal-sex"
+                required
+                error={field('sex')}
+                {...text('sex')}
+              >
                 <option value="">{t('common.choose')}</option>
                 {ANIMAL_SEXES.map((s) => (
                   <option key={s} value={s}>
@@ -491,6 +500,7 @@ export default function AnimalFormPage() {
               {!editing && (
                 <TextField
                   label={t('animalForm.weightKg')}
+                  data-tour="animal-first-weight"
                   hint={t('animalForm.weightHint')}
                   inputMode="decimal"
                   error={field('weightKg')}
@@ -506,10 +516,11 @@ export default function AnimalFormPage() {
             )}
           </Card>
 
-          <Card title={t('animalForm.datesOrigin')} headingLevel={2}>
+          <Card title={t('animalForm.datesOrigin')} headingLevel={2} data-tour="animal-birth">
             <div className="fd-form-grid">
               <TextField
                 label={t('detail.birthDate')}
+                data-tour="animal-birth-date"
                 type="date"
                 error={field('birthDate')}
                 {...text('birthDate')}
@@ -542,7 +553,11 @@ export default function AnimalFormPage() {
               checked={draft.birthDateEstimated}
               onChange={(e) => set('birthDateEstimated', e.target.checked)}
             />
-            <fieldset className="ds-field" style={{ border: 0, padding: 0, margin: 0 }}>
+            <fieldset
+              className="ds-field"
+              style={{ border: 0, padding: 0, margin: 0 }}
+              data-tour="animal-approx-age"
+            >
               <legend className="ds-field__label">{t('animalForm.approxAge')}</legend>
               <p className="ds-field__hint">{t('animalForm.approxAgeHint')}</p>
               <div className="ds-row" style={{ alignItems: 'flex-end' }}>
@@ -566,7 +581,7 @@ export default function AnimalFormPage() {
             </fieldset>
           </Card>
 
-          <Card title={t('animalForm.parents')} headingLevel={2}>
+          <Card title={t('animalForm.parents')} headingLevel={2} data-tour="animal-parents">
             <div className="fd-form-grid fd-form-grid--2">
               <Select
                 label={t('animalForm.sire')}
@@ -635,7 +650,7 @@ export default function AnimalFormPage() {
               </p>
             )}
             <div className="fd-form-actions">
-              <Button type="submit" variant="primary" loading={busy}>
+              <Button type="submit" variant="primary" loading={busy} data-tour="animal-save">
                 {editing ? t('animalForm.save') : t('animals.register')}
               </Button>
               <Link to={cancelTo}>{t('common.cancel')}</Link>

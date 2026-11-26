@@ -84,13 +84,13 @@ export default function SellerRegistrationPage() {
   return (
     <>
       <h1>{t('seller.title')}</h1>
-      <p>{t('seller.intro')}</p>
+      <p data-tour="seller-why">{t('seller.intro')}</p>
       <p className="ds-field__hint">
         <Link to="/help/verify-identity-seller">{t('help.read')}</Link>
       </p>
       {notice && <Alert tone="success">{notice}</Alert>}
 
-      <Card title={t('seller.applicationTitle')} headingLevel={2}>
+      <Card title={t('seller.applicationTitle')} headingLevel={2} data-tour="seller-application">
         {!seller ? (
           <>
             <p>{t('seller.none')}</p>
@@ -105,6 +105,7 @@ export default function SellerRegistrationPage() {
         <Card
           title={t('seller.identityTitle')}
           headingLevel={2}
+          data-tour="seller-identity"
           style={{ marginTop: 'var(--ds-space-4)' }}
         >
           <p className="ds-field__hint">{t('seller.identityHint')}</p>
@@ -219,7 +220,10 @@ function RegistrationStatusLine({ registration }: { registration: RegistrationSu
     (registration.status === 'REJECTED' || registration.status === 'SUSPENDED');
   return (
     <>
-      <p className="ds-row">
+      <p
+        className="ds-row"
+        data-tour={registration.type === 'seller' ? 'seller-status' : undefined}
+      >
         <Badge tone={REGISTRATION_TONE[registration.status]}>
           {registrationStatusLabel(t, registration.status)}
         </Badge>
@@ -228,7 +232,10 @@ function RegistrationStatusLine({ registration }: { registration: RegistrationSu
         </span>
       </p>
       {showReason && (
-        <Alert tone={registration.status === 'SUSPENDED' ? 'danger' : 'warning'}>
+        <Alert
+          tone={registration.status === 'SUSPENDED' ? 'danger' : 'warning'}
+          data-tour={registration.type === 'seller' ? 'seller-reason' : undefined}
+        >
           {t('seller.reason', { reason: registration.decision!.reason })}
         </Alert>
       )}
