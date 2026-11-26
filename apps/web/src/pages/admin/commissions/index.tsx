@@ -81,7 +81,14 @@ export default function CommissionsPage() {
       <p className="adm-muted">
         {rich(t('commissions.intro'), {
           highest: <strong>{t('commissions.highest')}</strong>,
-          setting: <code>orders.platformFeeBps</code>,
+          setting: (
+            <>
+              {t('commissions.settingName')}{' '}
+              <small>
+                (<code>orders.platformFeeBps</code>)
+              </small>
+            </>
+          ),
         })}
       </p>
       {error && <StateMessage kind="error">{error}</StateMessage>}

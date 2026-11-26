@@ -49,6 +49,24 @@ export function useAdminI18n() {
      */
     apiText: (key: string, english: string): string =>
       locale === 'th' && isKey(key) ? t(key) : english,
+    /**
+     * An audit action (`farm.archived`): its own label when the catalog has one, otherwise worded from its parts
+     * (`archived` + `farm` → "เก็บถาวร (ฟาร์ม)"); the raw action when neither part is known. English keeps the API's
+     * action, as before.
+     */
+    auditAction: (action: string): string => {
+      if (locale !== 'th') return action;
+      if (isKey(`auditAction.${action}`)) return t(`auditAction.${action}` as AdminKey);
+      const dot = action.lastIndexOf('.');
+      const entity = action.slice(0, dot);
+      const verb = action.slice(dot + 1);
+      return dot > 0 && isKey(`auditVerb.${verb}`)
+        ? t('auditAction.fallback', {
+            verb: t(`auditVerb.${verb}` as AdminKey),
+            entity: lookup(`auditEntity.${entity}`, entity),
+          })
+        : action;
+    },
     /** Client-side (Zod) validation messages are English; Thai gets the shared translation. */
     validation: (english: string): string => validationMessage(locale, english),
     dateTime: (iso: string | null | undefined): string =>

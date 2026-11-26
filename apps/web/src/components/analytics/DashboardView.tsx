@@ -238,7 +238,12 @@ export function SectionView({
         </dl>
       )}
       {Object.entries(section.series).map(([name, points]) => (
-        <Bars key={name} name={name} points={points} money={/sales|proceeds|gross/i.test(name)} />
+        <Bars
+          key={name}
+          name={name}
+          points={points}
+          money={/sales|proceeds|gross|gmv|amount/i.test(name)}
+        />
       ))}
       {Object.entries(section.tables).map(([name, table]) => (
         <div className="an-table-wrap" key={name}>

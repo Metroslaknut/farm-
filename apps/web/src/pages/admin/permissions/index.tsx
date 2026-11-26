@@ -11,7 +11,7 @@ interface Row {
 
 /** Read-only: the permission catalogue is defined in code. Roles are mapped to it on the Roles page. */
 export default function PermissionsPage() {
-  const { t, apiText } = useAdminI18n();
+  const { t, apiText, label } = useAdminI18n();
   const { data, loading, error, reload } = useAsync(
     (signal) => api.request<{ permissions: Row[] }>('GET', '/admin/permissions', { signal }),
     [],
@@ -40,7 +40,11 @@ export default function PermissionsPage() {
             {data?.permissions.map((p) => (
               <tr key={p.key}>
                 <td data-label={t('permissions.colPermission')}>
-                  <code>{p.key}</code>
+                  {label('perm', p.key, p.description)}
+                  <br />
+                  <small className="adm-muted">
+                    <code>{p.key}</code>
+                  </small>
                 </td>
                 <td data-label={t('common.description')}>
                   {apiText(`perm.${p.key}`, p.description)}
