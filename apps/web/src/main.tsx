@@ -10,16 +10,23 @@ import './index.css';
 
 // The admin area is a separate lazy chunk: the public bundle does not grow, and the public page at "/"
 // (and any other public path) renders exactly as before.
-const AdminApp = lazy(() => import('./pages/admin/AdminApp'));
-const DesignSystem = lazy(() => import('./pages/design-system'));
-const FarmsApp = lazy(() => import('./pages/farms/FarmsApp'));
-const CommunityApp = lazy(() => import('./pages/community/CommunityApp'));
-const VideosApp = lazy(() => import('./pages/videos/VideosApp'));
-const LiveApp = lazy(() => import('./pages/live/LiveApp'));
-const MarketApp = lazy(() => import('./pages/market/MarketApp'));
-const InboxApp = lazy(() => import('./pages/inbox/InboxApp'));
-const ShopApp = lazy(() => import('./pages/shop/ShopApp'));
+/** An area page and the area texts (i18n/areaCatalogs) load together, so the page never renders without them. */
+const withAreaTexts =
+  <T,>(load: () => Promise<T>) =>
+  (): Promise<T> =>
+    Promise.all([import('./i18n/areaCatalogs'), load()]).then(([, page]) => page);
+
+const AdminApp = lazy(withAreaTexts(() => import('./pages/admin/AdminApp')));
+const DesignSystem = lazy(withAreaTexts(() => import('./pages/design-system')));
+const FarmsApp = lazy(withAreaTexts(() => import('./pages/farms/FarmsApp')));
+const CommunityApp = lazy(withAreaTexts(() => import('./pages/community/CommunityApp')));
+const VideosApp = lazy(withAreaTexts(() => import('./pages/videos/VideosApp')));
+const LiveApp = lazy(withAreaTexts(() => import('./pages/live/LiveApp')));
+const MarketApp = lazy(withAreaTexts(() => import('./pages/market/MarketApp')));
+const InboxApp = lazy(withAreaTexts(() => import('./pages/inbox/InboxApp')));
+const ShopApp = lazy(withAreaTexts(() => import('./pages/shop/ShopApp')));
 // The help centre and its articles are their own chunk: nothing of it loads on other pages.
+// The help centre uses only its own and the tour texts (no area texts needed).
 const HelpApp = lazy(() => import('./pages/help/HelpApp'));
 
 // The design-system preview is an internal page: on in development, opt-in elsewhere.
