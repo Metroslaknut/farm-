@@ -15,9 +15,13 @@ goTo: /shop
 
 1. Open the "Shop" and search or pick a category.
 2. Open a product, choose the "Quantity" and press "Add to cart".
+   ![The quantity and the Add to cart button](img:1)
 3. Press "Cart" at the top to check the items, change quantities or "Remove" them.
+   ![Your cart](img:2)
 4. Under "How do you want to receive it?", choose "I collect it from the seller" or "Deliver to me", and enter your address.
+   ![The ways to receive the items](img:3)
 5. Check the "Summary", then press "Place order".
+   ![The Place order button](img:4)
 6. Pay and follow the status of your order.
 
 :::note Buying from several sellers
