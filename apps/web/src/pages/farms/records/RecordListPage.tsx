@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- generic record engine: shape is driven by the per-kind config/schema */
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { AnimalSummary, ExpenseSummary, Page } from '@farmplus/shared-types';
 import { api } from '../../../api';
@@ -8,6 +9,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Modal,
   Pagination,
   Select,
   Table,
@@ -19,6 +21,7 @@ import { useListParams } from '../../../lib/useListParams';
 import { NavButton } from '../NavButton';
 import { bahtLabel, enumLabel, useFarmFormat, useFarmsT } from '../labels';
 import { useFarm } from '../useFarmAccess';
+import { RecordForm } from './RecordForm';
 import type { KindConfig } from './recordConfigs';
 
 const PAGE_SIZE = 15;
@@ -111,6 +114,11 @@ export default function RecordListPage({ config }: { config: KindConfig }) {
   const data = list.data?.kind === config.kind ? list.data.page : undefined;
   const { loading, error, reload } = list;
   const canWrite = can(config.permissions.write) && farm?.status === 'active';
+  // "Add" opens the form in a dialog over the list (the /new page stays for links and new tabs). Breeding keeps its
+  // own page: its form is long and continues into delivery/offspring steps.
+  const popup = config.kind !== 'breeding';
+  const [adding, setAdding] = useState(false);
+  const [saved, setSaved] = useState<{ id: string; n: number } | null>(null);
 
   const columns: TableColumn<any>[] = [
     ...config.columns.map((c, i) => ({
@@ -147,12 +155,43 @@ export default function RecordListPage({ config }: { config: KindConfig }) {
             to={`/farms/${farmId}/${config.path}/new`}
             variant="primary"
             data-tour="records-add"
+            {...(popup ? { onOpen: () => setAdding(true) } : {})}
           >
             {t('rec.list.add', { singular: t(config.singular) })}
           </NavButton>
         )}
       </div>
-      {config.kind === 'expense' && <SpendingSummary farmId={farmId} params={params} />}
+      {saved && (
+        <p role="status">
+          {t('rec.list.saved')}{' '}
+          <Link to={`/farms/${farmId}/${config.path}/${saved.id}`}>{t('rec.list.openSaved')}</Link>
+        </p>
+      )}
+      {popup && (
+        <Modal
+          open={adding}
+          onClose={() => setAdding(false)}
+          title={t('rec.form.newTitle', { singular: t(config.singular) })}
+        >
+          {/* Mounted only while open, so every "Add" starts from an empty form. */}
+          {adding && (
+            <RecordForm
+              config={config}
+              farmId={farmId}
+              prefill={params['animalId'] ? { animalId: params['animalId'] } : {}}
+              onCancel={() => setAdding(false)}
+              onDone={(r) => {
+                setAdding(false);
+                setSaved((s) => ({ id: r.id, n: (s?.n ?? 0) + 1 }));
+                reload(); // the list stays on screen (and where it was scrolled) while it refreshes
+              }}
+            />
+          )}
+        </Modal>
+      )}
+      {config.kind === 'expense' && (
+        <SpendingSummary key={saved?.n ?? 0} farmId={farmId} params={params} />
+      )}
       <form
         className="ds-grid ds-grid--3"
         onSubmit={(e) => e.preventDefault()}
