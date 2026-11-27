@@ -9,6 +9,7 @@ import { AdminHeader } from '../src/components/admin/AdminHeader';
 import { AdminSidebar } from '../src/components/admin/AdminSidebar';
 import { ConfirmActionDialog } from '../src/components/admin/ConfirmActionDialog';
 import { StatusBadge } from '../src/components/admin/StatusBadge';
+import { useAdminI18n } from '../src/components/admin/i18n';
 import { AdminHome } from '../src/pages/admin/RouteGuards';
 import UsersPage from '../src/pages/admin/users';
 import { getLocale, setLocale } from '../src/i18n';
@@ -116,5 +117,68 @@ describe('admin in Thai', () => {
     renderAs(<AdminHome />, { permissions: [], mfaRequired: true });
     expect(screen.getByText(/ยินดีต้อนรับ Tester/)).toBeTruthy();
     expect(screen.getByRole('link', { name: 'ตั้งค่าหรือยืนยัน MFA' })).toBeTruthy();
+  });
+});
+
+describe('admin in Thai: roles, permissions, audit actions, placeholders (staging QA 2026-11-25)', () => {
+  it('permissions show their Thai description first and the key small', async () => {
+    setLocale('th');
+    request.mockResolvedValue({
+      permissions: [{ key: 'users.read', description: 'View user accounts', roles: ['admin'] }],
+    });
+    const { default: PermissionsPage } = await import('../src/pages/admin/permissions');
+    renderAs(<PermissionsPage />, { permissions: ['roles.read'], route: '/admin/permissions' });
+    expect((await screen.findAllByText('ดูบัญชีผู้ใช้')).length).toBeGreaterThan(0);
+    expect(screen.getByText('ผู้ดูแลระบบ')).toBeTruthy();
+    expect(screen.queryByText('View user accounts')).toBeNull();
+    expect(screen.queryByText('admin')).toBeNull();
+  });
+
+  it('roles are named in Thai; the key is small', async () => {
+    setLocale('th');
+    request.mockResolvedValue({
+      roles: [
+        {
+          id: 'r1',
+          key: 'buyer',
+          name: 'Buyer',
+          description: 'Default role for every account',
+          isSystem: true,
+          permissions: [],
+          userCount: 3,
+          requiresMfa: false,
+        },
+      ],
+    });
+    const { default: RolesPage } = await import('../src/pages/admin/roles');
+    renderAs(<RolesPage />, { permissions: ['roles.read'], route: '/admin/roles' });
+    expect(await screen.findByRole('link', { name: 'ผู้ซื้อ' })).toBeTruthy();
+    expect(screen.getByText('buyer').closest('small')).toBeTruthy();
+    expect(screen.queryByText('Buyer')).toBeNull();
+  });
+
+  it('audit actions without their own label are worded from their parts', () => {
+    setLocale('th');
+    let words: (a: string) => string = (a) => a;
+    function Probe() {
+      words = useAdminI18n().auditAction;
+      return null;
+    }
+    render(<Probe />);
+    expect(words('farm.archived')).toBe('เก็บฟาร์มเข้าคลัง');
+    expect(words('moderation.hidden')).toBe('ซ่อนเนื้อหา');
+    expect(words('listing.published')).toBe('เผยแพร่ (ประกาศขาย)');
+    expect(words('something.odd')).toBe('something.odd');
+    act(() => setLocale('en'));
+    render(<Probe />);
+    expect(words('farm.archived')).toBe('farm.archived');
+  });
+
+  it('a module that is not available yet names the permission in Thai, not only its key', async () => {
+    setLocale('th');
+    const { default: FarmsPlaceholder } = await import('../src/pages/admin/farms');
+    renderAs(<FarmsPlaceholder />, { permissions: ['farms.read'], route: '/admin/farms' });
+    expect(screen.getByText(/ดูฟาร์มทั้งหมด/)).toBeTruthy();
+    expect(screen.getByText('farms.read').closest('small')).toBeTruthy();
   });
 });

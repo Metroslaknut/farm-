@@ -38,7 +38,7 @@ const endOfDay = (d: string) => (d ? new Date(`${d}T23:59:59.999`).toISOString()
 export default function AuditLogsPage() {
   const [params, setParams] = useListParams(DEFAULTS);
   const i18n = useAdminI18n();
-  const { t, apiText, dateTime } = i18n;
+  const { t, apiText, auditAction, dateTime } = i18n;
   const { data, loading, error, reload } = useAsync(
     (signal) =>
       api.request<Page<AuditLogEntry>>('GET', '/admin/audit-logs', {
@@ -63,7 +63,7 @@ export default function AuditLogsPage() {
       key: 'action',
       header: t('auditLogs.colAction'),
       cell: (e) => {
-        const text = apiText(`auditAction.${e.action}`, e.action);
+        const text = auditAction(e.action);
         return text === e.action ? <code>{e.action}</code> : <span title={e.action}>{text}</span>;
       },
     },

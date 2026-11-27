@@ -1242,6 +1242,21 @@ describe('B8 historical consistency of the animal timeline', () => {
     const dates = all.map((e: any) => e.date.slice(0, 10));
     expect(dates).toEqual([...dates].sort().reverse());
     expect(all.some((e: any) => e.type === 'expense' && e.summary === '12.34 THB')).toBe(true);
+    // Values for clients to word in the reader's language (staging QA 2026-11-25, Thai history).
+    expect(all.find((e: any) => e.recordId === w1).detail).toEqual({
+      kind: 'weight',
+      weightKg: 305,
+      method: expect.any(String),
+    });
+    expect(all.find((e: any) => e.type === 'expense').detail).toMatchObject({
+      kind: 'expense',
+      amountMinor: 1234,
+    });
+    expect(all.find((e: any) => e.title === 'Checkup: Recent').detail).toMatchObject({
+      kind: 'health',
+      healthType: 'checkup',
+      title: 'Recent',
+    });
 
     const live = (await hist(s.owner, '?includeVoided=false')).items;
     expect(live.some((e: any) => e.voided)).toBe(false);

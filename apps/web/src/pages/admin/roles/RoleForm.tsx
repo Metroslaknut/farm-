@@ -14,7 +14,7 @@ export default function RoleForm() {
   const creating = id === undefined;
   const navigate = useNavigate();
   const { can } = useAuth();
-  const { t, apiText, locale } = useAdminI18n();
+  const { t, apiText, label } = useAdminI18n();
   const canEditPermissions = can('permissions.manage');
   const canManage = can('roles.manage');
 
@@ -103,6 +103,9 @@ export default function RoleForm() {
           ? t('roles.new')
           : data && (data.isSystem ? apiText(`role.${data.key}`, data.name) : data.name)}
       </h1>
+      {data?.isSystem && (
+        <p className="adm-muted">{label('roleDesc', data.key, data.description ?? '')}</p>
+      )}
       {data?.key === 'super_admin' && <p className="adm-muted">{t('roleForm.superLocked')}</p>}
       <form className="adm-form adm-card" onSubmit={submit}>
         <label className="adm-field">
@@ -156,8 +159,10 @@ export default function RoleForm() {
                   })
                 }
               />
-              <code>{p}</code>
-              {locale === 'th' && <span className="adm-muted">{apiText(`perm.${p}`, '')}</span>}
+              {label('perm', p, p)}{' '}
+              <small className="adm-muted">
+                <code>{p}</code>
+              </small>
             </label>
           ))}
         </fieldset>

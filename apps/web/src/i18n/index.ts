@@ -1,5 +1,6 @@
 import { translate, type Catalog, type Params } from '@farmplus/i18n';
 import admin from './messages/admin';
+import analytics from './messages/analytics';
 import auth from './messages/auth';
 import common from './messages/common';
 import community from './messages/community';
@@ -31,6 +32,7 @@ const catalogs = {
   inbox,
   admin,
   tours,
+  analytics,
 };
 export type Area = keyof typeof catalogs;
 type KeyOf<A extends Area> = (typeof catalogs)[A] extends Catalog<infer K> ? K : never;

@@ -88,7 +88,7 @@ beforeEach(() => {
       if (path === '/shop/categories')
         return Promise.resolve({
           categories: [
-            { key: 'feed', name: 'Animal feed', salesEnabled: true },
+            { key: 'feed', name: 'Animal feed', nameTh: 'อาหารสัตว์', salesEnabled: true },
             { key: 'medicines', name: 'Medicines', salesEnabled: false },
           ],
         });
@@ -142,7 +142,7 @@ describe('home page (storefront structure)', () => {
     );
     expect(await screen.findByRole('heading', { name: 'หมวดหมู่สินค้า' })).toBeTruthy();
     // only categories open for sale are offered
-    expect(screen.getByRole('link', { name: /Animal feed/ }).getAttribute('href')).toBe(
+    expect(screen.getByRole('link', { name: /อาหารสัตว์/ }).getAttribute('href')).toBe(
       '/shop?category=feed',
     );
     expect(screen.queryByRole('link', { name: /Medicines/ })).toBeNull();
@@ -167,7 +167,8 @@ describe('home page (storefront structure)', () => {
 
     const best = screen.getByRole('region', { name: 'สินค้าขายดี' });
     await within(best).findByRole('link', { name: 'Best seller' });
-    await userEvent.click(await within(best).findByRole('button', { name: 'Animal feed' }));
+    // The tab is the Thai category name (staging QA 2026-11-25: it was English).
+    await userEvent.click(await within(best).findByRole('button', { name: 'อาหารสัตว์' }));
     await waitFor(() =>
       expect(request).toHaveBeenCalledWith(
         'GET',

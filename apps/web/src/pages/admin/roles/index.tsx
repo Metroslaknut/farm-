@@ -47,9 +47,9 @@ export default function RolesPage() {
                   <Link to={`/admin/roles/${r.id}`}>
                     {r.isSystem ? apiText(`role.${r.key}`, r.name) : r.name}
                   </Link>{' '}
-                  <span className="adm-muted">
+                  <small className="adm-muted">
                     <code>{r.key}</code>
-                  </span>
+                  </small>
                 </td>
                 <td data-label={t('common.type')}>
                   {r.isSystem ? t('roles.system') : t('roles.custom')}

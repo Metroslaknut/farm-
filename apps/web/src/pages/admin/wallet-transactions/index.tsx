@@ -5,6 +5,17 @@ import { usePagedList } from '../../community/usePagedList';
 import { ListState, baht } from '../finance-common';
 
 /** `/admin/wallet-transactions` — the append-only ledger. Read-only: there is no way to edit a line, only post a new journal. */
+/** The ledger type a journal key names (`wd_hold:<id>` is a withdrawal hold, `capture:<id>` a capture…). */
+const JOURNAL_KINDS: Record<string, string> = {
+  wd_hold: 'withdrawal_hold',
+  wd_release: 'withdrawal_release',
+  wd_paid: 'withdrawal_paid',
+};
+const journalKind = (key: string): string => {
+  const prefix = key.split(':')[0]!;
+  return JOURNAL_KINDS[prefix] ?? prefix;
+};
+
 export default function WalletTransactionsPage() {
   const { t, label, status, dateTime } = useAdminI18n();
   const [journal, setJournal] = useState('');
@@ -39,7 +50,11 @@ export default function WalletTransactionsPage() {
               <tr key={line.id}>
                 <td>{dateTime(line.createdAt)}</td>
                 <td>
-                  <code>{line.journalKey}</code>
+                  {/* journalKey is `<kind>:<id>`: the kind in words, the id small. */}
+                  {cap(label('ledgerType', journalKind(line.journalKey)))}{' '}
+                  <small>
+                    <code>{line.journalKey.split(':').slice(1).join(':')}</code>
+                  </small>
                 </td>
                 <td>
                   {cap(label('walletKind', line.walletKind))} <small>({status(line.bucket)})</small>
