@@ -73,8 +73,11 @@ export interface SeriesPoint {
 export interface DashboardAlert {
   code: string;
   severity: 'info' | 'caution' | 'serious';
+  /** English wording; clients word `code` + `count` + `params` in the reader's language. */
   message: string;
   count: number;
+  /** Other figures in the message (e.g. `amountMinor`, `total`, `percent`). */
+  params?: Record<string, number>;
 }
 
 export interface DashboardSection {

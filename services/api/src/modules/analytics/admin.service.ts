@@ -428,6 +428,7 @@ async function alerts(now: Date): Promise<DashboardSection> {
       code: 'unapplied_payments',
       severity: 'serious',
       count: unapplied[0]!.n,
+      params: { amountMinor: unapplied[0]!.total },
       message: `${unapplied[0]!.n} payment(s) were received but could not be applied to an order (${(unapplied[0]!.total / 100).toFixed(2)} THB parked, refund needed).`,
     });
   if (failedRefunds > 0)
@@ -456,6 +457,10 @@ async function alerts(now: Date): Promise<DashboardSection> {
       code: 'payment_failure_rate',
       severity: 'caution',
       count: failed24,
+      params: {
+        total: ok + failed24,
+        percent: Math.round((100 * failed24) / (ok + failed24)),
+      },
       message: `${failed24} of ${ok + failed24} payments failed in the last 24 hours (${Math.round((100 * failed24) / (ok + failed24))}%).`,
     });
   if (stalePending > 0)

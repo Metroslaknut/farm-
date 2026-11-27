@@ -45,6 +45,62 @@ describe('analytics catalog matches the API', () => {
   });
 });
 
+describe('metric explanations and alerts (Thai details, follow-up of task 3)', () => {
+  it('every explanation of every metric is in the catalog, and its English is exactly the API text', async () => {
+    const { DEFINITIONS } = await import('../../../services/api/src/modules/analytics/definitions');
+    expect(DEFINITIONS.length).toBeGreaterThan(90);
+    const th = analytics.th as Record<string, string>;
+    for (const d of DEFINITIONS)
+      for (const field of ['definition', 'includes', 'excludes', 'caveats'] as const) {
+        const english = d[field];
+        const key = `def.${d.key}.${field}`;
+        if (english === null) {
+          expect(en[key], key).toBeUndefined();
+          continue;
+        }
+        expect(en[key], key).toBe(english);
+        expect(th[key]?.trim().length, key).toBeGreaterThan(0);
+      }
+  });
+
+  it('every admin alert code has a Thai and English text', () => {
+    const codes = [...read('admin.service.ts').matchAll(/code: '([a-z_]+)'/g)].map((m) => m[1]);
+    expect(codes.length).toBeGreaterThan(5);
+    for (const code of codes) expect(en[`alert.${code}`], code).toBeTruthy();
+  });
+
+  it('an alert is worded in Thai from its code and figures', () => {
+    setLocale('th');
+    render(
+      <SectionView
+        id="alerts"
+        scope="admin"
+        definitions={{}}
+        section={
+          {
+            available: true,
+            metrics: {},
+            series: {},
+            tables: {},
+            alerts: [
+              {
+                code: 'payment_failure_rate',
+                severity: 'caution',
+                count: 4,
+                params: { total: 10, percent: 40 },
+                message: '4 of 10 payments failed in the last 24 hours (40%).',
+              },
+            ],
+          } as unknown as DashboardSection
+        }
+      />,
+    );
+    expect(
+      screen.getByText(/ชำระเงินไม่สำเร็จ 4 จาก 10 รายการใน 24 ชั่วโมงที่ผ่านมา \(40%\)/),
+    ).toBeTruthy();
+  });
+});
+
 describe('dashboard section in Thai', () => {
   const definitions: Record<string, MetricDefinition> = {
     'farm.animals.animalsOnFarm': {
