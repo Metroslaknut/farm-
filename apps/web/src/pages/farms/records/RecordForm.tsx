@@ -13,6 +13,7 @@ import { useLocale } from '../../../i18n';
 import { loadAnimalTypes } from '../../../lib/animalTypes';
 import { Alert, Button, Card, Select, TextField, Textarea } from '../../../components/ui';
 import { errorMessage } from '../../../lib/format';
+import { maxLengthOf } from '../../../lib/schemaLimits';
 import { useAsync } from '../../../lib/useAsync';
 import { breedLabel, localizeErrors, typeName, useFarmFormat, useFarmsT } from '../labels';
 import { changesFrom, draftFromRecord, payloadFromDraft } from './formEngine';
@@ -96,6 +97,30 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
     );
   };
 
+  /**
+   * Every message goes where the person can see it: an error on a group (`sireExternal`) goes to the group's first
+   * field (`sireExternal.name`); anything that matches no field is shown above the buttons. Before, such a message was
+   * dropped and "Save" seemed to do nothing (staging QA #21).
+   */
+  const place = (found: FieldErrors): FieldErrors => {
+    const names = config.fields.map((f) => f.name);
+    const out: FieldErrors = {};
+    const unplaced: string[] = [];
+    for (const [key, message] of Object.entries(found)) {
+      if (!message) continue;
+      const target =
+        key.startsWith('_') || names.includes(key)
+          ? key
+          : names.find((n) => n.startsWith(`${key}.`));
+      if (target) out[target] ??= message;
+      else unplaced.push(message);
+    }
+    if (unplaced.length) out['_form'] = [out['_form'], ...unplaced].filter(Boolean).join(' ');
+    return out;
+  };
+  // Focus then moves to the first message (lib/focusFirstInvalid.ts, for every form).
+  const fail = (found: FieldErrors) => setErrors(place(found));
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setErrors({});
@@ -103,12 +128,11 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
     let body: Record<string, unknown>;
     if (editing) {
       if (reason.trim().length < 3)
-        return setErrors({
+        return fail({
           _reason: t('rec.form.reasonRequired'),
         });
       const changes = changesFrom(config.fields, initial, draft);
-      if (Object.keys(changes).length === 0)
-        return setErrors({ _form: t('rec.form.nothingChanged') });
+      if (Object.keys(changes).length === 0) return fail({ _form: t('rec.form.nothingChanged') });
       path += `/${record.id}/corrections`;
       body = { reason: reason.trim(), changes };
     } else {
@@ -116,7 +140,7 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
       // Clutch counts belong to egg-laying species only (the section is hidden otherwise).
       if (breeding && !eggLaying) delete body['clutch'];
       const parsed = config.schema.safeParse(body);
-      if (!parsed.success) return setErrors(localizeErrors(fieldErrorsFromZod(parsed.error)));
+      if (!parsed.success) return fail(localizeErrors(fieldErrorsFromZod(parsed.error)));
     }
     setBusy(true);
     try {
@@ -126,9 +150,7 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
       const fromApi = fieldErrorsFromDetails(
         (e as { details?: { path: string; message: string }[] }).details,
       );
-      setErrors(
-        Object.keys(fromApi).length > 0 ? localizeErrors(fromApi) : { _form: errorMessage(e) },
-      );
+      fail(Object.keys(fromApi).length > 0 ? localizeErrors(fromApi) : { _form: errorMessage(e) });
     } finally {
       setBusy(false);
     }
@@ -143,9 +165,17 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
       value: draft[f.name] ?? '',
       disabled: editing && f.lockedOnEdit,
     };
+    // The schema's length limit, shown while typing (staging QA #18).
+    const maxLength = maxLengthOf(config.schema, f.name);
     if (f.type === 'textarea')
       return (
-        <Textarea key={f.name} {...common} rows={3} onChange={(e) => set(f.name, e.target.value)} />
+        <Textarea
+          key={f.name}
+          {...common}
+          rows={3}
+          maxLength={maxLength}
+          onChange={(e) => set(f.name, e.target.value)}
+        />
       );
     if (f.type === 'select' || f.type === 'animal' || f.type === 'health-ref') {
       const options =
@@ -192,6 +222,7 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
         {...common}
         type={type}
         step={f.step}
+        maxLength={type === 'text' ? maxLength : undefined}
         inputMode={f.type === 'number' ? 'decimal' : undefined}
         onChange={(e) => set(f.name, e.target.value)}
       />
@@ -287,7 +318,12 @@ export function RecordForm({ config, farmId, record, prefill, onDone, onCancel }
         </Card>
       )}
       {errors['_form'] && (
-        <Alert tone="danger" style={{ marginBottom: 'var(--ds-space-4)' }}>
+        <Alert
+          tone="danger"
+          style={{ marginBottom: 'var(--ds-space-4)' }}
+          data-form-error
+          tabIndex={-1}
+        >
           {errors['_form']}
         </Alert>
       )}
