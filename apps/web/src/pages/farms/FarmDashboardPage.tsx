@@ -57,7 +57,7 @@ export default function FarmDashboardPage() {
       <p>
         <Link to={`/farms/${farmId}`}>← {farm?.name ?? t('common.farm')}</Link>
       </p>
-      <h1>{t('dashboard.title')}</h1>
+      <h1 data-tour="farm-analytics-title">{t('dashboard.title')}</h1>
       <FilterForm params={params} onApply={setSearch}>
         <label>
           {t('dashboard.animalType')}

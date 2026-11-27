@@ -122,7 +122,7 @@ export default function ListingDetailPage() {
           )}
         </div>
         <div>
-          <Card title={formatBaht(l.askingPriceMinor)} headingLevel={2}>
+          <Card title={formatBaht(l.askingPriceMinor)} headingLevel={2} data-tour="listing-summary">
             <p className="ds-row">
               {l.negotiable ? (
                 <Badge tone="info">{t('openToOffers')}</Badge>
@@ -170,7 +170,11 @@ export default function ListingDetailPage() {
               </>
             )}
             {['ACTIVE', 'RESERVED'].includes(l.status) && (
-              <Button aria-pressed={favorited} onClick={() => void toggleFavorite()}>
+              <Button
+                aria-pressed={favorited}
+                onClick={() => void toggleFavorite()}
+                data-tour="listing-favorite"
+              >
                 {favorited ? t('detail.saved') : t('detail.save')}
                 {fav ? ` · ${fav.favoriteCount}` : ` · ${l.favoriteCount}`}
               </Button>
@@ -187,7 +191,7 @@ export default function ListingDetailPage() {
             </Alert>
           )}
           {l.viewer.negotiationId && (
-            <Alert tone="info">
+            <Alert tone="info" data-tour="listing-open-negotiation">
               {rich(t('detail.hasOffer'), {
                 link: (
                   <Link to={`/market/offers/${l.viewer.negotiationId}`}>
@@ -198,7 +202,7 @@ export default function ListingDetailPage() {
             </Alert>
           )}
           {!l.viewer.isSellerSide && ['ACTIVE', 'RESERVED'].includes(l.status) && (
-            <p>
+            <p data-tour="listing-contact-seller">
               <ContactSellerButton listingId={l.id} />
             </p>
           )}
@@ -208,6 +212,7 @@ export default function ListingDetailPage() {
                 title={t('detail.makeOffer')}
                 headingLevel={2}
                 style={{ marginTop: 'var(--ds-space-4)' }}
+                data-tour="listing-make-offer"
               >
                 {formError && <Alert tone="danger">{formError}</Alert>}
                 {l.negotiable ? (

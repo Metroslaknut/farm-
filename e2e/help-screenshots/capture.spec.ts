@@ -193,6 +193,81 @@ const field = (c: Ctx, th: string, en: string) => c.page.getByLabel(labelled(c.L
 const button = (c: Ctx, th: string, en: string) =>
   c.page.getByRole('button', { name: c.L(th, en), exact: true });
 
+/** Signs in through the API too: the farm data behind a scene is made with the account's own token. */
+async function tokenFor(request: APIRequestContext, email: string): Promise<string> {
+  const res = await request.post(`${API()}/api/v1/auth/login`, {
+    data: { identifier: email, password: PASSWORD },
+  });
+  expect(res.status(), await res.text()).toBe(200);
+  return (await res.json()).tokens.accessToken as string;
+}
+const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
+
+/** Gives an example account roles directly, as an admin decision would (farm_owner, seller). */
+async function grant(userId: string, keys: string[]) {
+  const d = await db();
+  for (const key of keys) {
+    const role = await d.collection('roles').findOne({ key });
+    await d
+      .collection('user_roles')
+      .updateOne(
+        { userId: new mongoose.Types.ObjectId(userId), roleId: role!._id },
+        { $setOnInsert: { createdAt: new Date() } },
+        { upsert: true },
+      );
+  }
+}
+
+/** Listings need a moderator's review (the default) or go live at once (for the buyer scene's example listing). */
+async function requireListingReview(on: boolean) {
+  await (
+    await db()
+  )
+    .collection('settings')
+    .updateOne(
+      { key: 'marketplace.requireReview' },
+      { $set: { key: 'marketplace.requireReview', value: on } },
+      { upsert: true },
+    );
+}
+
+/** An example farm owner with a farm (and, with `animals`, registered animals), signed in on the page. */
+async function ownerWithFarm(
+  c: Ctx,
+  tag: string,
+  opts: { roles?: string[]; animals?: number; signIn?: boolean } = {},
+) {
+  const email = `${tag}.${c.locale}${c.width}@example.com`;
+  const user = await verifiedUser(c.request, email, c.L('[ตัวอย่าง] สมชาย', '[Example] Somchai'));
+  await grant(user.id, opts.roles ?? ['farm_owner']);
+  const token = await tokenFor(c.request, email);
+  const types = await (
+    await c.request.get(`${API()}/api/v1/animal-types`, { headers: bearer(token) })
+  ).json();
+  const type =
+    types.animalTypes.find((t: { key: string }) => t.key === 'goat') ?? types.animalTypes[0];
+  const farm = await c.request.post(`${API()}/api/v1/farms`, {
+    headers: bearer(token),
+    data: { name: c.L('[ตัวอย่าง] ฟาร์มสุขใจ', '[Example] Sukjai Farm'), animalTypeIds: [type.id] },
+  });
+  expect(farm.status(), await farm.text()).toBe(201);
+  const farmId = (await farm.json()).farm.id as string;
+  const animals: string[] = [];
+  for (let i = 0; i < (opts.animals ?? 0); i++) {
+    const a = await c.request.post(`${API()}/api/v1/farms/${farmId}/animals`, {
+      headers: bearer(token),
+      data: { animalCode: `G-00${i + 1}`, animalTypeId: type.id, sex: i % 2 ? 'male' : 'female' },
+    });
+    expect(a.status(), await a.text()).toBe(201);
+    animals.push((await a.json()).animal.id as string);
+  }
+  if (opts.signIn !== false) await signIn(c.page, email, c.L);
+  return { email, token, farmId, animals, userId: user.id };
+}
+
+const tour = (c: Ctx, anchor: string) =>
+  c.page.locator(`[data-tour="${anchor}"]`).locator('visible=true').first();
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Scenes, one per article (ids = the img:<id> of each step)
 // ---------------------------------------------------------------------------------------------------------------------
@@ -562,6 +637,202 @@ const SCENES: Record<string, (c: Ctx) => Promise<void>> = {
       c.page.getByRole('heading', { name: c.L('ตั้งค่าฟาร์มของคุณ', 'Set up your farm') }),
     ).toBeVisible();
     await c.shot('request-farm-owner', '9', c.page.getByRole('heading', { level: 1 }));
+  },
+  async 'create-farm'(c) {
+    const email = `farm.${c.locale}${c.width}@example.com`;
+    const user = await verifiedUser(c.request, email, c.L('[ตัวอย่าง] สมชาย', '[Example] Somchai'));
+    await grant(user.id, ['farm_owner']);
+    await signIn(c.page, email, c.L);
+    await expect(c.page).toHaveURL(/\/farms\/new/);
+    await c.shot('create-farm', '1', c.page.getByRole('heading', { level: 1 }));
+    const name = tour(c, 'farm-name');
+    await name.fill(c.L('[ตัวอย่าง] ฟาร์มสุขใจ', '[Example] Sukjai Farm'));
+    await c.shot('create-farm', '2', name);
+    const types = tour(c, 'farm-animal-types');
+    await types.getByRole('checkbox').first().check();
+    await c.shot('create-farm', '3', types);
+    const next = tour(c, 'farm-setup-submit');
+    await c.shot('create-farm', '4', next);
+    await next.click();
+    const location = tour(c, 'farm-location');
+    await expect(location).toBeVisible();
+    const pick = async (th: string, en: string) => {
+      const select = location.getByLabel(labelled(c.L(th, en)));
+      await expect(select.locator('option').nth(1)).toBeAttached();
+      await select.selectOption({ index: 1 });
+    };
+    await pick('จังหวัด', 'Province');
+    await pick('อำเภอ/เขต', 'District');
+    await pick('ตำบล/แขวง', 'Sub-district');
+    await c.shot('create-farm', '5', location);
+    const map = tour(c, 'farm-map-pin');
+    await map.click();
+    await c.shot('create-farm', '6', map);
+    await next.click();
+    const contact = tour(c, 'farm-contact');
+    await expect(contact).toBeVisible();
+    await contact.getByLabel(labelled(c.L('เบอร์โทรศัพท์', 'Phone'))).fill(EXAMPLE_PHONE);
+    await c.shot('create-farm', '7', contact);
+    await next.click();
+    await expect(tour(c, 'farm-home-title')).toBeVisible();
+    await c.shot('create-farm', '8', tour(c, 'farm-home-title'));
+  },
+
+  async 'add-animal'(c) {
+    const { farmId } = await ownerWithFarm(c, 'animal', { animals: 2 });
+    await c.page.goto(`/farms/${farmId}/animals`);
+    const register = c.page.getByRole('link', { name: c.L('ขึ้นทะเบียนสัตว์', 'Register animal') });
+    await c.shot('add-animal', '1', register);
+    await register.click();
+    const code = tour(c, 'animal-code');
+    await c.shot('add-animal', '2', code);
+    const type = tour(c, 'animal-type');
+    await type.selectOption({ index: 1 });
+    const breed = tour(c, 'animal-breed');
+    if ((await breed.locator('option').count()) > 1) await breed.selectOption({ index: 1 });
+    await c.shot('add-animal', '3', type);
+    await tour(c, 'animal-sex').selectOption({ index: 1 });
+    await tour(c, 'animal-first-weight').fill('32.5');
+    await c.shot('add-animal', '4', tour(c, 'animal-sex'));
+    await tour(c, 'animal-birth-date').fill('2026-03-01');
+    await c.shot('add-animal', '5', tour(c, 'animal-birth'));
+    await c.shot('add-animal', '6', tour(c, 'animal-parents'));
+    const save = tour(c, 'animal-save');
+    await c.shot('add-animal', '7', save);
+    await save.click();
+    await expect(tour(c, 'animal-info')).toBeVisible();
+    await c.shot('add-animal', '8', tour(c, 'animal-actions'));
+  },
+
+  async 'farm-records'(c) {
+    const { farmId, token, animals } = await ownerWithFarm(c, 'records', { animals: 1 });
+    const w = await c.request.post(`${API()}/api/v1/farms/${farmId}/weights`, {
+      headers: bearer(token),
+      data: { animalId: animals[0], weighedOn: '2026-11-01', weightKg: 31.5 },
+    });
+    expect(w.status(), await w.text()).toBe(201);
+    await c.page.goto(`/farms/${farmId}/weights`);
+    await expect(tour(c, 'records-filters')).toBeVisible();
+    await c.shot('farm-records', '1', c.page.getByRole('heading', { level: 1 }));
+    const add = tour(c, 'records-add');
+    await c.shot('farm-records', '2', add);
+    await add.click();
+    const form = c.page
+      .locator('form')
+      .filter({ has: c.page.getByLabel(labelled(c.L('น้ำหนัก (กก.)', 'Weight (kg)'))) });
+    await form.getByLabel(labelled(c.L('สัตว์', 'Animal'))).selectOption({ index: 1 });
+    await form.getByLabel(labelled(c.L('วันที่', 'Date'))).fill('2026-11-20');
+    await form.getByLabel(labelled(c.L('น้ำหนัก (กก.)', 'Weight (kg)'))).fill('34');
+    // The whole form is taller than a phone screen: outline the weight, the field this example fills in.
+    await c.shot(
+      'farm-records',
+      '3',
+      form.getByLabel(labelled(c.L('น้ำหนัก (กก.)', 'Weight (kg)'))),
+    );
+    await form.getByRole('button', { name: c.L('บันทึก', 'Save weight'), exact: true }).click();
+    const voidButton = tour(c, 'record-void');
+    await expect(voidButton).toBeVisible();
+    await c.shot('farm-records', '5', voidButton.locator('..'));
+    await c.page.goto(`/farms/${farmId}/weights`);
+    await c.shot('farm-records', '4', tour(c, 'records-filters'));
+    await c.shot(
+      'farm-records',
+      '6',
+      tour(c, 'records-show-voided').locator('xpath=ancestor::label[1]'),
+    );
+  },
+
+  async 'list-animal-for-sale'(c) {
+    await requireListingReview(true);
+    const { farmId } = await ownerWithFarm(c, 'listing', {
+      roles: ['farm_owner', 'seller'],
+      animals: 1,
+    });
+    await c.page.goto('/market/sell');
+    const open = tour(c, 'market-sell-farm');
+    await c.shot('list-animal-for-sale', '1', open);
+    await open.click();
+    await expect(c.page).toHaveURL(new RegExp(`/farms/${farmId}/listings$`));
+    const create = c.page.getByRole('link', { name: c.L('ลงประกาศใหม่', 'New listing') });
+    await c.shot('list-animal-for-sale', '2', create);
+    await create.click();
+    const animal = tour(c, 'listing-animal');
+    await animal
+      .getByLabel(labelled(c.L('เลือกจากสัตว์ของคุณ', 'Choose from your animals')))
+      .selectOption({ index: 1 });
+    await c.shot('list-animal-for-sale', '3', animal);
+    const title = c.page.getByLabel(labelled(c.L('หัวข้อ', 'Title')));
+    if ((await title.inputValue()) === '')
+      await title.fill(c.L('[ตัวอย่าง] แพะพันธุ์ดี', '[Example] Healthy goat'));
+    const price = tour(c, 'listing-price');
+    await price.getByLabel(labelled(c.L('ราคาตั้งขาย (฿)', 'Asking price (฿)'))).fill('4500');
+    await price
+      .getByLabel(
+        labelled(
+          c.L(
+            'ราคาต่ำสุดที่คุณยอมรับได้ (฿, ไม่เปิดเผย)',
+            'Lowest offer you would consider (฿, private)',
+          ),
+        ),
+      )
+      .fill('4000');
+    await c.shot('list-animal-for-sale', '4', price);
+    const photos = tour(c, 'listing-photos');
+    const link = photos.getByLabel(labelled(c.L('ลิงก์รูปที่ 1 (https)', 'Photo 1 link (https)')));
+    if (!(await link.count()))
+      await photos.getByRole('button', { name: c.L('เพิ่มรูป', 'Add photo') }).click();
+    await link.fill('https://files.example.com/goat.jpg');
+    const save = tour(c, 'listing-save');
+    await c.shot('list-animal-for-sale', '5', photos);
+    await save.click();
+    const submit = c.page.getByRole('button', { name: c.L('ส่งตรวจสอบ', 'Submit for review') });
+    await expect(submit).toBeVisible();
+    await c.shot('list-animal-for-sale', '6', submit);
+  },
+
+  async 'buy-animals'(c) {
+    // An example seller's live listing (review switched off just for it).
+    await requireListingReview(false);
+    const seller = await ownerWithFarm(c, 'seller-b', {
+      roles: ['farm_owner', 'seller'],
+      animals: 1,
+      signIn: false,
+    });
+    const listing = await c.request.post(`${API()}/api/v1/farms/${seller.farmId}/listings`, {
+      headers: bearer(seller.token),
+      data: {
+        animalId: seller.animals[0],
+        title: c.L('[ตัวอย่าง] แพะพันธุ์ดี', '[Example] Healthy goat'),
+        askingPriceMinor: 450_000,
+        negotiable: true,
+        photos: [{ url: 'https://files.example.com/goat.jpg' }],
+        deliveryOptions: ['pickup'],
+      },
+    });
+    expect(listing.status(), await listing.text()).toBe(201);
+    const listingId = (await listing.json()).listing.id as string;
+    const submitted = await c.request.post(
+      `${API()}/api/v1/farms/${seller.farmId}/listings/${listingId}/submit`,
+      { headers: bearer(seller.token) },
+    );
+    expect(submitted.status(), await submitted.text()).toBe(200);
+    await requireListingReview(true);
+    // The buyer: a plain member.
+    const email = `buyer.${c.locale}${c.width}@example.com`;
+    await verifiedUser(c.request, email, c.L('[ตัวอย่าง] สมหญิง', '[Example] Somying'));
+    await signIn(c.page, email, c.L);
+    await c.page.goto('/market');
+    await c.shot('buy-animals', '1', tour(c, 'market-search'));
+    await c.page.goto(`/market/listing/${listingId}`);
+    await expect(tour(c, 'listing-summary')).toBeVisible();
+    await c.shot('buy-animals', '2', tour(c, 'listing-favorite'));
+    const offer = tour(c, 'listing-make-offer');
+    await offer.getByLabel(labelled(c.L('ราคาที่คุณเสนอ (฿)', 'Your offer (฿)'))).fill('4200');
+    await c.shot('buy-animals', '3', offer);
+    await offer.getByRole('button', { name: c.L('ส่งข้อเสนอ', 'Send offer') }).click();
+    // Sending the offer opens the negotiation: the offer on the table, waiting for the seller.
+    await expect(c.page).toHaveURL(/\/market\/offers\/[a-f0-9]{24}/);
+    await c.shot('buy-animals', '4', c.page.getByRole('heading', { level: 2 }).first());
   },
 };
 

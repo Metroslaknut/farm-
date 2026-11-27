@@ -233,30 +233,38 @@ export default function AnimalDetailPage() {
       {actionError && <Alert tone="danger">{actionError}</Alert>}
       {photoError && <Alert tone="warning">{photoError}</Alert>}
 
-      <div className="ds-row" style={{ margin: 'var(--ds-space-3) 0' }}>
+      <div className="ds-row" style={{ margin: 'var(--ds-space-3) 0' }} data-tour="animal-actions">
         {can('listings.manage') &&
           writable &&
           !a.archived &&
           ['active', 'for_sale'].includes(a.currentStatus) && (
-            <NavButton to={`/farms/${farmId}/listings/new?animalId=${a.id}`}>
+            <NavButton
+              to={`/farms/${farmId}/listings/new?animalId=${a.id}`}
+              data-tour="animal-list-for-sale"
+            >
               {t('detail.listForSale')}
             </NavButton>
           )}
         {can('records.read') && !a.archived && (
-          <NavButton to={`/farms/${farmId}/animals/${a.id}/assessment`}>
+          <NavButton
+            to={`/farms/${farmId}/animals/${a.id}/assessment`}
+            data-tour="animal-assessment"
+          >
             {t('detail.saleAssessment')}
           </NavButton>
         )}
-        <NavButton to={`/farms/${farmId}/animals/${a.id}/lineage`}>{t('pedigree.open')}</NavButton>
+        <NavButton to={`/farms/${farmId}/animals/${a.id}/lineage`} data-tour="animal-pedigree">
+          {t('pedigree.open')}
+        </NavButton>
         {can('records.read') && (
           <>
-            <NavButton to={`/farms/${farmId}/animals/${a.id}/growth`}>
+            <NavButton to={`/farms/${farmId}/animals/${a.id}/growth`} data-tour="animal-growth">
               {t('detail.growth')}
             </NavButton>
-            <NavButton to={`/farms/${farmId}/animals/${a.id}/history`}>
+            <NavButton to={`/farms/${farmId}/animals/${a.id}/history`} data-tour="animal-history">
               {t('detail.history')}
             </NavButton>
-            <NavButton to={`/farms/${farmId}/health?animalId=${a.id}`}>
+            <NavButton to={`/farms/${farmId}/health?animalId=${a.id}`} data-tour="animal-health">
               {t('overview.health')}
             </NavButton>
           </>
@@ -284,7 +292,7 @@ export default function AnimalDetailPage() {
       </div>
 
       <div className="ds-grid ds-grid--2">
-        <Card title={t('common.details')} headingLevel={2}>
+        <Card title={t('common.details')} headingLevel={2} data-tour="animal-info">
           <dl
             style={{
               display: 'grid',

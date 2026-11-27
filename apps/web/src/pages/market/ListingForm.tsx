@@ -23,7 +23,7 @@ import { api } from '../../api';
 import { Alert, Button, Card, Select, TextField, Textarea } from '../../components/ui';
 import { useLocale } from '../../i18n';
 import { errorMessage } from '../../lib/format';
-import { useCanSell } from '../../lib/sellEligibility';
+import { useSellEligibility } from '../../lib/sellEligibility';
 import { SellerRequiredNotice } from '../farms/SellerRequiredNotice';
 import { typeName } from '../farms/labels';
 import { localizeErrors, sexLabel, useAnimalLabel, useMarketT } from './common';
@@ -55,7 +55,7 @@ export function ListingForm({
   const [locale] = useLocale();
   const editing = Boolean(listing);
   // Only new listings need the seller role (the API checks it on create and submit).
-  const canSell = useCanSell(!editing);
+  const { canSell, checked: sellChecked } = useSellEligibility(!editing);
   const [animal, setAnimal] = useState(animalId ?? listing?.animalId ?? '');
   const [animals, setAnimals] = useState<AnimalSummary[]>([]);
   const [title, setTitle] = useState(listing?.title ?? '');
@@ -192,9 +192,20 @@ export function ListingForm({
       noValidate
       aria-label={editing ? t('form.editAria') : t('form.newAria')}
     >
-      {!canSell && <SellerRequiredNotice message={t('form.sellerRequired')} />}
+      {!canSell && (
+        <SellerRequiredNotice
+          message={t('form.sellerRequired')}
+          data-tour="listing-become-seller"
+        />
+      )}
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
-      <Card title={t('form.animal')} headingLevel={2} style={{ marginBottom: 'var(--ds-space-4)' }}>
+      <Card
+        title={t('form.animal')}
+        headingLevel={2}
+        style={{ marginBottom: 'var(--ds-space-4)' }}
+        // The tour starts once seller status is known, so non-sellers first see "apply to become a seller".
+        data-tour={sellChecked ? 'listing-animal' : undefined}
+      >
         {editing ? (
           <p>
             {animalLabel(listing!.animal)} · {sexLabel(t, listing!.animal.sex)}
@@ -238,7 +249,7 @@ export function ListingForm({
           onChange={(e) => setDescription(e.target.value)}
           error={errors['description']}
         />
-        <div className="ds-grid ds-grid--2">
+        <div className="ds-grid ds-grid--2" data-tour="listing-price">
           <TextField
             label={t('form.price')}
             inputMode="decimal"
@@ -255,7 +266,7 @@ export function ListingForm({
             error={errors['minOfferMinor']}
           />
         </div>
-        <label className="ds-row">
+        <label className="ds-row" data-tour="listing-negotiable">
           <input
             type="checkbox"
             checked={negotiable}
@@ -399,6 +410,7 @@ export function ListingForm({
         title={t('form.photos', { count: photos.length, max: LISTING_LIMITS.photos })}
         headingLevel={2}
         style={{ marginBottom: 'var(--ds-space-4)' }}
+        data-tour="listing-photos"
       >
         {photos.map((p, i) => (
           <div key={i} className="ds-grid ds-grid--3" style={{ alignItems: 'end' }}>
@@ -439,7 +451,13 @@ export function ListingForm({
         <p className="ds-field__hint">{t('form.photosHint')}</p>
       </Card>
       <div className="ds-row">
-        <Button type="submit" variant="primary" loading={busy} disabled={!canSell}>
+        <Button
+          type="submit"
+          variant="primary"
+          loading={busy}
+          disabled={!canSell}
+          data-tour="listing-save"
+        >
           {editing ? t('form.saveChanges') : t('form.saveDraft')}
         </Button>
         {onCancel && <Button onClick={onCancel}>{t('cancel')}</Button>}

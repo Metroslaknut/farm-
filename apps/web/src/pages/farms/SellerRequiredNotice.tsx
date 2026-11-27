@@ -8,7 +8,14 @@ import { latestOf, loadMyRegistrations, registrationStatusLabel } from './Seller
  * "Only approved sellers can …" on the sell forms, with the caller's seller application status (if any) and a link to
  * `/farms/seller` to apply or follow it. `message` is the area's own sentence (listing an animal / a product).
  */
-export function SellerRequiredNotice({ message }: { message: string }) {
+export function SellerRequiredNotice({
+  message,
+  'data-tour': tourAnchor,
+}: {
+  message: string;
+  /** Guided-tour anchor, put on the link to the seller application. */
+  'data-tour'?: string;
+}) {
   const t = useFarmsT();
   const { data } = useAsync((signal) => loadMyRegistrations(signal), []);
   const seller = latestOf(data?.registrations, 'seller');
@@ -20,7 +27,9 @@ export function SellerRequiredNotice({ message }: { message: string }) {
       {seller && (
         <>{t('seller.notice.status', { status: registrationStatusLabel(t, seller.status) })} </>
       )}
-      <Link to="/farms/seller">{t(apply ? 'seller.notice.apply' : 'seller.notice.view')}</Link>
+      <Link to="/farms/seller" data-tour={tourAnchor}>
+        {t(apply ? 'seller.notice.apply' : 'seller.notice.view')}
+      </Link>
     </Alert>
   );
 }

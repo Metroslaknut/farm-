@@ -157,12 +157,15 @@ export default function LiveHostPage() {
       {errors['_form'] && <Alert tone="danger">{errors['_form']}</Alert>}
 
       {live === null && disabled ? (
-        <Alert tone="info">{t('host.unavailable')}</Alert>
+        <Alert tone="info" data-tour="live-unavailable">
+          {t('host.unavailable')}
+        </Alert>
       ) : live === null ? (
         <form onSubmit={create} noValidate>
           <Card>
-            <p>{t('host.intro')}</p>
+            <p data-tour="live-intro">{t('host.intro')}</p>
             <TextField
+              data-tour="live-title"
               label={t('host.title')}
               value={title}
               maxLength={120}
@@ -170,6 +173,7 @@ export default function LiveHostPage() {
               error={errors['title']}
             />
             <Textarea
+              data-tour="live-description"
               label={t('host.description')}
               rows={2}
               maxLength={500}
@@ -178,6 +182,7 @@ export default function LiveHostPage() {
               error={errors['description']}
             />
             <Select
+              data-tour="live-access"
               label={t('host.whoCanWatch')}
               value={access}
               onChange={(e) => setAccess(e.target.value as LiveAccess)}
@@ -188,14 +193,14 @@ export default function LiveHostPage() {
                 </option>
               ))}
             </Select>
-            <Button type="submit" variant="primary" loading={busy}>
+            <Button type="submit" variant="primary" loading={busy} data-tour="live-create">
               {t('host.create')}
             </Button>
           </Card>
         </form>
       ) : (
         <>
-          <Card title={live.title} headingLevel={2}>
+          <Card title={live.title} headingLevel={2} data-tour="live-session">
             <p>
               <Badge tone={live.state === 'live' ? 'danger' : 'warning'}>
                 {t(`host.state.${live.state}`)}
@@ -209,10 +214,10 @@ export default function LiveHostPage() {
               <Link to={`/live/${live.id}`} className="ds-btn">
                 {t('host.openViewer')}
               </Link>
-              <Button onClick={() => void reveal()} loading={busy}>
+              <Button onClick={() => void reveal()} loading={busy} data-tour="live-show-settings">
                 {t('host.showSettings')}
               </Button>
-              <Button variant="danger" onClick={() => setConfirmEnd(true)}>
+              <Button variant="danger" onClick={() => setConfirmEnd(true)} data-tour="live-end">
                 {t('host.end')}
               </Button>
             </div>
@@ -238,6 +243,7 @@ export default function LiveHostPage() {
           {(live.state === 'live' || live.state === 'interrupted') && (
             <div
               className="vf-feed"
+              data-tour="live-preview"
               style={{ height: '50vh', overflow: 'hidden', marginTop: 'var(--ds-space-4)' }}
             >
               <Player

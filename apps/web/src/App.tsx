@@ -51,7 +51,7 @@ export function App() {
   return (
     <div className="home">
       <Band>
-        <div className="home-hero">
+        <div className="home-hero" data-tour="home-welcome">
           <HeroSlider />
           <div className="home-hero__side">
             <Link to="/market/sell" className="home-promo home-promo--soft">

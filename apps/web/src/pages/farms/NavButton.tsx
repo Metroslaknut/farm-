@@ -8,14 +8,17 @@ export function NavButton({
   variant,
   size,
   children,
+  'data-tour': dataTour,
 }: {
   to: string;
   variant?: ButtonProps['variant'];
   size?: ButtonProps['size'];
   children: ReactNode;
+  /** Guided-tour anchor (see src/tours). */
+  'data-tour'?: string;
 }) {
   return (
-    <Link to={to} className={buttonClass({ variant, size })}>
+    <Link to={to} className={buttonClass({ variant, size })} data-tour={dataTour}>
       {children}
     </Link>
   );
