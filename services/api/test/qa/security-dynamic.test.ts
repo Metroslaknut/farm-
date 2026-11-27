@@ -264,6 +264,37 @@ describe('rate limiting', () => {
     expect(Object.keys(last!.headers).some((k) => k.startsWith('ratelimit'))).toBe(true);
   });
 
+  it('one account being throttled does not lock out other accounts or Google sign-in from the same address (QA #13)', async () => {
+    const locked = 'locked-account@example.test';
+    for (let i = 0; i < 12; i++)
+      await api(hLimited.app)
+        .post('/auth/login')
+        .send({ identifier: locked, password: 'wrong-password-123' });
+    const lockedAgain = await api(hLimited.app)
+      .post('/auth/login')
+      .send({ identifier: locked.toUpperCase(), password: 'wrong-password-123' });
+    expect(lockedAgain.status).toBe(429); // the same account, whatever its case
+    const other = await api(hLimited.app)
+      .post('/auth/login')
+      .send({ identifier: 'someone-else@example.test', password: 'wrong-password-123' });
+    expect(other.status).not.toBe(429);
+    const google = await api(hLimited.app).get('/auth/oauth/google/start');
+    expect(google.status).not.toBe(429);
+  });
+
+  it('one address cannot try account after account without limit', async () => {
+    const codes: number[] = [];
+    for (let i = 0; i < 105; i++)
+      codes.push(
+        (
+          await api(hLimited.app)
+            .post('/auth/login')
+            .send({ identifier: `spray-${i}@example.test`, password: 'wrong-password-123' })
+        ).status,
+      );
+    expect(codes.slice(-3)).toEqual([429, 429, 429]);
+  });
+
   it('cannot be bypassed by forging X-Forwarded-For when no proxy is trusted', async () => {
     const results: number[] = [];
     for (let i = 0; i < 14; i++) {
