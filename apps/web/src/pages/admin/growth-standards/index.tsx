@@ -8,6 +8,7 @@ import {
   type GrowthStandardKind,
 } from '@farmplus/shared-types';
 import { createGrowthStandardSchema, updateGrowthStandardSchema } from '@farmplus/validation';
+import { localName } from '@farmplus/shared-utils';
 import { api } from '../../../api';
 import { StateMessage } from '../../../components/admin';
 import { useAdminI18n, type AdminKey } from '../../../components/admin/i18n';
@@ -56,7 +57,7 @@ const range = (min?: number, max?: number) =>
 
 /** `/admin/growth-standards` — growth criteria per type / breed / sex (API `/growth-standards`, `animal_types.manage`). */
 export default function GrowthStandardsPage() {
-  const { t } = useAdminI18n();
+  const { t, locale } = useAdminI18n();
   const [types, setTypes] = useState<AnimalTypeSummary[]>();
   const [rows, setRows] = useState<GrowthStandardDTO[]>();
   const [error, setError] = useState<string>();
@@ -90,7 +91,14 @@ export default function GrowthStandardsPage() {
     };
   }, [typeId, inactive, version]);
 
-  const typeLabel = (s: GrowthStandardDTO) => s.animalType.name;
+  // Thai names where the catalog has them (staging QA 2026-11-25: they were English).
+  const typeLabel = (s: GrowthStandardDTO) => localName(s.animalType, locale);
+  const breedLabel = (s: GrowthStandardDTO) => {
+    const breed = types
+      ?.find((ty) => ty.id === s.animalType.id)
+      ?.breeds?.find((b) => b.key === s.breed);
+    return breed ? localName(breed, locale) : s.breed;
+  };
   return (
     <>
       <h1>{t('growthStd.title')}</h1>
@@ -102,7 +110,7 @@ export default function GrowthStandardsPage() {
             <option value="">{t('common.all')}</option>
             {types?.map((ty) => (
               <option key={ty.id} value={ty.id}>
-                {ty.name}
+                {localName(ty, locale)}
               </option>
             ))}
           </select>
@@ -141,7 +149,7 @@ export default function GrowthStandardsPage() {
               {rows.map((s) => (
                 <tr key={s.id}>
                   <td>{typeLabel(s)}</td>
-                  <td>{s.breed ?? t('growthStd.allBreeds')}</td>
+                  <td>{s.breed ? breedLabel(s) : t('growthStd.allBreeds')}</td>
                   <td>{t(`growthStd.sex.${s.sex}`)}</td>
                   <td>{t(`growthStd.kind.${s.kind}`)}</td>
                   <td>
@@ -219,7 +227,7 @@ function StandardForm({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const { t, validation } = useAdminI18n();
+  const { t, validation, locale } = useAdminI18n();
   const [f, setF] = useState<Form>(formOf(standard, defaultTypeId));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -333,7 +341,7 @@ function StandardForm({
       {select(
         'animalTypeId',
         'growthStd.animalType',
-        types.map((ty) => ({ value: ty.id, label: ty.name })),
+        types.map((ty) => ({ value: ty.id, label: localName(ty, locale) })),
         Boolean(standard),
       )}
       {select(
@@ -344,7 +352,7 @@ function StandardForm({
       )}
       {select('breed', 'growthStd.breed', [
         { value: '', label: t('growthStd.allBreeds') },
-        ...(type?.breeds ?? []).map((b) => ({ value: b.key, label: b.name })),
+        ...(type?.breeds ?? []).map((b) => ({ value: b.key, label: localName(b, locale) })),
       ])}
       {select(
         'sex',

@@ -6,7 +6,9 @@ import type {
   ShipmentStatus,
   ShippingQuoteDTO,
 } from '@farmplus/shared-types';
-import { formatBaht } from '@farmplus/shared-utils';
+import { formatBaht, localName } from '@farmplus/shared-utils';
+import { useLocale } from '../../i18n';
+import { shopCategories } from '../../lib/shopCategories';
 import { api } from '../../api';
 import {
   Alert,
@@ -35,6 +37,13 @@ export default function OrderPage() {
   const t = useMarketT();
   const animalLabel = useAnimalLabel();
   const dateTime = useDateTime();
+  const [locale] = useLocale();
+  // The order keeps the category's English name: show the shop's Thai name for its key when there is one.
+  const categories = useAsync(() => shopCategories(), []);
+  const categoryName = (key: string, name: string) => {
+    const c = categories.data?.categories?.find((x) => x.key === key);
+    return c ? localName(c, locale) : name;
+  };
   const [version, setVersion] = useState(0);
   const { data, error, loading } = useAsync(
     (signal) => api.request<{ order: OrderDTO }>('GET', `/orders/${id}`, { signal }),
@@ -189,7 +198,11 @@ export default function OrderPage() {
                 <div key={i.productId} style={{ marginBottom: 'var(--ds-space-3)' }}>
                   <strong>{i.title}</strong>
                   <p className="ds-field__hint" style={{ margin: 0 }}>
-                    {[i.categoryName, i.brand, i.sku && t('order.sku', { sku: i.sku })]
+                    {[
+                      categoryName(i.categoryKey, i.categoryName),
+                      i.brand,
+                      i.sku && t('order.sku', { sku: i.sku }),
+                    ]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>

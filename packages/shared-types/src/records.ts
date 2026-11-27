@@ -380,13 +380,44 @@ export interface BreedingRecordDTO extends RecordMeta {
 export const HISTORY_EVENT_TYPES = ['animal', ...RECORD_KINDS] as const;
 export type HistoryEventType = (typeof HISTORY_EVENT_TYPES)[number];
 
+/**
+ * What a history event is about, as values (not sentences), so clients can word it in the reader's language.
+ * `title`/`summary` stay the English wording for clients that do not know a detail kind.
+ */
+export type HistoryDetail =
+  | { kind: 'audit'; action: string; fields?: string[] }
+  | {
+      kind: 'breeding';
+      method: string;
+      status: string;
+      /** The other parent: an animal code, an outside sire's name, or nothing recorded. */
+      partner: { role: 'sire' | 'dam'; code?: string; name?: string };
+    }
+  | { kind: 'delivery'; offspring: number }
+  | { kind: 'breedingFailed'; reason?: string }
+  | { kind: 'born'; damCode?: string; sireCode?: string }
+  | {
+      kind: 'health';
+      healthType: string;
+      title: string;
+      condition?: string;
+      statedBy?: string;
+      medication?: string;
+      vaccine?: string;
+    }
+  | { kind: 'feeding'; schedule: boolean; feedName: string; amount: number; unit: string }
+  | { kind: 'weight'; weightKg: number; method: string }
+  | { kind: 'expense'; category: string; description: string; amountMinor: number };
+
 export interface HistoryEvent {
   /** Stable key: `${type}:${recordId or audit id}` */
   key: string;
   type: HistoryEventType;
   date: string;
+  /** English wording (kept for older clients); clients word `detail` in the reader's language. */
   title: string;
   summary?: string;
+  detail?: HistoryDetail;
   by?: ActorRef;
   voided?: boolean;
   recordId?: string;

@@ -15,7 +15,7 @@ export function ModuleUnavailable({
   permission: string;
   note: string;
 }) {
-  const { t } = useAdminI18n();
+  const { t, label } = useAdminI18n();
   return (
     <PermissionGuard permission={permission} fallback={null}>
       <h1>{title}</h1>
@@ -25,7 +25,10 @@ export function ModuleUnavailable({
         </p>
         <p className="adm-muted">{note}</p>
         <p className="adm-muted">
-          {t('module.requiredPermission')} <code>{permission}</code>
+          {t('module.requiredPermission')} {label('perm', permission, permission)}{' '}
+          <small>
+            (<code>{permission}</code>)
+          </small>
         </p>
       </div>
     </PermissionGuard>

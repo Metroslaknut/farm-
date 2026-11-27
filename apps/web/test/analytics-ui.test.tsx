@@ -131,7 +131,7 @@ describe('farm dashboard page', () => {
     const animals = await screen.findByRole('region', { name: 'Animals' });
     expect(within(animals).getAllByText('Animals on the farm').length).toBeGreaterThan(0);
     expect(within(animals).getByText('5')).toBeTruthy();
-    expect(within(animals).getByRole('table', { name: 'By Type And Status' })).toBeTruthy();
+    expect(within(animals).getByRole('table', { name: 'By type and status' })).toBeTruthy();
     const sales = screen.getByRole('region', { name: 'Sales' });
     expect(within(sales).getByText('฿96,000.00')).toBeTruthy();
     expect(within(sales).getByText('฿4,800.00')).toBeTruthy();

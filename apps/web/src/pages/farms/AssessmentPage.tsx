@@ -12,7 +12,8 @@ import { api } from '../../api';
 import { Alert, Badge, Button, Card, Checkbox, Textarea, type Tone } from '../../components/ui';
 import { errorMessage } from '../../lib/format';
 import { useAsync } from '../../lib/useAsync';
-import { enumLabel, useFarmFormat, useFarmsT, type FarmsKey } from './labels';
+import { loadAnimalTypes } from '../../lib/animalTypes';
+import { enumLabel, typeName, useFarmFormat, useFarmsT, type FarmsKey } from './labels';
 import { useFarm } from './useFarmAccess';
 
 const STATUS_TONE: Record<FactorStatus, Tone> = {
@@ -160,6 +161,9 @@ function Result({
 }) {
   const t = useFarmsT();
   const fmt = useFarmFormat();
+  // The assessment names the animal type in English: show the catalog's Thai name when there is one.
+  const types = useAsync(() => loadAnimalTypes(), []);
+  const type = types.data?.animalTypes?.find((x) => x.key === a.animalType.key);
   const [note, setNote] = useState('');
   const [error, setError] = useState<string>();
   const decide = async (decision: 'accepted' | 'dismissed') => {
@@ -186,7 +190,7 @@ function Result({
   return (
     <div aria-label={t('ai.resultAria')}>
       <p className="ds-field__hint">
-        {a.animalType.name} · {a.animalCode} ·{' '}
+        {type ? typeName(type, fmt.locale) : a.animalType.name} · {a.animalCode} ·{' '}
         {t('ai.assessedOn', { date: fmt.dateTime(a.assessmentDate) })} ·{' '}
         <code>{a.modelVersion}</code>
       </p>

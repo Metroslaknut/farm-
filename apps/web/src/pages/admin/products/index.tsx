@@ -6,7 +6,7 @@ import {
   type ProductDTO,
   type ProductStatus,
 } from '@farmplus/shared-types';
-import { formatBaht } from '@farmplus/shared-utils';
+import { formatBaht, localName } from '@farmplus/shared-utils';
 import { cap, rich, useAdminI18n, type AdminKey } from '../../../components/admin/i18n';
 import { api } from '../../../api';
 import { ConfirmActionDialog, StateMessage } from '../../../components/admin';
@@ -67,7 +67,7 @@ export default function ProductsPage() {
 }
 
 function Queue() {
-  const { t, status: statusLabel, dateTime } = useAdminI18n();
+  const { t, status: statusLabel, dateTime, locale } = useAdminI18n();
   const [status, setStatus] = useState<ProductStatus>('PENDING_REVIEW');
   const [page, setPage] = useState(1);
   const [version, setVersion] = useState(0);
@@ -153,7 +153,7 @@ function Queue() {
               {p.seller.displayName} · {p.farmName}
             </dd>
             <dt>{t('products.category')}</dt>
-            <dd>{p.categoryName}</dd>
+            <dd>{localName({ name: p.categoryName, nameTh: p.categoryNameTh }, locale)}</dd>
             {p.brand && (
               <>
                 <dt>{t('products.brand')}</dt>
@@ -259,7 +259,7 @@ function Queue() {
 }
 
 function Categories() {
-  const { t, label, dateTime } = useAdminI18n();
+  const { t, label, dateTime, locale } = useAdminI18n();
   const [version, setVersion] = useState(0);
   const cats = useAsync(
     (signal) =>
@@ -325,8 +325,12 @@ function Categories() {
             {cats.data?.categories.map((c) => (
               <tr key={c.key}>
                 <td>
-                  {c.name}
-                  {c.nameTh && <> · {c.nameTh}</>} <small>({c.key})</small>
+                  {localName(c, locale)}{' '}
+                  <small>
+                    {[locale === 'th' ? c.name : c.nameTh, `(${c.key})`]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </small>
                 </td>
                 <td>{cap(label('regulation', c.regulation))}</td>
                 <td>
@@ -375,7 +379,7 @@ function Categories() {
         title={
           pending
             ? t(pending.enable ? 'categories.openTitle' : 'categories.closeTitle', {
-                name: pending.cat.name,
+                name: localName(pending.cat, locale),
               })
             : ''
         }

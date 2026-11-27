@@ -56,7 +56,11 @@ function Usage() {
                 used: u.budget.usedToday,
                 limit: u.budget.dailyLimit,
               }),
-              { provider: <strong>{u.provider}</strong> },
+              {
+                provider: (
+                  <strong>{u.provider === 'none' ? t('ai.providerNone') : u.provider}</strong>
+                ),
+              },
             )}
           </p>
           <dl className="adm-dl">

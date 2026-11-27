@@ -179,7 +179,7 @@ function ReconcilePanel() {
 }
 
 function AuditPanel() {
-  const { t, label, apiText, dateTime } = useAdminI18n();
+  const { t, label, apiText, auditAction, dateTime } = useAdminI18n();
   const [items, setItems] = useState<FinancialAuditEntryDTO[]>();
   const [next, setNext] = useState<string>();
   const [verify, setVerify] = useState<string>();
@@ -261,7 +261,7 @@ function AuditPanel() {
                       ? (e.actorId ?? label('actorType', 'user'))
                       : cap(label('actorType', e.actorType))}
                   </td>
-                  <td>{apiText(`auditAction.${e.action}`, e.action)}</td>
+                  <td>{auditAction(e.action)}</td>
                   <td>
                     {apiText(`targetType.${e.targetType}`, e.targetType)} <code>{e.targetId}</code>
                   </td>

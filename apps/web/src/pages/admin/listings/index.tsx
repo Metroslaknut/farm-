@@ -6,11 +6,12 @@ import {
   type ListingEventDTO,
   type ListingStatus,
 } from '@farmplus/shared-types';
-import { formatBaht, humanize } from '@farmplus/shared-utils';
+import { formatBaht } from '@farmplus/shared-utils';
 import { cap, useAdminI18n, type AdminKey } from '../../../components/admin/i18n';
 import { api } from '../../../api';
 import { ConfirmActionDialog, StateMessage } from '../../../components/admin';
 import { errorMessage } from '../../../lib/format';
+import { useAnimalLabel } from '../../market/common';
 
 type Action = 'approve' | 'reject' | 'suspend' | 'restore';
 const COPY: Record<
@@ -55,6 +56,7 @@ const ACTIONS: Partial<Record<ListingStatus, Action[]>> = {
 /** `/admin/listings` — marketplace review queue and moderation (permission `listings.moderate`, enforced by the API). */
 export default function ListingsPage() {
   const { t, label, status: statusLabel, dateTime } = useAdminI18n();
+  const animalLabel = useAnimalLabel();
   const [status, setStatus] = useState<ListingStatus>('PENDING_REVIEW');
   const [items, setItems] = useState<ListingDTO[]>([]);
   const [next, setNext] = useState<string | undefined>();
@@ -181,9 +183,7 @@ export default function ListingsPage() {
             </dd>
             <dt>{t('listings.animal')}</dt>
             <dd>
-              {l.animal.animalTypeName}
-              {l.animal.breed ? ` · ${humanize(l.animal.breed)}` : ''} ·{' '}
-              {cap(label('sex', l.animal.sex))}
+              {animalLabel(l.animal)} · {cap(label('sex', l.animal.sex))}
               {l.animal.birthDate ? t('listings.born', { date: l.animal.birthDate }) : ''}
             </dd>
             <dt>{t('listings.location')}</dt>

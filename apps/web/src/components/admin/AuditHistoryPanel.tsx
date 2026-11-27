@@ -14,7 +14,7 @@ interface Props {
 }
 
 function Entries({ entries }: { entries: AuditLogEntry[] }) {
-  const { t, apiText, dateTime } = useAdminI18n();
+  const { t, auditAction, dateTime } = useAdminI18n();
   if (entries.length === 0) return <StateMessage kind="empty">{t('history.empty')}</StateMessage>;
   return (
     <ol className="adm-history">
@@ -23,7 +23,7 @@ function Entries({ entries }: { entries: AuditLogEntry[] }) {
           typeof e.metadata?.['reason'] === 'string' ? e.metadata['reason'] : undefined;
         return (
           <li key={e.id}>
-            <strong title={e.action}>{apiText(`auditAction.${e.action}`, e.action)}</strong>
+            <strong title={e.action}>{auditAction(e.action)}</strong>
             <span className="adm-muted">
               {' '}
               {t('history.meta', {

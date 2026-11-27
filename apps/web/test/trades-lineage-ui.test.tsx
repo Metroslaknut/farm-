@@ -12,6 +12,9 @@ import TradesPage from '../src/pages/farms/TradesPage';
 type Opts = { query?: Record<string, unknown>; body?: unknown };
 function mockApi(handlers: Record<string, (opts?: Opts) => unknown>) {
   request.mockImplementation(async (method: string, path: string, opts?: Opts) => {
+    // The animal-type catalog (Thai names for the trades table).
+    if (method === 'GET' && path === '/animal-types' && !handlers[`${method} ${path}`])
+      return { animalTypes: [] };
     const handler = handlers[`${method} ${path}`];
     if (!handler) throw new Error(`unexpected request ${method} ${path}`);
     return handler(opts);
@@ -152,7 +155,10 @@ describe('trades page', () => {
     expect(
       await screen.findByText('Selling information is for the farm’s owners and managers.'),
     ).toBeTruthy();
-    expect(request.mock.calls.every((c) => c[1] === '/farms/f1')).toBe(true);
+    // Only the farm (for the permission check) and the shared animal-type names: no selling data.
+    expect(request.mock.calls.every((c) => ['/farms/f1', '/animal-types'].includes(c[1]))).toBe(
+      true,
+    );
   });
 
   it('shows counts, listings (filterable, with the real sale price) and animal orders with payment state', async () => {

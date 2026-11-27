@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Alert, Badge, Card } from '../../components/ui';
 import { useAuth } from '../../auth/AuthContext';
+import { humanize } from '@farmplus/shared-utils';
 import { useLocale, useT } from '../../i18n';
+import layout from '../../i18n/messages/layout';
 import { NavButton } from './NavButton';
 import { roleLabel, useFarmsT } from './labels';
 import { useFarmSetup } from './useFarmSetup';
@@ -33,7 +35,17 @@ export default function UserProfilePage() {
           </div>
           <div>
             <dt>{t('profile.roles')}</dt>
-            <dd>{user?.roles.length ? user.roles.join(', ') : t('profile.notProvided')}</dd>
+            <dd>
+              {user?.roles.length
+                ? user.roles
+                    .map((r) =>
+                      `profile.role.${r}` in layout.en
+                        ? t(`profile.role.${r}` as Parameters<typeof t>[0])
+                        : humanize(r),
+                    )
+                    .join(', ')
+                : t('profile.notProvided')}
+            </dd>
           </div>
           <div>
             <dt>{t('profile.emailVerified')}</dt>
