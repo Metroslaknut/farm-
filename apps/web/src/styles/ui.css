@@ -349,3 +349,18 @@
   cursor: pointer;
   font-weight: 700;
 }
+
+/* Phones: every tap target at least --ds-touch-target (44px) tall (staging QA 2026-11-25). Desktop is unchanged. */
+@media (max-width: 767px) {
+  .ds-btn--sm {
+    min-height: var(--ds-touch-target);
+  }
+  .ds-table__sort {
+    min-height: var(--ds-touch-target);
+  }
+  .ds-table td a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--ds-touch-target);
+  }
+}
