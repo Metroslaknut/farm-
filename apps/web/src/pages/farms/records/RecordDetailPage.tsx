@@ -11,6 +11,7 @@ import { enumLabel, useFarmFormat, useFarmsT } from '../labels';
 import { useFarm } from '../useFarmAccess';
 import { BreedingActions } from './BreedingActions';
 import { RecordHistoryPanel } from './RecordHistoryPanel';
+import { RecordForm } from './RecordForm';
 import type { KindConfig } from './recordConfigs';
 
 type Full = RecordMeta & { history: RecordHistoryEntry[] } & Record<string, any>;
@@ -28,6 +29,10 @@ export default function RecordDetailPage({ config }: { config: KindConfig }) {
     [farmId, id, version],
   );
   const [voiding, setVoiding] = useState(false);
+  // "Correct" opens the form in a dialog over the record (the /edit page stays for links and new tabs). Breeding keeps
+  // its own page, as on the list.
+  const popup = config.kind !== 'breeding';
+  const [correcting, setCorrecting] = useState(false);
   const [reason, setReason] = useState('');
   const [voidError, setVoidError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -99,7 +104,11 @@ export default function RecordDetailPage({ config }: { config: KindConfig }) {
 
       <div className="ds-row" style={{ margin: 'var(--ds-space-3) 0' }}>
         {canCorrect && (
-          <NavButton to={`${base}/${id}/edit`} variant="primary">
+          <NavButton
+            to={`${base}/${id}/edit`}
+            variant="primary"
+            {...(popup ? { onOpen: () => setCorrecting(true) } : {})}
+          >
             {t('rec.detail.correct')}
           </NavButton>
         )}
@@ -188,6 +197,27 @@ export default function RecordDetailPage({ config }: { config: KindConfig }) {
         </div>
       </div>
 
+      {popup && (
+        <Modal
+          open={correcting}
+          onClose={() => setCorrecting(false)}
+          title={t('rec.form.correctTitle', { singular: t(config.singular) })}
+        >
+          {/* Mounted only while open: every correction starts from the record as saved. */}
+          {correcting && (
+            <RecordForm
+              config={config}
+              farmId={farmId}
+              record={r}
+              onCancel={() => setCorrecting(false)}
+              onDone={() => {
+                setCorrecting(false);
+                setVersion((v) => v + 1);
+              }}
+            />
+          )}
+        </Modal>
+      )}
       <Modal
         open={voiding}
         onClose={() => setVoiding(false)}

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AdminDataTable } from '../src/components/admin/AdminDataTable';
 import { ConfirmActionDialog } from '../src/components/admin/ConfirmActionDialog';
 import { StatusBadge } from '../src/components/admin/StatusBadge';
+import { productReasonSchema } from '@farmplus/validation';
 
 describe('ConfirmActionDialog', () => {
   const setup = (onConfirm = vi.fn().mockResolvedValue(undefined), requireReason = true) => {
@@ -131,5 +132,36 @@ describe('StatusBadge', () => {
     );
     expect(screen.getByText('under review').className).toContain('info');
     expect(screen.getByText('suspended').className).toContain('danger');
+  });
+});
+
+describe('ConfirmActionDialog with the API reason schema (staging QA 2026-11-25, task 4)', () => {
+  it('checks the reason with the schema before sending and shows its message', async () => {
+    const onConfirm = vi.fn(async () => undefined);
+    const user = userEvent.setup();
+    render(
+      <ConfirmActionDialog
+        open
+        title="Reject product"
+        confirmLabel="Reject"
+        requireReason
+        reasonSchema={productReasonSchema}
+        onConfirm={onConfirm}
+        onClose={() => undefined}
+      />,
+    );
+    const reason = screen.getByRole('textbox');
+    const reject = screen.getByRole('button', { name: 'Reject' });
+    expect((reject as HTMLButtonElement).disabled).toBe(true); // empty reason
+    fireEvent.change(reason, { target: { value: 'x'.repeat(320) } }); // longer than the API accepts (300)
+    await user.click(reject);
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert').textContent).toBeTruthy();
+    expect(reason.getAttribute('aria-invalid')).toBe('true');
+    fireEvent.change(reason, { target: { value: 'Photos do not match the product' } });
+    await user.click(reject);
+    await waitFor(() =>
+      expect(onConfirm).toHaveBeenCalledWith('Photos do not match the product', ''),
+    );
   });
 });

@@ -841,6 +841,8 @@ export default defineMessages({
     'rec.list.to': 'ถึง',
     'rec.list.showVoided': 'แสดงรายการที่ยกเลิก',
     'rec.list.empty': 'ยังไม่มีบันทึกตามตัวกรองนี้',
+    'rec.list.saved': 'บันทึกเรียบร้อยแล้ว',
+    'rec.list.openSaved': 'ดูบันทึกนี้',
     'rec.detail.revision': 'แก้ไขแล้ว · ฉบับที่ {revision}',
     'rec.detail.voidedNotice':
       'ยกเลิกโดย {name} เมื่อ {date} — “{reason}” บันทึกนี้ถูกเก็บไว้ในประวัติและแก้ไขไม่ได้อีก',
@@ -1900,6 +1902,8 @@ export default defineMessages({
     'rec.list.to': 'To',
     'rec.list.showVoided': 'Show voided',
     'rec.list.empty': 'Nothing recorded yet for this filter.',
+    'rec.list.saved': 'Saved.',
+    'rec.list.openSaved': 'Open it',
     'rec.detail.revision': 'Updated · revision {revision}',
     'rec.detail.voidedNotice':
       'Voided by {name} on {date} — “{reason}”. The record is kept for the history and can no longer be changed.',

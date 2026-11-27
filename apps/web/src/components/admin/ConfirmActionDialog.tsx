@@ -10,6 +10,15 @@ interface Props {
   tone?: 'default' | 'danger';
   /** Sensitive actions record a reason in the audit log (the API requires 3+ characters). */
   requireReason?: boolean;
+  /**
+   * The API's own schema for the reason (e.g. `productReasonSchema`): checked before sending, its message shown
+   * under the field in the admin's language. Without it, a reason only needs 3+ characters.
+   */
+  reasonSchema?: {
+    safeParse: (
+      value: unknown,
+    ) => { success: true } | { success: false; error: { issues: { message: string }[] } };
+  };
   /** Money-moving actions: the person must type this exact reference (e.g. the refund number) before the button works. */
   confirmText?: string;
   onConfirm: (reason: string, typed: string) => Promise<unknown>;
@@ -25,10 +34,12 @@ export function ConfirmActionDialog({
   tone = 'default',
   requireReason = false,
   confirmText,
+  reasonSchema,
   onConfirm,
   onClose,
 }: Props) {
-  const { t } = useAdminI18n();
+  const { t, validation } = useAdminI18n();
+  const [reasonError, setReasonError] = useState<string>();
   const ref = useRef<HTMLDialogElement>(null);
   const [reason, setReason] = useState('');
   const [typed, setTyped] = useState('');
@@ -42,6 +53,7 @@ export function ConfirmActionDialog({
       setReason('');
       setTyped('');
       setError(undefined);
+      setReasonError(undefined);
       if (typeof dialog.showModal === 'function') dialog.showModal();
       else dialog.setAttribute('open', '');
     }
@@ -56,6 +68,14 @@ export function ConfirmActionDialog({
     (confirmText !== undefined && typed.trim() !== confirmText);
 
   const confirm = async () => {
+    if (requireReason && reasonSchema) {
+      const checked = reasonSchema.safeParse({ reason: reason.trim() });
+      if (!checked.success) {
+        setReasonError(validation(checked.error.issues[0]?.message ?? ''));
+        return;
+      }
+    }
+    setReasonError(undefined);
     setBusy(true);
     setError(undefined);
     try {
@@ -96,7 +116,14 @@ export function ConfirmActionDialog({
               onChange={(e) => setReason(e.target.value)}
               maxLength={500}
               required
+              aria-invalid={reasonError ? true : undefined}
+              aria-describedby={reasonError ? 'adm-dialog-reason-error' : undefined}
             />
+            {reasonError && (
+              <span id="adm-dialog-reason-error" className="adm-error" role="alert">
+                {reasonError}
+              </span>
+            )}
           </label>
         )}
         {confirmText !== undefined && (
