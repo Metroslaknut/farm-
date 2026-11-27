@@ -12,6 +12,7 @@ import { api } from '../../../api';
 import { ConfirmActionDialog, StateMessage } from '../../../components/admin';
 import { errorMessage } from '../../../lib/format';
 import { useAsync } from '../../../lib/useAsync';
+import { productReasonSchema } from '@farmplus/validation';
 
 type Action = 'approve' | 'reject' | 'suspend' | 'restore';
 const COPY: Record<
@@ -251,6 +252,7 @@ function Queue() {
         confirmLabel={pending ? t(COPY[pending.action].confirm) : ''}
         tone={pending && COPY[pending.action].danger ? 'danger' : 'default'}
         requireReason={pending ? COPY[pending.action].reason : false}
+        reasonSchema={productReasonSchema}
         onConfirm={act}
         onClose={() => setPending(null)}
       />
