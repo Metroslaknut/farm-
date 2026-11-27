@@ -7,8 +7,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { LoginResponse, PublicUser } from '@farmplus/shared-types';
+import type { AuthTokens, LoginResponse, PublicUser } from '@farmplus/shared-types';
 import { api, publicApi, refreshSession } from '../api';
+import { answerOtherTabs, requestSessionFromOtherTab, setSignedInHint } from './tabHandoff';
 import { tokenStore } from './tokens';
 
 export interface AuthState {
@@ -54,6 +55,14 @@ export function withHelpers(
   };
 }
 
+/** A new tab with no session of its own: take one from another signed-in tab, if there is one. */
+async function fromOtherTab(): Promise<boolean> {
+  const tokens = await requestSessionFromOtherTab();
+  if (!tokens) return false;
+  tokenStore.set(tokens);
+  return true;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     status: 'loading',
@@ -74,8 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // Page reload: the access token is gone, the refresh token may still be in this tab.
-      const restored = tokenStore.getRefresh() ? await refreshSession() : false;
+      // Page reload: the access token is gone, the refresh token may still be in this tab. A new tab has none: it asks
+      // an open, signed-in tab for a session of its own (tabHandoff.ts).
+      const restored = tokenStore.getRefresh() ? await refreshSession() : await fromOtherTab();
       if (cancelled) return;
       if (!restored) return setState(ANONYMOUS);
       try {
@@ -90,6 +100,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       off();
     };
   }, [load]);
+
+  // While signed in, answer new tabs of this browser that ask for a session.
+  useEffect(() => {
+    if (state.status !== 'authenticated') return;
+    setSignedInHint(true);
+    return answerOtherTabs(
+      async () =>
+        (await api.request<{ tokens: AuthTokens }>('POST', '/auth/session/handoff')).tokens,
+    );
+  }, [state.status]);
 
   const actions = useMemo(() => {
     const completeSignIn = async (res: LoginResponse) => {
@@ -120,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           /* the session may already be gone: still clear locally */
         }
         tokenStore.clear();
+        setSignedInHint(false);
         setState(ANONYMOUS);
       },
       reload: load,
