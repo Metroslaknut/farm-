@@ -14,6 +14,7 @@ import type {
 import {
   clutchSchema,
   createBreedingSchema,
+  thaiToday,
   type ClutchInput,
   type CreateBreedingInput,
   type RecordDeliveryInput,
@@ -561,9 +562,31 @@ export async function recordClutch(
   input: { clutch: ClutchInput; notes?: string | undefined },
 ): Promise<BreedingRecordDTO> {
   const doc = await loadOpen(ctx, id, ['bred', 'pregnant', 'delivered', 'failed']);
-  const changes = mergeClutch(doc, input.clutch);
+  const changes: { field: string; from: unknown; to: unknown }[] = mergeClutch(doc, input.clutch);
   if (changes.length === 0) throw conflict('Nothing to change', 'NO_CHANGE');
   if (input.notes) doc.notes = [doc.notes, input.notes].filter(Boolean).join('\n');
+  // Entering how many chicks hatched settles an open breeding (staging QA #22, decided 2026-11-27): any hatched →
+  // delivered (chicks can then be added as offspring), none hatched → failed. Dated today (Thai calendar day).
+  const hatched = input.clutch.chicksHatched;
+  if (hatched !== undefined && (doc.status === 'bred' || doc.status === 'pregnant')) {
+    const from = doc.status;
+    const today = thaiToday();
+    if (hatched > 0) {
+      doc.status = 'delivered';
+      doc.delivery = { date: toDate(today), notes: null, offspring: [] } as never;
+      changes.push(
+        { field: 'status', from, to: 'delivered' },
+        { field: 'delivery.date', from: null, to: today },
+      );
+    } else {
+      doc.status = 'failed';
+      doc.failedOn = toDate(today);
+      changes.push(
+        { field: 'status', from, to: 'failed' },
+        { field: 'failedOn', from: null, to: today },
+      );
+    }
+  }
   return finish(ctx, doc, changes, 'clutch_recorded');
 }
 
