@@ -231,6 +231,8 @@ export default defineMessages({
       'นี่คืออัตราค่าจัดส่งของคุณเอง คิดหนึ่งครั้งต่อรายการสินค้า FARM+ ไม่กำหนดอัตราค่าขนส่งขึ้นเอง ระยะเวลาจัดส่งจะแสดงให้ผู้ซื้อเห็นเป็นค่าประมาณของคุณเท่านั้น',
     'form.save': 'บันทึกการเปลี่ยนแปลง',
     'form.create': 'สร้างสินค้า',
+    'sell.sellerRequired':
+      'เฉพาะผู้ขายที่ได้รับอนุมัติเท่านั้นที่ขายสินค้าในร้านค้าได้ บัญชีของคุณยังไม่ได้รับอนุมัติเป็นผู้ขาย',
     'form.sellerRequired':
       'เฉพาะผู้ขายที่ได้รับอนุมัติเท่านั้นที่ขายสินค้าได้ และบัญชีของคุณยังไม่ได้รับอนุมัติเป็นผู้ขาย จึงยังสร้างสินค้านี้ไม่ได้',
     'history.title': 'ประวัติ',
@@ -493,6 +495,8 @@ export default defineMessages({
       'These are YOUR rates, charged once per product line. FARM+ never invents carrier rates; a delivery time is shown to buyers only as your estimate.',
     'form.save': 'Save changes',
     'form.create': 'Create product',
+    'sell.sellerRequired':
+      'Only approved sellers can sell products in the shop, and your account has not been approved as a seller yet.',
     'form.sellerRequired':
       'Only approved sellers can sell products, and your account has not been approved as a seller yet, so this product cannot be created.',
     'history.title': 'History',
