@@ -77,9 +77,18 @@ const unavailable = () =>
 // Host authorisation
 // ---------------------------------------------------------------------------
 /** Going live is for farm owners / sellers (setting `live.requireHostRole`); nobody can host as someone else. */
+async function mayHost(actor: Actor): Promise<boolean> {
+  if (!(await getBooleanSetting('live.requireHostRole'))) return true;
+  return HOST_ROLES.some((r) => actor.access.roleKeys.includes(r));
+}
+
+/** Whether the caller may start a live stream (the same rule as `createLive`), so the page can say so up front. */
+export async function hostEligibility(actor: Actor): Promise<{ canHost: boolean }> {
+  return { canHost: await mayHost(actor) };
+}
+
 async function assertMayHost(actor: Actor): Promise<void> {
-  if (!(await getBooleanSetting('live.requireHostRole'))) return;
-  if (!HOST_ROLES.some((r) => actor.access.roleKeys.includes(r)))
+  if (!(await mayHost(actor)))
     throw forbidden(
       'Only approved farm owners and sellers can start a live stream.',
       'LIVE_HOST_REQUIRED',

@@ -102,7 +102,8 @@ export const TOURS: TourDefinition[] = [
         optional: true,
         helpSlug: 'request-farm-owner',
       }),
-      step('farm-list-empty', 3, 'farm-create', { helpSlug: 'create-farm' }),
+      // Only for people who may create a farm (the others see the request link of step 2 instead).
+      step('farm-list-empty', 3, 'farm-create', { optional: true, helpSlug: 'create-farm' }),
     ],
   },
   {

@@ -97,6 +97,7 @@ GET /api/v1/health
 GET /api/v1/live
 GET /api/v1/live/:id
 GET /api/v1/live/:id/playback
+GET /api/v1/live/eligibility
 GET /api/v1/marketplace/favorites
 GET /api/v1/marketplace/listings
 GET /api/v1/marketplace/listings/:id
