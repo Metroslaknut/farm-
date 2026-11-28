@@ -27,9 +27,12 @@ import {
 import { ListingForm } from './ListingForm';
 import { NegotiationRow } from './ListsPages';
 import { OrderRow } from './orderCommon';
+import { useCanSell } from '../../lib/sellEligibility';
+import { SellerRequiredNotice } from '../farms/SellerRequiredNotice';
 
 /** `/market/sell` — pick the farm you sell for (selling itself happens in My Farm). */
 export function SellFarmsPage() {
+  const canSell = useCanSell();
   const t = useMarketT();
   const farms = useAsync(
     (signal) =>
@@ -51,6 +54,8 @@ export function SellFarmsPage() {
       </p>
       {farms.error && <Alert tone="danger">{farms.error}</Alert>}
       <p>{t('sell.intro')}</p>
+      {/* Not an approved seller yet: say so here, before a farm and a form (QA, 28 Nov). */}
+      {!canSell && <SellerRequiredNotice message={t('sell.sellerRequired')} />}
       {mine.map((f) => (
         <Card
           key={f.id}

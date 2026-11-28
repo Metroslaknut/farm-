@@ -40,6 +40,12 @@ const KEY_VISIBLE_MS = 60_000;
 /** `/live/host` — create, monitor and end your live stream. Only the host ever sees the stream key. */
 export default function LiveHostPage() {
   const t = useT('live');
+  // Whether this account may host (farm owners and approved sellers): said up front, not after "Create" (QA, 28 Nov).
+  const eligibility = useAsync(
+    (signal) => api.request<{ canHost: boolean }>('GET', '/live/eligibility', { signal }),
+    [],
+  );
+  const notHost = eligibility.data?.canHost === false;
   const { user } = useAuth();
   const me = user?.id;
   const [live, setLive] = useState<LiveDTO | null | undefined>(undefined);
@@ -164,6 +170,13 @@ export default function LiveHostPage() {
         <form onSubmit={create} noValidate>
           <Card>
             <p data-tour="live-intro">{t('host.intro')}</p>
+            {notHost && (
+              <Alert tone="warning">
+                {t('host.notAllowed')} <Link to="/farms/owner-request">{t('host.applyOwner')}</Link>
+                {' · '}
+                <Link to="/farms/seller">{t('host.applySeller')}</Link>
+              </Alert>
+            )}
             <TextField
               data-tour="live-title"
               label={t('host.title')}
@@ -193,7 +206,13 @@ export default function LiveHostPage() {
                 </option>
               ))}
             </Select>
-            <Button type="submit" variant="primary" loading={busy} data-tour="live-create">
+            <Button
+              type="submit"
+              variant="primary"
+              loading={busy}
+              disabled={notHost}
+              data-tour="live-create"
+            >
               {t('host.create')}
             </Button>
           </Card>
