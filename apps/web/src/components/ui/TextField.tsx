@@ -32,12 +32,20 @@ export function Textarea({
   return (
     <FormField label={label} hint={hint} error={error} required={required} idOverride={id}>
       {(control) => (
-        <textarea
-          {...rest}
-          {...control}
-          required={required}
-          className={cx('ds-textarea', className)}
-        />
+        <>
+          <textarea
+            {...rest}
+            {...control}
+            required={required}
+            className={cx('ds-textarea', className)}
+          />
+          {/* With a limit, how much is used shows while typing (the browser stops at the limit). */}
+          {rest.maxLength !== undefined && typeof rest.value === 'string' && (
+            <span className="ds-field__hint" aria-hidden="true" data-counter>
+              {rest.value.length}/{rest.maxLength}
+            </span>
+          )}
+        </>
       )}
     </FormField>
   );

@@ -220,6 +220,28 @@ describe('My farm home (dashboard layout)', () => {
     ),
   });
 
+  it('a farm that does not exist says so, instead of its page with filters and "try again" (QA #19)', async () => {
+    const { ApiClientError } = await import('@farmplus/api-client');
+    mockApi({
+      'GET /farms/me': () => ({ status: 'ready', canCreateFarm: true, farms: [summary()] }),
+      'GET /farms/zzz': () => {
+        throw new ApiClientError('Farm not found', 404, { code: 'NOT_FOUND' });
+      },
+    });
+    renderAt(
+      '/farms/zzz/animals',
+      <Route path="/farms" element={<FarmShell />}>
+        <Route path=":farmId/animals" element={<p>animal list with filters</p>} />
+      </Route>,
+    );
+    expect(await screen.findByRole('heading', { name: 'Farm not found' })).toBeTruthy();
+    expect(screen.queryByText('animal list with filters')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Go to my farms' }).getAttribute('href')).toBe(
+      '/farms/list',
+    );
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
   it('shows the sidebar menu (filtered by permission), KPI cards, animal types and growth alerts', async () => {
     mockApi({
       'GET /farms/me': () => ({ status: 'ready', canCreateFarm: true, farms: [summary()] }),

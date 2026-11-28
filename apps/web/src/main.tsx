@@ -7,6 +7,8 @@ import { AuthProvider } from './auth/AuthContext';
 import { TourProvider } from './tours/TourProvider';
 import NotFoundPage from './pages/NotFoundPage';
 import './index.css';
+import { installFocusFirstInvalid } from './lib/focusFirstInvalid';
+import { installPageTitles } from './lib/pageTitle';
 
 // The admin area is a separate lazy chunk: the public bundle does not grow, and the public page at "/"
 // (and any other public path) renders exactly as before.
@@ -27,6 +29,9 @@ const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DESIGN
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element #root not found');
+
+installFocusFirstInvalid();
+installPageTitles();
 
 createRoot(root).render(
   <StrictMode>
