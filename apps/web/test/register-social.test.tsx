@@ -414,6 +414,12 @@ describe('header', () => {
     );
   });
 
+  it('the sign-in link is named even when its text is hidden on phones (QA #15)', () => {
+    renderAs(<SiteHeader />, { status: 'anonymous', route: '/' });
+    const link = document.querySelector('a.site-action[href="/farms/sign-in"]')!;
+    expect(link.getAttribute('aria-label')).toBe('เข้าสู่ระบบ');
+  });
+
   it('signed in: no register link', () => {
     m.request.mockResolvedValue({ cart: { itemCount: 0 }, categories: [] });
     renderAs(<SiteHeader />, { route: '/' });

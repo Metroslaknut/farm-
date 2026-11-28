@@ -61,12 +61,28 @@ export interface TestHarness {
 // (each still gets its own env/app/notifier). The server is stopped when the last harness stops.
 let shared: { mongo: MongoMemoryServer; refs: number } | undefined;
 
+/**
+ * Start the in-memory MongoDB. With many test files starting at once, two can be handed the same free port before
+ * either binds it ("Port … already in use"): that is retried with a short random pause; anything else fails at once.
+ */
+async function startMongo(): Promise<MongoMemoryServer> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await MongoMemoryServer.create();
+    } catch (error) {
+      const portTaken = /already in use/i.test(String((error as Error | undefined)?.message));
+      if (!portTaken || attempt >= 5) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 150 * attempt + Math.random() * 350));
+    }
+  }
+}
+
 export async function startHarness(
   overrides: Record<string, string> = {},
   deps: { video?: (env: ApiEnv) => VideoProvider; photos?: PhotoStorage | null } = {},
 ): Promise<TestHarness> {
   if (!shared) {
-    const mongo = await MongoMemoryServer.create();
+    const mongo = await startMongo();
     await connectDb(mongo.getUri('farmplus_test'));
     await syncRbac();
     await seedAnimalTypes();

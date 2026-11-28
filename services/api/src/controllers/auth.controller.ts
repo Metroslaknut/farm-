@@ -54,6 +54,12 @@ export function authController(auth: AuthService) {
       res.status(204).end();
     }) satisfies RequestHandler,
 
+    sessionHandoff: (async (req, res) => {
+      res
+        .status(201)
+        .json({ tokens: await auth.handoffSession(requireActor(req), requestMeta(req)) });
+    }) satisfies RequestHandler,
+
     logoutAll: (async (req, res) => {
       await auth.logoutAll(requireActor(req));
       res.status(204).end();
