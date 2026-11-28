@@ -1,6 +1,8 @@
 # Plan: admin Farms, Orders and Reports pages
 
-**Status: proposal — not implemented.** Needs approval of the decisions in [§6](#6-decisions-needed) before any code.
+**Status: partly built.** Step 2 of [§7](#7-order-of-work-one-pr-each), **farms read-only**, is built (see
+[§2](#2-farms-adminfarms-adminfarmsfarmid) → "Built"). The rest is still a proposal; the decisions in
+[§6](#6-decisions-needed) are needed before that code.
 
 The three admin sections `/admin/farms`, `/admin/orders` and `/admin/reports` are placeholders today
 (`ModuleUnavailable`, see `docs/architecture/admin.md` → "Frontend"). This plan sets out what each page does, which API it
@@ -44,6 +46,23 @@ with its owner/managers; `farms.manage` staff can already act through the normal
 Owner filter: an exact e-mail uses the unique `users.email` index; a display-name search is a case-insensitive regex over
 `users` (no index, capped at 50 matches, same as the admin users list today). The matching ids then select farms
 through `farm_members` (`role: 'owner'`).
+
+**Built (farms read-only, phase 1):**
+
+- API: `GET /admin/farms` and `GET /admin/farms/:id` in `modules/admin/admin-farms.service.ts`, guarded by
+  `requireAnyPermission('farms.read', 'farms.manage')` (MFA-withheld → `403 MFA_REQUIRED`). The detail param is `:id`,
+  not `:farmId`: it is a platform route decided by permission, not a farm route decided by membership (the farm
+  isolation QA test expects 404 from every `:farmId` route for strangers). The detail goes through `loadFarmAccess`
+  (unknown id → 404) and reuses `getFarmDetail`, `listMembers` and `farmAnimalSummary`.
+- Query (`adminFarmListQuerySchema`): `q` (name, partial), `province` (exact, as stored — the Thai name the farm form
+  saves), `status`, `owner` (exact e-mail or partial display name, capped at 50 users), `from`/`to` (created),
+  `sortBy` `createdAt` | `name`, `order` (default newest first), `page`, `pageSize` ≤ 50. A single sort key, so the
+  `createdAt`, `name` and province indexes serve the sort.
+- Rows: name, owner, province, status, member count, animal count (not archived), created, archived. Detail: profile and
+  contact, owner, members with roles, per-status and per-type animal counts, latest activity (latest of the farm's
+  update, an animal change, an audited farm action), and the farm's audit trail (archive/restore and the rest) only for
+  `audit_logs.read`. The owner's e-mail is included only for staff who also hold `users.read`.
+- Not built: the archive/restore actions (D1) — the pages have no actions.
 
 ## 3. Orders (`/admin/orders`, `/admin/orders/:id`)
 
@@ -115,7 +134,7 @@ Each list query gets a `test/qa/query-plans.test.ts` case (IXSCAN, no COLLSCAN),
 
 1. **Orders read-only** — `GET /admin/orders`, `/admin/orders/:id`, the order index, page + tests (API, query plans,
    authz/permission snapshots, web unit tests, e2e: finance admin finds an order by number).
-2. **Farms read-only** — `GET /admin/farms`, `/admin/farms/:farmId`, province index, pages + tests.
+2. **Farms read-only** — `GET /admin/farms`, `/admin/farms/:id`, province index, pages + tests. **Built.**
 3. **Reports catalogue** — web only, on the existing export API.
 4. **Platform archive/restore** (only if D1) — permission, endpoints, audit, owner notification, UI, tests.
 5. **Contact reveal** (only if D3) — endpoint, audit, UI.

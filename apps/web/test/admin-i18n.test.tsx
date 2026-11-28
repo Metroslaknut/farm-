@@ -176,9 +176,9 @@ describe('admin in Thai: roles, permissions, audit actions, placeholders (stagin
 
   it('a module that is not available yet names the permission in Thai, not only its key', async () => {
     setLocale('th');
-    const { default: FarmsPlaceholder } = await import('../src/pages/admin/farms');
-    renderAs(<FarmsPlaceholder />, { permissions: ['farms.read'], route: '/admin/farms' });
-    expect(screen.getByText(/ดูฟาร์มทั้งหมด/)).toBeTruthy();
-    expect(screen.getByText('farms.read').closest('small')).toBeTruthy();
+    const { default: ReportsPlaceholder } = await import('../src/pages/admin/reports');
+    renderAs(<ReportsPlaceholder />, { permissions: ['reports.read'], route: '/admin/reports' });
+    expect(screen.getByText(/ดูรายงานและการวิเคราะห์/)).toBeTruthy();
+    expect(screen.getByText('reports.read').closest('small')).toBeTruthy();
   });
 });

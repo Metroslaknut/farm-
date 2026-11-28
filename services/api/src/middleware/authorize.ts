@@ -16,6 +16,18 @@ export function requirePermission(...keys: PermissionKey[]): RequestHandler {
   };
 }
 
+/** Require AT LEAST ONE of the listed permissions (e.g. `farms.read` or `farms.manage`). Must run after `authenticate`. */
+export function requireAnyPermission(...keys: PermissionKey[]): RequestHandler {
+  return (req, _res, next) => {
+    const { access } = requireActor(req);
+    if (keys.some((key) => access.permissions.has(key))) return next();
+    if (keys.some((key) => access.withheld.has(key))) {
+      throw forbidden('Multi-factor authentication is required for this action', 'MFA_REQUIRED');
+    }
+    throw forbidden();
+  };
+}
+
 export interface OwnedResource {
   ownerId: string;
 }

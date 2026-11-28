@@ -25,6 +25,8 @@ GET /api/v1/admin/audit-logs
 GET /api/v1/admin/chat/reports
 GET /api/v1/admin/chat/reports/:id
 GET /api/v1/admin/dashboard
+GET /api/v1/admin/farms
+GET /api/v1/admin/farms/:id
 GET /api/v1/admin/finance/audit-logs
 GET /api/v1/admin/finance/audit-logs/verify
 GET /api/v1/admin/finance/commission-rules

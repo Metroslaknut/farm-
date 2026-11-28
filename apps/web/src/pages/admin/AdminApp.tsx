@@ -8,6 +8,7 @@ import SecurityPage from './account/SecurityPage';
 import AuditLogsPage from './audit-logs';
 import CommissionsPage from './commissions';
 import DashboardPage from './dashboard';
+import FarmDetail from './farms/FarmDetail';
 import FarmsPage from './farms';
 import AiAdminPage from './ai';
 import ListingsPage from './listings';
@@ -74,6 +75,7 @@ export default function AdminApp() {
           />
           <Route path="commissions" element={guarded('commissions', <CommissionsPage />)} />
           <Route path="farms" element={guarded('farms', <FarmsPage />)} />
+          <Route path="farms/:id" element={guarded('farms', <FarmDetail />)} />
           <Route path="listings" element={guarded('listings', <ListingsPage />)} />
           <Route path="animal-types" element={guarded('animal-types', <AnimalTypesPage />)} />
           <Route

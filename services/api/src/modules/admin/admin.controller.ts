@@ -1,8 +1,13 @@
 import type { RequestHandler } from 'express';
-import { adminUserListQuerySchema, setUserStatusSchema } from '@farmplus/validation';
+import {
+  adminFarmListQuerySchema,
+  adminUserListQuerySchema,
+  setUserStatusSchema,
+} from '@farmplus/validation';
 import { parse, requireActor } from '../../lib/http';
 import { parseObjectId } from '../../lib/object-id';
 import { setUserStatus } from '../../services/user.service';
+import { getAdminFarmDetail, listAdminFarms } from './admin-farms.service';
 import { getAdminUserDetail, listAdminUsers } from './admin-users.service';
 import { buildDashboard } from './dashboard.service';
 
@@ -26,5 +31,14 @@ export const adminController = {
     const id = parseObjectId(req.params['id']);
     await setUserStatus(actor, id, body.status, body.reason);
     res.json(await getAdminUserDetail(actor, id));
+  }) satisfies RequestHandler,
+
+  /** Read-only farm list for platform staff (no actions in phase 1). */
+  listFarms: (async (req, res) => {
+    res.json(await listAdminFarms(requireActor(req), parse(adminFarmListQuerySchema, req.query)));
+  }) satisfies RequestHandler,
+
+  getFarm: (async (req, res) => {
+    res.json(await getAdminFarmDetail(requireActor(req), parseObjectId(req.params['id'])));
   }) satisfies RequestHandler,
 };

@@ -6,6 +6,7 @@ import {
   Animal,
   AuditLog,
   BreedingRecord,
+  Farm,
   FarmInvitation,
   FarmMember,
   Conversation,
@@ -16,6 +17,7 @@ import {
   Payment,
   Refund,
   Product,
+  User,
   Wallet,
   WalletTransaction,
   Withdrawal,
@@ -234,6 +236,40 @@ const HOT: [string, () => Promise<unknown>][] = [
         .sort({ breedingDate: -1, _id: -1 })
         .limit(20)
         .explain('queryPlanner'),
+  ],
+  // Admin farms, read-only (docs/architecture/admin-farms-orders-reports.md §2)
+  [
+    'admin farms: newest first',
+    () => Farm.find({}).sort({ createdAt: -1 }).limit(20).explain('queryPlanner'),
+  ],
+  [
+    'admin farms: by province, newest first',
+    () =>
+      Farm.find({ 'location.province': 'เชียงใหม่' })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .explain('queryPlanner'),
+  ],
+  [
+    'admin farms: by status, newest first',
+    () =>
+      Farm.find({ status: 'archived' }).sort({ createdAt: -1 }).limit(20).explain('queryPlanner'),
+  ],
+  ['admin farms: by name', () => Farm.find({}).sort({ name: 1 }).limit(20).explain('queryPlanner')],
+  [
+    'admin farms: owner by exact e-mail',
+    () =>
+      User.find({ email: { $eq: 'owner@example.test', $type: 'string' } })
+        .limit(50)
+        .explain('queryPlanner'),
+  ],
+  [
+    'admin farms: farms owned by the matched users',
+    () => FarmMember.find({ userId: { $in: [id(), id()] }, role: 'owner' }).explain('queryPlanner'),
+  ],
+  [
+    'admin farms: owners and member counts of a page of farms',
+    () => FarmMember.find({ farmId: { $in: [id(), id()] }, role: 'owner' }).explain('queryPlanner'),
   ],
 ];
 
