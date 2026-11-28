@@ -27,7 +27,7 @@ import {
 } from '../../components/ui';
 import { useLocale } from '../../i18n';
 import { errorMessage, toDateTimeLocal } from '../../lib/format';
-import { useSellEligibility } from '../../lib/sellEligibility';
+import { useCanSell, useSellEligibility } from '../../lib/sellEligibility';
 import { SellerRequiredNotice } from '../farms/SellerRequiredNotice';
 import { useAsync } from '../../lib/useAsync';
 import {
@@ -64,6 +64,7 @@ const movementLabel = (t: ShopT, type: string): string =>
 const signed = (n: number): string => `${n > 0 ? '+' : ''}${n}`;
 
 export function SellFarmsPage() {
+  const canSell = useCanSell();
   const t = useShopT();
   const farms = useAsync(
     (signal) =>
@@ -80,6 +81,8 @@ export function SellFarmsPage() {
       <h1>{t('browse.sell')}</h1>
       <p>{t('sell.intro')}</p>
       {farms.error && <Alert tone="danger">{farms.error}</Alert>}
+      {/* Not an approved seller yet: say so here, before a farm and a form (QA, 28 Nov). */}
+      {!canSell && <SellerRequiredNotice message={t('sell.sellerRequired')} />}
       {mine.map((f) => (
         <Card
           key={f.id}

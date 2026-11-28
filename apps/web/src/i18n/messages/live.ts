@@ -23,6 +23,10 @@ export default defineMessages({
       'สร้างไลฟ์ แล้วเริ่มถ่ายทอดสดจากแอปสตรีม เช่น OBS โดยใช้ที่อยู่เซิร์ฟเวอร์และสตรีมคีย์ที่แสดงในหน้านี้ เฉพาะเจ้าของฟาร์มและผู้ขายที่ได้รับอนุมัติเท่านั้นที่ไลฟ์ได้',
     'host.title': 'ชื่อไลฟ์',
     'host.unavailable': 'ยังไม่เปิดให้เริ่มไลฟ์ในขณะนี้ ดูไลฟ์ของผู้อื่นได้ตามปกติ',
+    'host.notAllowed':
+      'บัญชีของคุณยังไลฟ์ไม่ได้ เฉพาะเจ้าของฟาร์มและผู้ขายที่ได้รับอนุมัติเท่านั้นที่ไลฟ์ได้',
+    'host.applyOwner': 'ขอสิทธิ์เจ้าของฟาร์ม',
+    'host.applySeller': 'สมัครเป็นผู้ขาย',
     'host.description': 'คำอธิบาย (ไม่บังคับ)',
     'host.whoCanWatch': 'ใครดูได้บ้าง',
     'host.access.public': 'ทุกคน',
@@ -84,6 +88,10 @@ export default defineMessages({
       'Create a stream, then start broadcasting from a streaming app such as OBS using the address and key shown here. Only approved farm owners and sellers can go live.',
     'host.title': 'Title',
     'host.unavailable': 'Going live is not available yet. You can still watch other live streams.',
+    'host.notAllowed':
+      'Your account cannot go live yet: only approved farm owners and sellers can.',
+    'host.applyOwner': 'Request farm-owner access',
+    'host.applySeller': 'Become a seller',
     'host.description': 'Description (optional)',
     'host.whoCanWatch': 'Who can watch',
     'host.access.public': 'Everyone',

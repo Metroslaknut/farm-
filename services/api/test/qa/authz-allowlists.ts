@@ -82,6 +82,8 @@ export const SELF_SERVICE: Set<string> = new Set([
   'GET /api/v1/videos/limits',
   'GET /api/v1/videos',
   'GET /api/v1/live',
+  // Whether the caller may start a live stream: their own roles + one non-sensitive setting, read-only.
+  'GET /api/v1/live/eligibility',
   'GET /api/v1/wallet',
   'GET /api/v1/wallet/transactions',
   'GET /api/v1/wallet/withdrawals',

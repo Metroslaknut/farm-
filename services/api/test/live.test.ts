@@ -30,7 +30,7 @@ afterAll(async () => {
 });
 
 const get = (s: Session, path: string) => request(h.app).get(`${API}${path}`).set(s.auth);
-const send = (m: 'post' | 'patch' | 'delete', s: Session, path: string, body?: object) =>
+const send = (m: 'get' | 'post' | 'patch' | 'delete', s: Session, path: string, body?: object) =>
   request(h.app)[m](`${API}${path}`).set(s.auth).send(body);
 const host = () => createFarmer(h.app);
 const goLive = async (s: Session, body: object = {}) => {
@@ -56,6 +56,13 @@ describe('host authorization', () => {
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe('LIVE_HOST_REQUIRED');
     expect((await goLive(await host())).live.state).toBe('created');
+  });
+
+  it('the host page can ask first: members may not, farm owners may (and only for themselves)', async () => {
+    expect((await request(h.app).get(`${API}/live/eligibility`)).status).toBe(401);
+    const member = await createUser(h.app);
+    expect((await send('get', member, '/live/eligibility')).body).toEqual({ canHost: false });
+    expect((await send('get', await host(), '/live/eligibility')).body).toEqual({ canHost: true });
   });
 
   it('the setting live.requireHostRole opens hosting to every member', async () => {

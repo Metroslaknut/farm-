@@ -20,7 +20,15 @@ import { rateLimits } from '../../middleware/rate-limit';
 import { createComment, listComments } from '../community/comments.service';
 import { reportContent } from '../community/moderation.service';
 import { react, unreact } from '../community/reactions.service';
-import { createLive, endLive, getIngest, getLive, listLive, livePlayback } from './live.service';
+import {
+  createLive,
+  endLive,
+  getIngest,
+  getLive,
+  hostEligibility,
+  listLive,
+  livePlayback,
+} from './live.service';
 import {
   createUpload,
   deleteVideo,
@@ -150,6 +158,10 @@ export function liveRouter(ctx: AppContext): Router {
     res
       .status(201)
       .json(await createLive(requireActor(req), parse(createLiveSchema, req.body), ctx.video));
+  });
+  // Whether the caller may host (their own roles + one setting): the host page says so before the form (QA, 28 Nov).
+  router.get('/eligibility', async (req, res) => {
+    res.json(await hostEligibility(requireActor(req)));
   });
   router.get('/:id', async (req, res) => {
     res.json({ live: await getLive(requireActor(req), id(req)) });

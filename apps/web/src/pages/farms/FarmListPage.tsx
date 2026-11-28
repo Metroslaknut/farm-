@@ -95,15 +95,23 @@ export default function FarmListPage() {
   const t = useFarmsT();
   const [params, setParams] = useListParams(DEFAULTS);
   const q = params['q'] ?? '';
+  // Without farm-owner access, "Create farm" could only fail on save: offer the request instead (same place and style).
+  const mayCreate = useFarmSetup().data?.canCreateFarm !== false;
   return (
     <>
       <div className="ds-row" style={{ justifyContent: 'space-between' }}>
         <h1>{t('list.title')}</h1>
         <span className="ds-row">
           <NavButton to="/farms/invitations">{t('shell.invitations')}</NavButton>
-          <NavButton to="/farms/new" variant="primary" data-tour="farm-create">
-            {t('list.create')}
-          </NavButton>
+          {mayCreate ? (
+            <NavButton to="/farms/new" variant="primary" data-tour="farm-create">
+              {t('list.create')}
+            </NavButton>
+          ) : (
+            <NavButton to="/farms/owner-request" variant="primary">
+              {t('ownerRequest.link')}
+            </NavButton>
+          )}
         </span>
       </div>
       <form
