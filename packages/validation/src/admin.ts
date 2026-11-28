@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  FARM_STATUSES,
   IDENTITY_VERIFICATION_STATUSES,
   PERMISSION_KEYS,
   REGISTRATION_STATUSES,
@@ -52,6 +53,22 @@ export const adminUserListQuerySchema = listQuerySchema.extend({
   sortBy: z.enum(['createdAt', 'displayName', 'lastLoginAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('desc'),
 });
+
+/**
+ * `GET /admin/farms` (read-only farm list for platform staff). `owner` is a display name (partial, case-insensitive)
+ * or an exact e-mail address; `province` is matched exactly as stored (the Thai name the farm form saves).
+ */
+export const adminFarmListQuerySchema = listQuerySchema.extend({
+  pageSize: z.coerce.number().int().min(1).max(50).default(20),
+  status: z.enum(FARM_STATUSES).optional(),
+  province: z.string().trim().min(1).max(100).optional(),
+  owner: z.string().trim().min(1).max(254).optional(),
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+  sortBy: z.enum(['createdAt', 'name']).default('createdAt'),
+  order: z.enum(['asc', 'desc']).default('desc'),
+});
+export type AdminFarmListQuery = z.infer<typeof adminFarmListQuerySchema>;
 
 export const createRoleSchema = z
   .object({

@@ -1,4 +1,5 @@
 import type { AuditLogEntry, PublicUser, RoleSummary } from './auth';
+import type { FarmAnimalTypeCount, FarmDetail, FarmMemberSummary, FarmStatus } from './farms';
 
 /** Registration (application) lifecycle. Independent of user account status. */
 export const REGISTRATION_STATUSES = [
@@ -84,6 +85,42 @@ export interface AdminUserDetail {
   activeSessions: number;
   registrations: RegistrationSummary[];
   /** Present only when the caller also holds `audit_logs.read`. */
+  recentAudit?: AuditLogEntry[];
+}
+
+/** A farm owner as platform staff see it. `email` only for callers who may also read users (`users.read`). */
+export interface AdminFarmOwner {
+  id: string;
+  displayName: string;
+  email?: string;
+}
+
+/** One row of `GET /admin/farms` (read-only, platform staff with `farms.read` or `farms.manage`). */
+export interface AdminFarmRow {
+  id: string;
+  name: string;
+  status: FarmStatus;
+  province?: string;
+  owner: AdminFarmOwner | null;
+  /** Every membership, the owner included. */
+  memberCount: number;
+  /** Animals not archived, in any status. */
+  animalCount: number;
+  createdAt: string;
+  archivedAt?: string;
+}
+
+/** `GET /admin/farms/:id`: everything the read-only detail page shows, in one response. */
+export interface AdminFarmDetail {
+  /** Profile, contact, owner and per-status animal counts (the same shape as `GET /farms/:farmId`). */
+  farm: FarmDetail;
+  owner: AdminFarmOwner | null;
+  members: FarmMemberSummary[];
+  /** Per-type animal counts (the `GET /farms/:farmId/summary` cards). */
+  animalsByType: FarmAnimalTypeCount[];
+  /** Latest of: the farm's own last update, an animal change, an audited action on the farm. */
+  lastActivityAt: string | null;
+  /** Audited actions on the farm (archive/restore, members…); present only with `audit_logs.read`. */
   recentAudit?: AuditLogEntry[];
 }
 

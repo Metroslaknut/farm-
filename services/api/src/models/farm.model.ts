@@ -42,5 +42,6 @@ const farmSchema = new Schema<FarmAttrs>(
 );
 farmSchema.index({ name: 1 });
 farmSchema.index({ createdAt: 1 }); // analytics: new farms by date
+farmSchema.index({ 'location.province': 1, createdAt: -1 }); // admin farm list by province, newest first
 export type FarmDoc = HydratedDocument<FarmAttrs>;
 export const Farm = model<FarmAttrs>('Farm', farmSchema);

@@ -139,7 +139,7 @@ describe('every admin endpoint is protected server-side', () => {
       'withdrawals',
       'wallet-transactions',
       'commissions',
-      'farms',
+      // `farms` exists now (read-only, test/admin-farms.test.ts).
       'listings',
       'orders',
       'products',

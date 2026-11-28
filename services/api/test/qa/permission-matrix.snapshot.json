@@ -27,8 +27,8 @@
   ],
   "roles.manage": [],
   "permissions.manage": [],
-  "farms.read": ["GET /api/v1/admin/analytics"],
-  "farms.manage": [],
+  "farms.read": ["GET /api/v1/admin/analytics", "GET /api/v1/admin/farms"],
+  "farms.manage": ["GET /api/v1/admin/farms"],
   "listings.moderate": [
     "GET /api/v1/admin/analytics",
     "GET /api/v1/marketplace/moderation/listings",

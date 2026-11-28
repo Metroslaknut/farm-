@@ -48,8 +48,10 @@ when they do they must expose their own audited workflows and be mounted in `adm
 - Auth: `auth/` (in-memory access token, refresh token in `sessionStorage`, single-flight refresh, retry once on 401).
   `/admin/login` supports the MFA step; `/admin/account/security` enrols TOTP.
 - List state (search/filter/sort/page) lives in the URL. Native `<dialog>` for confirmations; sensitive actions require a reason.
-- Sections whose backend does not exist (payments, refunds, withdrawals, wallet transactions, commissions, farms,
+- Sections whose backend does not exist (payments, refunds, withdrawals, wallet transactions, commissions,
   listings, products, orders, reports) render an honest "not available yet" page behind the same permission guard — no fake data, no actions.
+- Farms (`/admin/farms`, `/admin/farms/:id`) are read-only lists/details for `farms.read` or `farms.manage`; see
+  `admin-farms-orders-reports.md` §2.
 
 ## Limitations
 

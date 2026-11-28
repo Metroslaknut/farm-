@@ -44,7 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     labelKey: 'nav.group.marketplace',
     items: [
-      { path: 'farms', labelKey: 'nav.farms', anyOf: ['farms.read'] },
+      { path: 'farms', labelKey: 'nav.farms', anyOf: ['farms.read', 'farms.manage'] },
       { path: 'listings', labelKey: 'nav.listings', anyOf: ['listings.moderate'] },
       { path: 'products', labelKey: 'nav.products', anyOf: ['listings.moderate'] },
       { path: 'orders', labelKey: 'nav.orders', anyOf: ['payments.read'] },
