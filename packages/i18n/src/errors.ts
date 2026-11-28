@@ -467,6 +467,7 @@ export function apiErrorMessage(locale: Locale, code: string | undefined): strin
 export const validationMessages: Record<string, string> = {
   // --- packages/validation: shared ---
   'Invalid id': 'รหัสอ้างอิงไม่ถูกต้อง',
+  'Invalid tip': 'คำแนะนำไม่ถูกต้อง',
   'Invalid cursor': 'ตำแหน่งหน้าข้อมูลไม่ถูกต้อง กรุณาโหลดใหม่',
   'Invalid filter': 'ตัวกรองไม่ถูกต้อง',
   'Invalid MIME type': 'ประเภทไฟล์ไม่ถูกต้อง',

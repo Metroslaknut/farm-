@@ -45,7 +45,7 @@ export function toFarmSummary(farm: FarmDoc, myRole: FarmRole | null): FarmSumma
 }
 
 /** Creating farms is for approved farm owners (setting `farms.requireFarmOwnerRole`), or platform staff with farms.manage. */
-async function mayCreateFarm(actor: Actor): Promise<boolean> {
+export async function mayCreateFarm(actor: Actor): Promise<boolean> {
   if (actor.access.permissions.has('farms.manage')) return true;
   if (!(await getBooleanSetting('farms.requireFarmOwnerRole'))) return true;
   return actor.access.roleKeys.includes('farm_owner');

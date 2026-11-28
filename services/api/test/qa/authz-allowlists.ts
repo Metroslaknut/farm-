@@ -57,6 +57,10 @@ export const SELF_SERVICE: Set<string> = new Set([
   // The caller's own guided-tour progress (scoped to userId from the token; nothing about other people).
   'GET /api/v1/me/tours',
   'PUT /api/v1/me/tours/:tourId',
+  // Contextual tips: the caller's own situation (farm tips only with ?farmId= the caller can see, else 404) and the
+  // caller's own hide / snooze choices, keyed by userId from the token.
+  'GET /api/v1/assistant/suggestions',
+  'PUT /api/v1/me/assistant-tips/:key',
   'DELETE /api/v1/users/:id/follow',
   'GET /api/v1/registrations/mine',
   'GET /api/v1/farms',

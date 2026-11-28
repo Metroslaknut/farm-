@@ -89,3 +89,8 @@ export {
   type UserTourProgressAttrs,
   type UserTourProgressDoc,
 } from './user-tour-progress.model';
+export {
+  AssistantTipState,
+  type AssistantTipStateAttrs,
+  type AssistantTipStateDoc,
+} from './assistant-tip-state.model';
