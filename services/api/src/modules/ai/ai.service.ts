@@ -57,7 +57,7 @@ const startOfThaiDay = (d: Date) => thaiDayBegins(thaiToday(d.getTime()));
 // ---------------------------------------------------------------------------
 // Monitoring: every provider call (or skipped call) is a row with tokens, cost, latency and error code — never any text.
 // ---------------------------------------------------------------------------
-async function costMicros(inputTokens: number, outputTokens: number): Promise<number> {
+export async function costMicros(inputTokens: number, outputTokens: number): Promise<number> {
   const [i, o] = await Promise.all([
     getNumberSetting('ai.inputCostPerMillionMicros', 0, 1e12),
     getNumberSetting('ai.outputCostPerMillionMicros', 0, 1e12),
@@ -106,8 +106,18 @@ async function narrativeBudget(
     };
   const since = startOfThaiDay(now);
   const [platform, mine, platformMax, userMax] = await Promise.all([
-    AiUsageLog.countDocuments({ createdAt: { $gte: since }, status: { $ne: 'skipped' } }),
-    AiUsageLog.countDocuments({ createdAt: { $gte: since }, status: { $ne: 'skipped' }, userId }),
+    // The assistant has its own limits: only explanations count here (old rows have no other feature).
+    AiUsageLog.countDocuments({
+      createdAt: { $gte: since },
+      status: { $ne: 'skipped' },
+      feature: { $ne: 'assistant' },
+    }),
+    AiUsageLog.countDocuments({
+      createdAt: { $gte: since },
+      status: { $ne: 'skipped' },
+      feature: { $ne: 'assistant' },
+      userId,
+    }),
     getNumberSetting('ai.dailyNarrativeLimit', 0, 1_000_000),
     getNumberSetting('ai.perUserDailyNarratives', 0, 10_000),
   ]);

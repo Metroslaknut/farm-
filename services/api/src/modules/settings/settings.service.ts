@@ -181,6 +181,23 @@ export const SETTING_REGISTRY = {
     description:
       'Comma-separated word STEMS an AI explanation may not contain ("treat" also blocks "treatment"; Thai terms match anywhere in the text): no diagnosis, treatment, health-status claims or guarantees. A starter list: extend it for your needs.',
   },
+  'assistant.enabled': {
+    type: 'boolean',
+    default: false,
+    description:
+      'Let signed-in users get AI answers from the FARM+ assistant (help Q&A). Off: everyone gets help-article search only, with no AI call.',
+  },
+  'assistant.dailyLimit': {
+    type: 'number',
+    default: 1000,
+    description:
+      'Most AI answers from the assistant the whole platform may request per day (a cost guard). Past it, people get help-article search only.',
+  },
+  'assistant.perUserDaily': {
+    type: 'number',
+    default: 20,
+    description: 'Most AI answers from the assistant one user may request per day.',
+  },
   'analytics.cacheSeconds': {
     type: 'number',
     default: 60,

@@ -186,6 +186,7 @@ POST /api/v1/animal-types
 POST /api/v1/animal-types/:id/breed-groups
 POST /api/v1/animal-types/:id/breeds
 POST /api/v1/animal-types/:id/rearing-types
+POST /api/v1/assistant/ask
 POST /api/v1/auth/login
 POST /api/v1/auth/logout
 POST /api/v1/auth/logout-all
