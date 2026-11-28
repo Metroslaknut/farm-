@@ -99,3 +99,56 @@ test('the farm dashboard suggests the first animal; "remind me in 7 days" keeps 
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByTestId('assistant-tips')).toHaveCount(0);
 });
+
+test('assistant action: "บันทึกน้ำหนัก A-00001 2 โล 3 ขีด วันนี้" → 2.3 kg shown → the form opens filled in → saved by the person', async ({
+  page,
+  request,
+}) => {
+  const db_ = await db();
+  await db_
+    .collection('settings')
+    .updateOne(
+      { key: 'assistant.actionsEnabled' },
+      { $set: { key: 'assistant.actionsEnabled', value: true } },
+      { upsert: true },
+    );
+  const owner = await register(request, 'Action Owner');
+  await grantRoles(owner.id, ['farm_owner']);
+  const API = process.env['E2E_API'];
+  const farm = await request.post(`${API}/api/v1/farms`, {
+    ...authed(owner),
+    data: { name: 'Action Farm' },
+  });
+  const farmId = (await farm.json()).farm.id as string;
+  const types = await (await request.get(`${API}/api/v1/animal-types`, authed(owner))).json();
+  const animal = await request.post(`${API}/api/v1/farms/${farmId}/animals`, {
+    ...authed(owner),
+    data: {
+      animalCode: 'A-00001',
+      animalTypeId: types.animalTypes[0].id,
+      sex: 'female',
+      name: 'Bua',
+    },
+  });
+  expect(animal.status(), await animal.text()).toBe(201);
+
+  await signIn(page, owner, '/help');
+  const box = page.getByRole('region', { name: 'Ask the assistant to do it' });
+  await box.getByLabel(/What do you want to do/).fill('บันทึกน้ำหนัก A-00001 2 โล 3 ขีด วันนี้');
+  await box.getByRole('button', { name: 'Do it' }).click();
+  const result = box.getByTestId('assistant-act-result');
+  await expect(result).toContainText('Animal: A-00001 — Bua');
+  await expect(result).toContainText('Weight: 2.3 kg');
+  await result.getByRole('button', { name: 'Open the filled-in form' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/farms/${farmId}/weights/new$`));
+  await expect(page.getByLabel(/^Weight \(kg\)/)).toHaveValue('2.3');
+  await expect(page.getByLabel(/^Animal/)).toHaveValue((await animal.json()).animal.id);
+  // Nothing was saved by the assistant: the person saves.
+  const before = await db_.collection('weight_records').countDocuments({ weightKg: 2.3 });
+  await page.getByRole('button', { name: 'Save weight' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /^2\.3 kg on / })).toBeVisible();
+  expect(await db_.collection('weight_records').countDocuments({ weightKg: 2.3 })).toBe(before + 1);
+  await page.goto(`/farms/${farmId}/weights`);
+  await expect(page.getByRole('table').getByText('2.3')).toBeVisible();
+});

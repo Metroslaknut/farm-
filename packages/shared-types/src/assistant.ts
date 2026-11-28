@@ -59,3 +59,31 @@ export interface AssistantTipDTO {
 export interface AssistantTipsDTO {
   tips: AssistantTipDTO[];
 }
+
+/** Assistant actions, level 1 (PR 6a): go somewhere, start a tour, or open a form filled in — the person saves it. */
+export type AssistantFormKind = 'add_animal' | 'record_weight' | 'feeding_schedule';
+export type AssistantActResultDTO =
+  | { kind: 'navigate'; route: string; label: string }
+  | { kind: 'tour'; tourId: string }
+  | {
+      kind: 'form';
+      form: AssistantFormKind;
+      route: string;
+      /** Draft values for the form's own fields (strings, as typed in the form). */
+      values: Record<string, string>;
+      /** What was understood, for the person to check: field → shown value (an animal's code, "2.3", a day). */
+      understood: { field: string; value: string }[];
+    }
+  /** Something needed is missing or unclear: the person is asked for these fields (never guessed). */
+  | { kind: 'question'; form?: AssistantFormKind; missing: string[] }
+  | {
+      kind: 'none';
+      reason:
+        | 'disabled'
+        | 'limit'
+        | 'unavailable'
+        | 'unchecked'
+        | 'not_understood'
+        | 'no_farm'
+        | 'not_allowed';
+    };

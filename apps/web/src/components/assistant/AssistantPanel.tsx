@@ -6,6 +6,7 @@ import { AuthContext } from '../../auth/AuthContext';
 import { useLocale, useT } from '../../i18n';
 import { useTours } from '../../tours/TourProvider';
 import { Alert, Button, Textarea } from '../ui';
+import AssistantActions from './AssistantActions';
 import { TipCards } from './TipCards';
 
 /**
@@ -127,6 +128,7 @@ export default function AssistantPanel() {
           )}
         </div>
       </section>
+      {status === 'authenticated' && <AssistantActions />}
     </>
   );
 }

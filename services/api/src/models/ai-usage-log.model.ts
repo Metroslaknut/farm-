@@ -4,7 +4,7 @@ import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 export interface AiUsageLogAttrs {
   _id: Types.ObjectId;
   /** 'assistant' = the help assistant (no assessment, no farm). */
-  feature: 'assessment_narrative' | 'assistant';
+  feature: 'assessment_narrative' | 'assistant' | 'assistant_action';
   provider: string;
   model: string;
   status: 'ok' | 'error' | 'rejected' | 'skipped';

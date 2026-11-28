@@ -264,7 +264,7 @@ export async function usageSummary(
     AiUsageLog.countDocuments({
       createdAt: { $gte: startOfDay },
       status: { $ne: 'skipped' },
-      feature: { $ne: 'assistant' },
+      feature: { $nin: ['assistant', 'assistant_action'] },
     }),
     getNumberSetting('ai.inputCostPerMillionMicros', 0, 1e12),
     getNumberSetting('ai.outputCostPerMillionMicros', 0, 1e12),

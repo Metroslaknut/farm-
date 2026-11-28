@@ -193,6 +193,12 @@ export const SETTING_REGISTRY = {
     description:
       'Most AI answers from the assistant the whole platform may request per day (a cost guard). Past it, people get help-article search only.',
   },
+  'assistant.actionsEnabled': {
+    type: 'boolean',
+    default: false,
+    description:
+      "Let signed-in users ask the assistant to open a page, a tour or a form filled in from what they typed (they always check and save the form themselves). Uses the assistant's daily limits.",
+  },
   'assistant.perUserDaily': {
     type: 'number',
     default: 20,

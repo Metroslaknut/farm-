@@ -109,10 +109,11 @@ export function checkReply(
 
 const startOfThaiDay = (d: Date) => thaiDayBegins(thaiToday(d.getTime()));
 
-async function withinLimits(userId: string, now: Date): Promise<boolean> {
+/** The assistant's daily limits, shared by answers and actions (one request = one unit). */
+export async function withinLimits(userId: string, now: Date): Promise<boolean> {
   const since = startOfThaiDay(now);
   const base = {
-    feature: 'assistant' as const,
+    feature: { $in: ['assistant' as const, 'assistant_action' as const] },
     createdAt: { $gte: since },
     status: { $ne: 'skipped' as const },
   };
@@ -125,7 +126,8 @@ async function withinLimits(userId: string, now: Date): Promise<boolean> {
   return platform < platformMax && mine < userMax;
 }
 
-async function logUsage(row: {
+export async function logUsage(row: {
+  feature?: 'assistant' | 'assistant_action';
   provider: string;
   model: string;
   status: 'ok' | 'error' | 'rejected';
@@ -138,7 +140,7 @@ async function logUsage(row: {
   const inputTokens = row.inputTokens ?? 0;
   const outputTokens = row.outputTokens ?? 0;
   await AiUsageLog.create({
-    feature: 'assistant',
+    feature: row.feature ?? 'assistant',
     provider: row.provider,
     model: row.model,
     status: row.status,

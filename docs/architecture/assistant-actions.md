@@ -1,7 +1,16 @@
-# FARM+ assistant actions — design for PR 6
+# FARM+ assistant actions (PR 6)
 
-Status: **proposal, waiting for approval**. Nothing below is built. It builds on PR 4 (assistant Q&A, #28) and PR 5
-(contextual tips, #29). This PR changes real farm data, so it starts here.
+Status: **6a built (off by default: `assistant.actionsEnabled`), 6b not started.** Design approved 28 Nov 2026 with
+the recommended decisions: strict JSON output through the existing provider seam; the assistant's daily limits are
+shared (one request = one unit); 6a = go to a page, start a tour and three filled-in forms (add animal, weight, feeding
+schedule) plus the Thai unit/date parsers; 6b (confirm cards, proposals, `X-Assistant-Proposal`, audit
+`via: assistant`) is a separate PR.
+
+What 6a is in code: `services/api/src/modules/assistant/actions.service.ts` (`POST /api/v1/assistant/act`),
+`parse-thai.ts` (weights, quantities, Thai dates, sex), `apps/web/src/components/assistant/AssistantActions.tsx` on
+`/help` (a farm picker, what was understood, "เปิดแบบฟอร์มที่กรอกไว้"), and the animal and record forms taking
+`location.state.assistantPrefill`. A missing or unclear value returns `{ kind: 'question', missing }`; nothing is
+saved by the assistant.
 
 ## What it does
 

@@ -110,12 +110,12 @@ async function narrativeBudget(
     AiUsageLog.countDocuments({
       createdAt: { $gte: since },
       status: { $ne: 'skipped' },
-      feature: { $ne: 'assistant' },
+      feature: { $nin: ['assistant', 'assistant_action'] },
     }),
     AiUsageLog.countDocuments({
       createdAt: { $gte: since },
       status: { $ne: 'skipped' },
-      feature: { $ne: 'assistant' },
+      feature: { $nin: ['assistant', 'assistant_action'] },
       userId,
     }),
     getNumberSetting('ai.dailyNarrativeLimit', 0, 1_000_000),

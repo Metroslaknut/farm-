@@ -30,3 +30,22 @@ export const assistantTipKeySchema = z
   .regex(/^[a-z-]+(?::[a-f0-9]{24})?$/, 'Invalid tip')
   .max(80);
 export const assistantTipStateSchema = z.object({ action: z.enum(['hide', 'snooze']) }).strict();
+
+/** `POST /assistant/act` — what the person wants done, and on which farm (form actions need one). */
+export const assistantActSchema = z
+  .object({
+    message: z.string().trim().min(2, 'At least 2 characters').max(500, 'At most 500 characters'),
+    locale: z.enum(['th', 'en']).default('th'),
+    context: z
+      .object({
+        route: z.string().trim().max(200).optional(),
+        farmId: z
+          .string()
+          .regex(/^[a-f0-9]{24}$/, 'Invalid id')
+          .optional(),
+      })
+      .strict()
+      .default({}),
+  })
+  .strict();
+export type AssistantActInput = z.infer<typeof assistantActSchema>;

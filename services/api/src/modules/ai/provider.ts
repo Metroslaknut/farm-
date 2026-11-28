@@ -153,12 +153,16 @@ export class MockAiProvider implements AiProvider {
   lastRequest: AiRequest | null = null;
   /** Tests: the exact text to return for the next assistant questions (null = a grounded answer). */
   assistantReply: string | null = null;
+  /** Tests: the exact text to return for assistant actions (null = a simple imitation, see mockActionReply). */
+  actionReply: string | null = null;
 
   async complete(req: AiRequest): Promise<AiResponse> {
     this.calls++;
     this.lastRequest = req;
     if (this.failWith) throw new AiProviderError(this.failWith, 'simulated');
     if (req.system.startsWith('You are the FARM+ help assistant')) return this.assistant(req);
+    if (req.system.startsWith('You are the FARM+ action helper'))
+      return this.reply(req, this.actionReply ?? mockActionReply(req));
     const facts = req.user;
     const base = {
       summary: 'This is a plain-language reading of the recorded facts only.',
@@ -190,7 +194,10 @@ export class MockAiProvider implements AiProvider {
   }
 
   private assistant(req: AiRequest): AiResponse {
-    const text = this.assistantReply ?? mockAssistantReply(req);
+    return this.reply(req, this.assistantReply ?? mockAssistantReply(req));
+  }
+
+  private reply(req: AiRequest, text: string): AiResponse {
     return {
       text,
       inputTokens: Math.ceil((req.system.length + req.user.length) / 4),
@@ -198,6 +205,28 @@ export class MockAiProvider implements AiProvider {
       model: this.model,
     };
   }
+}
+
+/**
+ * The mock's action reply: a crude imitation of the model for development and e2e — a weighing request
+ * ("บันทึกน้ำหนัก A-00001 2 โล 3 ขีด วันนี้") becomes record_weight with the person's own words; anything else is "none".
+ */
+function mockActionReply(req: AiRequest): string {
+  const request = /<request>\n([\s\S]*?)\n<\/request>/.exec(req.user)?.[1] ?? '';
+  if (!/น้ำหนัก|weigh/i.test(request)) return JSON.stringify({ action: 'none' });
+  const animal = /[A-Za-z]+-?\d{3,}/.exec(request)?.[0];
+  const weight = /\d+(?:\.\d+)?\s*(?:กก\.?|กิโล(?:กรัม)?|โล|kg)(?:\s*\d+\s*ขีด)?/i.exec(
+    request,
+  )?.[0];
+  const date = /วันนี้|เมื่อวานซืน|เมื่อวาน|today|yesterday/i.exec(request)?.[0];
+  return JSON.stringify({
+    action: 'record_weight',
+    args: {
+      ...(animal ? { animal } : {}),
+      ...(weight ? { weight } : {}),
+      ...(date ? { date } : {}),
+    },
+  });
 }
 
 /** The mock's assistant reply: cites the first article it was handed and offers the help centre. */

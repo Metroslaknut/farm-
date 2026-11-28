@@ -897,6 +897,8 @@ export default defineMessages({
     'setting.assistant.dailyLimit':
       'จำนวนคำตอบ AI ของผู้ช่วยสูงสุดที่ทั้งแพลตฟอร์มขอได้ต่อวัน (เพื่อคุมค่าใช้จ่าย) เกินจากนี้จะได้เฉพาะผลค้นหาบทความ',
     'setting.assistant.perUserDaily': 'จำนวนคำตอบ AI ของผู้ช่วยสูงสุดที่ผู้ใช้หนึ่งคนขอได้ต่อวัน',
+    'setting.assistant.actionsEnabled':
+      'ให้ผู้ใช้ที่เข้าสู่ระบบสั่งผู้ช่วยให้เปิดหน้า คำแนะนำ หรือแบบฟอร์มที่กรอกจากข้อความที่พิมพ์ไว้ให้ (ผู้ใช้ตรวจและกดบันทึกเอง) ใช้โควตารายวันเดียวกับผู้ช่วย',
     'setting.analytics.cacheSeconds':
       'ระยะเวลาที่ใช้รายงานแดชบอร์ดซ้ำก่อนคำนวณใหม่ (วินาที, 0 = ไม่แคช) ตัวเลขอาจเก่าได้เท่านี้ และปุ่มรีเฟรชจะคำนวณใหม่ทันที',
     'setting.platform.maintenanceMode':
@@ -1879,6 +1881,8 @@ export default defineMessages({
       'Most AI answers from the assistant the whole platform may request per day (a cost guard). Past it, people get help-article search only.',
     'setting.assistant.perUserDaily':
       'Most AI answers from the assistant one user may request per day.',
+    'setting.assistant.actionsEnabled':
+      'Let signed-in users ask the assistant to open a page, a tour or a form filled in from what they typed (they always check and save the form themselves). Uses the assistant’s daily limits.',
     'setting.analytics.cacheSeconds':
       'How long a dashboard report is reused before it is recalculated (seconds, 0 = never cache). Figures can be this old; a refresh option recalculates immediately.',
     'setting.platform.maintenanceMode':

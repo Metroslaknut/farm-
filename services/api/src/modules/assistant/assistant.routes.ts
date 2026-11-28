@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  assistantActSchema,
   assistantAskSchema,
   assistantSuggestionsQuerySchema,
   assistantTipKeySchema,
@@ -9,6 +10,7 @@ import type { Actor, AppContext } from '../../context';
 import { parse, requireActor } from '../../lib/http';
 import { authenticate, authenticateToken } from '../../middleware/authenticate';
 import { rateLimits } from '../../middleware/rate-limit';
+import { act } from './actions.service';
 import { ask } from './assistant.service';
 import { saveTipState, suggestions } from './tips.service';
 
@@ -30,6 +32,10 @@ export function assistantRouter(ctx: AppContext): Router {
       actor = a;
     }
     res.json(await ask(actor, input, ctx.ai));
+  });
+  /** Actions (level 1): open a page, a tour or a form filled in. Signed in; a farm the caller cannot see is 404. */
+  router.post('/act', limits.assistant, authenticate(ctx), async (req, res) => {
+    res.json(await act(requireActor(req), parse(assistantActSchema, req.body), ctx.ai));
   });
   /** Contextual tips: signed in only; a `farmId` the caller cannot see is 404 (farm-access check first). */
   router.get('/suggestions', authenticate(ctx), async (req, res) => {

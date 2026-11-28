@@ -60,6 +60,8 @@ export const SELF_SERVICE: Set<string> = new Set([
   // Contextual tips: the caller's own situation (farm tips only with ?farmId= the caller can see, else 404) and the
   // caller's own hide / snooze choices, keyed by userId from the token.
   'GET /api/v1/assistant/suggestions',
+  // Assistant actions (level 1): opens a page, tour or a filled-in form for the caller; saves nothing; farm access first.
+  'POST /api/v1/assistant/act',
   'PUT /api/v1/me/assistant-tips/:key',
   'DELETE /api/v1/users/:id/follow',
   'GET /api/v1/registrations/mine',
