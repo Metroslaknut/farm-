@@ -78,7 +78,8 @@
   --ds-radius-md: 10px;
   --ds-radius-lg: 16px;
   --ds-radius-full: 999px;
-  --ds-control-h: 2.5rem; /* min 40px; touch targets are raised to 44px on coarse pointers */
+  --ds-control-h: 2.5rem; /* min 40px; touch targets are raised to 44px on coarse pointers and phones */
+  --ds-touch-target: 2.75rem; /* 44px: the smallest tap target on phones (WCAG 2.5.5) */
   --ds-container: 72rem;
   --ds-header-h: 3.75rem;
 
@@ -97,8 +98,8 @@
   color-scheme: dark;
 }
 
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 767px) {
   .ds-root {
-    --ds-control-h: 2.75rem;
+    --ds-control-h: var(--ds-touch-target);
   }
 }

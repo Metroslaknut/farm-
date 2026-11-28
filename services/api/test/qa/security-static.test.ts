@@ -109,10 +109,20 @@ describe('CSRF: tokens travel only in the Authorization header', () => {
   it('the web client keeps tokens in memory and sessionStorage only — never localStorage or cookies', () => {
     const web = sourceOf('apps/web/src');
     expect(grep(web, /document\.cookie/)).toEqual([]);
-    const storage = grep(web, /localStorage\.(set|get)Item/).filter((l) =>
-      /token|auth|refresh|session|password/i.test(l),
-    );
+    // Reviewed exceptions: the line is in an auth file but stores no secret.
+    const reviewed = [
+      // Tab hand-off (QA #14): "some tab of this browser is signed in" ('1'), so a guest's first page does not wait for
+      // an answer; the tokens themselves only travel over the same-origin BroadcastChannel and live in sessionStorage.
+      /^apps\/web\/src\/auth\/tabHandoff\.ts:\d+: (return localStorage\.getItem\(HINT\) === '1';|if \(signedIn\) localStorage\.setItem\(HINT, '1'\);)$/,
+    ];
+    const storage = grep(web, /localStorage\.(set|get)Item/)
+      .filter((l) => /token|auth|refresh|session|password/i.test(l))
+      .filter((l) => !reviewed.some((r) => r.test(l)));
     expect(storage).toEqual([]);
+    // The hint key holds no secret: it is set to '1' and nothing else.
+    expect(read(join(ROOT, 'apps/web/src/auth/tabHandoff.ts'))).toMatch(
+      /const HINT = 'farmplus\.signedInTab';/,
+    );
   });
 });
 

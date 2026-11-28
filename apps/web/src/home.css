@@ -639,3 +639,41 @@
     transition: none;
   }
 }
+
+/* Phones: every tap target at least --ds-touch-target (44px) tall (staging QA 2026-11-25). Desktop is unchanged. */
+@media (max-width: 767px) {
+  .home-slider__controls button {
+    width: var(--ds-touch-target);
+    height: var(--ds-touch-target);
+  }
+  .home-tabs button {
+    min-height: var(--ds-touch-target);
+  }
+  /* The dots keep their look: a 44px transparent button around the same small dot. */
+  .home-slider__dots {
+    gap: 0;
+    bottom: 22px;
+  }
+  .home-slider__dots button,
+  .home-slider__dots button[aria-current='true'] {
+    position: relative;
+    width: var(--ds-touch-target);
+    height: var(--ds-touch-target);
+    background: transparent;
+  }
+  .home-slider__dots button::before {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--store-ink) 25%, transparent);
+    transform: translate(-50%, -50%);
+    transition: width 0.2s;
+  }
+  .home-slider__dots button[aria-current='true']::before {
+    width: 30px;
+    background: var(--store-green);
+  }
+}
