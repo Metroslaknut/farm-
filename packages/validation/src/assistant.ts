@@ -12,3 +12,21 @@ export const assistantAskSchema = z
   })
   .strict();
 export type AssistantAskInput = z.infer<typeof assistantAskSchema>;
+
+/** `GET /assistant/suggestions` — the page and (optionally) the farm being looked at. */
+export const assistantSuggestionsQuerySchema = z
+  .object({
+    route: z.string().trim().max(200).optional(),
+    farmId: z
+      .string()
+      .regex(/^[a-f0-9]{24}$/, 'Invalid id')
+      .optional(),
+  })
+  .strict();
+
+/** `PUT /me/assistant-tips/:key` — hide a tip for good, or be reminded in 7 (Thai) days. */
+export const assistantTipKeySchema = z
+  .string()
+  .regex(/^[a-z-]+(?::[a-f0-9]{24})?$/, 'Invalid tip')
+  .max(80);
+export const assistantTipStateSchema = z.object({ action: z.enum(['hide', 'snooze']) }).strict();

@@ -27,3 +27,35 @@ export interface AssistantAnswerDTO {
   /** Why there is no AI answer, when the mode is search: guest, disabled, limit, unavailable, unchecked. */
   reason?: 'guest' | 'disabled' | 'limit' | 'unavailable' | 'unchecked';
 }
+
+/** Contextual tips (PR 5): decided by fixed server rules; the web words them from its catalogs by `rule`. */
+export type AssistantTipRule =
+  | 'create-farm'
+  | 'owner-request'
+  | 'owner-request-pending'
+  | 'first-animal'
+  | 'weigh-overdue'
+  | 'growth-outside'
+  | 'withdrawal'
+  | 'seller-apply'
+  | 'seller-rejected'
+  | 'seller-pending'
+  | 'offers-waiting'
+  | 'listings-in-review'
+  | 'enable-mfa';
+
+export type AssistantTipAction = { route: string } | { tourId: string };
+
+export interface AssistantTipDTO {
+  /** Stable per person (and farm, for farm tips): the key "hide" and "remind me later" are stored under. */
+  key: string;
+  rule: AssistantTipRule;
+  severity: 'info' | 'warning' | 'action';
+  /** Values for the text (counts, a tag, a Thai date, a reason). */
+  params: Record<string, string | number>;
+  action?: AssistantTipAction;
+}
+
+export interface AssistantTipsDTO {
+  tips: AssistantTipDTO[];
+}

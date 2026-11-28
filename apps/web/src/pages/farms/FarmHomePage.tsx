@@ -11,6 +11,7 @@ import type {
 import { api } from '../../api';
 import { formatBaht, formatMetric } from '../../components/analytics/format';
 import { Icon } from '../../components/layout/Icon';
+import { TipCards } from '../../components/assistant/TipCards';
 import { Alert, Badge } from '../../components/ui';
 import { useLocale } from '../../i18n';
 import { formatDate } from '../../lib/format';
@@ -603,6 +604,7 @@ export default function FarmHomePage() {
           ))}
         </select>
       </div>
+      <TipCards farmId={farmId} compact />
       {farm.status === 'archived' && (
         <Alert tone="warning">
           {t('common.farmArchived')}

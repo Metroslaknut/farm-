@@ -28,7 +28,7 @@ import { shopRouter } from '../modules/products/products.routes';
 import { ordersRouter, shippingRouter } from '../modules/orders/orders.routes';
 import { farmsRouter } from '../modules/farms/farms.routes';
 import { helpRouter } from '../modules/help/help.routes';
-import { assistantRouter } from '../modules/assistant/assistant.routes';
+import { assistantRouter, meAssistantTipsRouter } from '../modules/assistant/assistant.routes';
 import { meToursRouter } from '../modules/tours/tours.routes';
 import { myFarmInvitationsRouter } from '../modules/farms/invitations.routes';
 import { registrationsRouter } from '../modules/registrations/registrations.routes';
@@ -48,6 +48,7 @@ export function v1Router(ctx: AppContext, auth: AuthService): Router {
   router.use('/help', helpRouter(ctx)); // public: the help centre needs no account
   router.use('/assistant', assistantRouter(ctx)); // public search; AI answers only when signed in
   router.use('/me/tours', meToursRouter(ctx)); // the caller's own guided-tour progress
+  router.use('/me/assistant-tips', meAssistantTipsRouter(ctx)); // the caller's own tip choices
   router.use('/users', usersRouter(ctx));
   router.use('/registrations', registrationsRouter(ctx));
   router.use('/farms', farmsRouter(ctx));

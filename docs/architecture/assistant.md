@@ -108,3 +108,34 @@ golden-set test, unit tests for redaction/validation/limits, e2e for the panel (
 - A short manual run against the real model in staging (a few questions, a few cents), with the owner's go-ahead,
   then set `assistant.enabled` in admin settings. The Anthropic adapter itself has not yet been run against the live
   service (see README).
+
+## Contextual tips (PR 5, built)
+
+Fixed server rules decide what is suggested; no model is involved (the brief allowed AI only to reword tips, and that
+is not built: the web words every tip from its TH/EN catalog by rule, so nothing is sent to a provider).
+
+- `GET /api/v1/assistant/suggestions?route=&farmId=` (signed in). With `farmId`, farm access is checked first
+  (`loadFarmAccess`: a farm the caller cannot see is 404). Returns at most 3 tips, warnings first, then actions, then
+  information: `{ key, rule, severity, params, action: { route } | { tourId } }`.
+- `PUT /api/v1/me/assistant-tips/:key` `{ action: 'hide' | 'snooze' }`: the caller's own choice, in
+  `assistant_tip_states` (unique `userId + key`). Snooze = back on the 7th Thai calendar day after today.
+
+| Rule                                                  | When                                                                                        | Shown to                     |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------- |
+| `create-farm`                                         | no farm, may create one                                                                     | the person                   |
+| `owner-request` / `owner-request-pending`             | no farm, may not create one; reason when refused / request under review                     | the person                   |
+| `first-animal`                                        | farm has no animals on it                                                                   | members with `animals.write` |
+| `weigh-overdue`                                       | animals not weighed in `farms.growthCheckDays` (existing dashboard figure)                  | members with `records.read`  |
+| `growth-outside`                                      | latest weight outside the growth criterion (existing figure)                                | members with `records.read`  |
+| `withdrawal`                                          | animals on the farm with a health record whose `withdrawalEndsOn` is today or later         | members with `records.read`  |
+| `seller-apply` / `seller-rejected` / `seller-pending` | animals marked for sale but no seller access; refused (with reason) / under review          | owner or manager             |
+| `offers-waiting`                                      | open offers whose turn is this person's (buyer, or seller side of their farms), not expired | the person                   |
+| `listings-in-review`                                  | own listings in `PENDING_REVIEW`                                                            | the person                   |
+| `enable-mfa`                                          | has the seller role, two-step sign-in off                                                   | the person                   |
+
+- Not built: "add and verify a second contact channel" — FARM+ has no way to add a phone or e-mail after
+  registration, so there is nothing to link to. No rule uses costs, so staff without `expenses.read` lose nothing.
+- Web: cards at the top of the assistant panel on `/help` (person tips) and under the farm dashboard's header (person
+  and farm tips), each with its action, "เตือนอีกครั้งใน 7 วัน" and "ซ่อน".
+- Release: new collection with a unique index → run `pnpm --filter @farmplus/api db indexes --apply --confirm-db
+farmplus` for staging (the collection works without it, but the uniqueness is then not enforced).
