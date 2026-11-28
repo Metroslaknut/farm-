@@ -159,3 +159,4 @@ export * from './ai';
 export * from './analytics';
 export * from './notifications';
 export * from './tours';
+export * from './assistant';

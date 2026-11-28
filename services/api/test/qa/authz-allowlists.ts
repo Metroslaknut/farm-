@@ -31,6 +31,8 @@ export const PUBLIC_ANONYMOUS: Record<string, string> = {
     'development mock provider only (absent in production, see ops tests)',
   'POST /api/v1/help/feedback':
     'help centre "was this helpful?": anonymous counters only (slug, locale, yes/no), returns nothing, rate limited',
+  'POST /api/v1/assistant/ask':
+    "help assistant: guests get help-article search only (public content, no AI call); a valid token unlocks AI answers within daily limits; never returns anyone's data, rate limited",
   'GET /api/v1/animal-photos/:key':
     'device-uploaded animal photo for <img> tags (no token possible); the 192-bit random key is the capability, images only',
 };
@@ -55,6 +57,12 @@ export const SELF_SERVICE: Set<string> = new Set([
   // The caller's own guided-tour progress (scoped to userId from the token; nothing about other people).
   'GET /api/v1/me/tours',
   'PUT /api/v1/me/tours/:tourId',
+  // Contextual tips: the caller's own situation (farm tips only with ?farmId= the caller can see, else 404) and the
+  // caller's own hide / snooze choices, keyed by userId from the token.
+  'GET /api/v1/assistant/suggestions',
+  // Assistant actions (level 1): opens a page, tour or a filled-in form for the caller; saves nothing; farm access first.
+  'POST /api/v1/assistant/act',
+  'PUT /api/v1/me/assistant-tips/:key',
   'DELETE /api/v1/users/:id/follow',
   'GET /api/v1/registrations/mine',
   'GET /api/v1/farms',

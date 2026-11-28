@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   ANIMAL_ORIGINS,
   ANIMAL_SEXES,
@@ -123,7 +123,20 @@ export default function AnimalFormPage() {
         : null,
     [farmId, animalId],
   );
-  const [edits, setEdits] = useState<Partial<Draft>>({});
+  const location = useLocation();
+  // Values the assistant understood (PR 6a), new animals only: text fields of this form, for the person to check.
+  const [edits, setEdits] = useState<Partial<Draft>>(() => {
+    const given = (location.state as { assistantPrefill?: Record<string, unknown> } | null)
+      ?.assistantPrefill;
+    if (editing || !given) return {};
+    return Object.fromEntries(
+      Object.entries(given).filter(
+        ([k, v]) =>
+          typeof v === 'string' &&
+          typeof (EMPTY as unknown as Record<string, unknown>)[k] === 'string',
+      ),
+    ) as Partial<Draft>;
+  });
   const base = existing.data ? toDraft(existing.data) : EMPTY;
   const draft: Draft = { ...base, ...edits };
   const [errors, setErrors] = useState<FieldErrors>({});

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- generic record engine: shape is driven by the per-kind config/schema */
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Alert } from '../../../components/ui';
 import { api } from '../../../api';
 import { useAsync } from '../../../lib/useAsync';
@@ -13,6 +13,7 @@ export default function RecordFormPage({ config }: { config: KindConfig }) {
   const t = useFarmsT();
   const { farmId = '', id } = useParams();
   const [search] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { farm, can } = useFarm(farmId);
   const existing = useAsync(
@@ -46,6 +47,13 @@ export default function RecordFormPage({ config }: { config: KindConfig }) {
 
   const prefill: Draft = {};
   for (const key of ['animalId', 'damId']) if (search.get(key)) prefill[key] = search.get(key)!;
+  // Values the assistant understood (PR 6a): only this form's own fields, as text, for the person to check and save.
+  const fromAssistant = (location.state as { assistantPrefill?: Record<string, unknown> } | null)
+    ?.assistantPrefill;
+  if (!id && fromAssistant)
+    for (const f of config.fields)
+      if (typeof fromAssistant[f.name] === 'string')
+        prefill[f.name] = fromAssistant[f.name] as string;
 
   return (
     <>

@@ -75,6 +75,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
         process.env['E2E_REQUIRE_VERIFICATION'] === 'true' ? 'true' : 'false',
       // Social sign-in through the mock provider: it bounces straight back to the API callback, then to the web page.
       OAUTH_MOCK: 'true',
+      // The FARM+ assistant's AI answers come from the mock: never a real provider from the developer's .env.
+      AI_PROVIDER: 'mock',
       API_PUBLIC_URL: `http://localhost:${API_PORT}`,
       OAUTH_RETURN_URLS: `http://localhost:${WEB_PORT}/farms/oauth-callback`,
       LOG_LEVEL: 'warn',

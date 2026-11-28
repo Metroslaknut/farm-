@@ -260,7 +260,12 @@ export async function usageSummary(
   const startOfDay = thaiDayBegins(thaiToday());
   const [limit, usedToday, inRate, outRate] = await Promise.all([
     getNumberSetting('ai.dailyNarrativeLimit', 0, 1_000_000),
-    AiUsageLog.countDocuments({ createdAt: { $gte: startOfDay }, status: { $ne: 'skipped' } }),
+    // The explanation budget: assistant answers have their own limits (they still count in the totals above).
+    AiUsageLog.countDocuments({
+      createdAt: { $gte: startOfDay },
+      status: { $ne: 'skipped' },
+      feature: { $nin: ['assistant', 'assistant_action'] },
+    }),
     getNumberSetting('ai.inputCostPerMillionMicros', 0, 1e12),
     getNumberSetting('ai.outputCostPerMillionMicros', 0, 1e12),
   ]);

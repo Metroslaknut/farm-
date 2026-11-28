@@ -59,7 +59,9 @@ describe('/help', () => {
     setLocale('th');
     const user = userEvent.setup();
     help('/help');
-    const sections = screen.getAllByRole('heading', { level: 2 });
+    const sections = screen
+      .getAllByRole('heading', { level: 2 })
+      .filter((h) => h.id !== 'help-assistant');
     expect(sections[0]!.textContent).toBe('เริ่มต้นใช้งาน');
     await user.type(screen.getByLabelText('ค้นหาวิธีใช้'), 'ไม่ได้รับอีเมล');
     await user.click(screen.getByRole('button', { name: 'ค้นหาวิธีใช้' }));

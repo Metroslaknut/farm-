@@ -3,7 +3,8 @@ import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 /** One row per AI provider call (or skipped call), for monitoring cost, latency and errors. Holds no prompt or output text. */
 export interface AiUsageLogAttrs {
   _id: Types.ObjectId;
-  feature: 'assessment_narrative';
+  /** 'assistant' = the help assistant (no assessment, no farm). */
+  feature: 'assessment_narrative' | 'assistant' | 'assistant_action';
   provider: string;
   model: string;
   status: 'ok' | 'error' | 'rejected' | 'skipped';
