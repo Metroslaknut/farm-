@@ -49,7 +49,8 @@ when they do they must expose their own audited workflows and be mounted in `adm
   `/admin/login` supports the MFA step; `/admin/account/security` enrols TOTP.
 - List state (search/filter/sort/page) lives in the URL. Native `<dialog>` for confirmations; sensitive actions require a reason.
 - Sections whose backend does not exist (payments, refunds, withdrawals, wallet transactions, commissions, farms,
-  listings, products, orders, reports) render an honest "not available yet" page behind the same permission guard — no fake data, no actions.
+  listings, products, orders) render an honest "not available yet" page behind the same permission guard — no fake data, no actions.
+  `/admin/reports` is a catalogue of the existing analytics CSV exports (see `admin-farms-orders-reports.md` §4).
 
 ## Limitations
 
