@@ -71,6 +71,17 @@ rather than adding `orders.read`.
 
 ## 4. Reports (`/admin/reports`)
 
+**Status: built** (web only, step 3 of §7). `apps/web/src/pages/admin/reports/index.tsx` lists one card per CSV export
+from the shared list `apps/web/src/pages/admin/analytics/exports.ts` (also used by `/admin/analytics`). Each card says
+what the file contains and which permission downloads it, has its own from/to dates (empty = the API's default last 30
+days; the chosen range is shown with the Thai/English date formatter) and downloads through the same `ExportButtons`
+helper as the analytics page. Cards are hidden with `useAuth().canAny` on the permissions of the dashboard section each
+export mirrors; that list mirrors the API's section rules (`analytics/admin.service.ts`), which still re-check every
+download, so it is only a UI convenience. The nav entry and route guard stay on `reports.read`; a viewer holding
+`reports.read` but no export permission sees an empty state. Tests: `apps/web/test/admin-reports.test.tsx`.
+
+Plan as approved:
+
 No new data and no new API: a catalogue page of the reports that already exist, each with what it contains, who may
 download it and a date range picker that calls the existing `GET /admin/analytics/export?section=…` (already
 permission-checked per section, audited and rate-limited). Sections the viewer may not export are hidden. Links to the
@@ -116,7 +127,7 @@ Each list query gets a `test/qa/query-plans.test.ts` case (IXSCAN, no COLLSCAN),
 1. **Orders read-only** — `GET /admin/orders`, `/admin/orders/:id`, the order index, page + tests (API, query plans,
    authz/permission snapshots, web unit tests, e2e: finance admin finds an order by number).
 2. **Farms read-only** — `GET /admin/farms`, `/admin/farms/:farmId`, province index, pages + tests.
-3. **Reports catalogue** — web only, on the existing export API.
+3. **Reports catalogue** — web only, on the existing export API. **Done** (see §4).
 4. **Platform archive/restore** (only if D1) — permission, endpoints, audit, owner notification, UI, tests.
 5. **Contact reveal** (only if D3) — endpoint, audit, UI.
 

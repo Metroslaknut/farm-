@@ -177,8 +177,6 @@ export default defineMessages({
     'module.requiredPermission': 'สิทธิ์ที่ต้องมี:',
     'module.farmsNote': 'ยังไม่ได้พัฒนาโมดูลฟาร์ม',
     'module.ordersNote': 'ยังไม่ได้พัฒนาโมดูลคำสั่งซื้อ',
-    'module.reportsNote':
-      'รายงานธุรกิจต้องใช้โมดูลการเงินและตลาด ส่วนตัวเลขผู้ใช้และคำขอลงทะเบียนดูได้ที่แดชบอร์ด',
     'guard.checking': 'กำลังตรวจสอบเซสชัน…',
     'guard.forbiddenTitle': '403 — ไม่มีสิทธิ์เข้าถึง',
     'guard.forbiddenText': 'บทบาทของคุณไม่มีสิทธิ์ที่จำเป็นสำหรับหน้านี้',
@@ -316,6 +314,31 @@ export default defineMessages({
     'analytics.allKinds': 'สัตว์และสินค้าในร้าน',
     'analytics.animals': 'สัตว์',
     'analytics.products': 'สินค้าในร้าน',
+    'reportCatalog.intro':
+      'รายงานที่ดาวน์โหลดเป็นไฟล์ CSV ได้ (เปิดใน Excel ได้) จำนวนเงินเป็นบาท ไม่มีข้อมูลระบุตัวผู้ซื้อ ที่อยู่ หรือบัญชีธนาคาร แสดงเฉพาะรายงานที่คุณมีสิทธิ์ดาวน์โหลด และทุกการดาวน์โหลดจะถูกบันทึกในประวัติการตรวจสอบ',
+    'reportCatalog.openAnalytics': 'เปิดแดชบอร์ดการวิเคราะห์',
+    'reportCatalog.openAiUsage': 'รายงานการใช้งาน AI',
+    'reportCatalog.none': 'คุณยังไม่มีสิทธิ์ดาวน์โหลดรายงานใด ๆ ในหน้านี้',
+    'reportCatalog.who': 'ผู้ที่ดาวน์โหลดได้: ผู้ที่มีสิทธิ์ “{permissions}”',
+    'reportCatalog.from': 'ตั้งแต่วันที่',
+    'reportCatalog.to': 'ถึงวันที่',
+    'reportCatalog.range': 'ช่วงวันที่: {from} – {to}',
+    'reportCatalog.rangeFrom': 'ช่วงวันที่: {from} – วันนี้',
+    'reportCatalog.rangeTo': 'ช่วงวันที่: 30 วันจนถึง {to}',
+    'reportCatalog.rangeDefault': 'ช่วงวันที่: 30 วันล่าสุด (ไม่เกิน 366 วันต่อไฟล์)',
+    'reportCatalog.download': 'ดาวน์โหลด “{report}”',
+    'reportCatalog.contains.signups':
+      'จำนวนผู้ใช้ใหม่รายวันตามวันที่สมัคร (เวลาประเทศไทย) เป็นตัวเลขรวมเท่านั้น ไม่มีชื่อหรืออีเมล',
+    'reportCatalog.contains.orders':
+      'คำสั่งซื้อที่สร้างหรือชำระเงินในช่วงวันที่: เลขที่คำสั่งซื้อ วันที่สั่ง วันที่ชำระ ประเภท สถานะ ค่าสินค้า ค่าจัดส่ง ยอดที่ผู้ซื้อชำระ และค่าธรรมเนียมแพลตฟอร์ม',
+    'reportCatalog.contains.payments':
+      'รายการชำระเงินที่สร้างในช่วงวันที่: เลขที่คำสั่งซื้อ วันที่ สถานะ การนำไปใช้ ยอดที่เรียกเก็บ ยอดที่ได้รับ และรหัสความล้มเหลว',
+    'reportCatalog.contains.commissions':
+      'คำสั่งซื้อที่ชำระเงินในช่วงวันที่และยังมีผลอยู่: เลขที่คำสั่งซื้อ วันที่ชำระ ประเภท สถานะ ค่าสินค้า และค่าคอมมิชชันของแพลตฟอร์ม',
+    'reportCatalog.contains.refunds':
+      'คำขอคืนเงินที่ยื่นในช่วงวันที่: เลขที่คืนเงิน เลขที่คำสั่งซื้อ วันที่ขอ วันที่เสร็จ สถานะ และจำนวนเงิน (ไม่รวมเหตุผลที่ผู้ใช้เขียน)',
+    'reportCatalog.contains.payouts':
+      'คำขอถอนเงินของผู้ขายที่ยื่นในช่วงวันที่: เลขที่คำขอ วันที่ขอ วันที่จ่าย สถานะ และจำนวนเงิน (ไม่มีตัวตนผู้ขายหรือบัญชีธนาคาร)',
     'range.none': 'ไม่มี',
     'range.upTo': 'ไม่เกิน {max}',
     'range.from': 'ตั้งแต่ {min}',
@@ -1151,8 +1174,6 @@ export default defineMessages({
     'module.requiredPermission': 'Required permission:',
     'module.farmsNote': 'The farm module has not been built yet.',
     'module.ordersNote': 'The orders module has not been built yet.',
-    'module.reportsNote':
-      'Business reports need the finance and marketplace modules. Platform user and registration figures are on the Dashboard.',
     'guard.checking': 'Checking your session…',
     'guard.forbiddenTitle': '403 — Not allowed',
     'guard.forbiddenText': 'Your roles do not include the permission needed for this page.',
@@ -1292,6 +1313,31 @@ export default defineMessages({
     'analytics.allKinds': 'Animals and shop',
     'analytics.animals': 'Animals',
     'analytics.products': 'Shop products',
+    'reportCatalog.intro':
+      'Reports you can download as CSV files (they open in Excel). Amounts are in baht; no buyer identity, addresses or bank accounts are included. Only the reports you may download are listed, and every download is recorded in the audit log.',
+    'reportCatalog.openAnalytics': 'Open the analytics dashboard',
+    'reportCatalog.openAiUsage': 'AI usage report',
+    'reportCatalog.none': 'You do not have permission to download any of these reports yet.',
+    'reportCatalog.who': 'Who can download: staff with “{permissions}”',
+    'reportCatalog.from': 'From',
+    'reportCatalog.to': 'To',
+    'reportCatalog.range': 'Date range: {from} – {to}',
+    'reportCatalog.rangeFrom': 'Date range: {from} – today',
+    'reportCatalog.rangeTo': 'Date range: the 30 days up to {to}',
+    'reportCatalog.rangeDefault': 'Date range: the last 30 days (at most 366 days per file)',
+    'reportCatalog.download': 'Download “{report}”',
+    'reportCatalog.contains.signups':
+      'New users per day by sign-up date (Thailand time). Totals only: no names or e-mail addresses.',
+    'reportCatalog.contains.orders':
+      'Orders placed or paid in the range: order number, placed and paid dates, type, status, items, shipping, amount the buyer paid and platform fee.',
+    'reportCatalog.contains.payments':
+      'Payments created in the range: order number, date, status, how it was applied, amount asked, amount received and failure code.',
+    'reportCatalog.contains.commissions':
+      'Orders paid in the range that still stand: order number, paid date, type, status, items and platform commission.',
+    'reportCatalog.contains.refunds':
+      'Refunds requested in the range: refund number, order number, requested and completed dates, status and amount (the free-text reason is left out).',
+    'reportCatalog.contains.payouts':
+      'Seller withdrawals requested in the range: withdrawal number, requested and paid dates, status and amount (no seller identity or bank details).',
     'range.none': 'None',
     'range.upTo': 'up to {max}',
     'range.from': 'from {min}',
