@@ -1,11 +1,13 @@
 import type {
+  DashboardAlert,
   DashboardDTO,
   DashboardSection,
   MetricDefinition,
   SeriesPoint,
 } from '@farmplus/shared-types';
 import { ANIMAL_STATUSES } from '@farmplus/shared-types';
-import { t as tr, useLocale, useT, type Translate } from '../../i18n';
+import { formatBaht } from '@farmplus/shared-utils';
+import { getLocale, t as tr, useLocale, useT, type Translate } from '../../i18n';
 import adminCatalog from '../../i18n/messages/admin';
 import analyticsCatalog from '../../i18n/messages/analytics';
 import farmsCatalog from '../../i18n/messages/farms';
@@ -56,6 +58,9 @@ const BY_ENGLISH = new Map<string, AnalyticsKey>(
     .map(([k, v]) => [v, k]),
 );
 const text = (key: string, fallback: string) => (has(key) ? tr('analytics', key) : fallback);
+/** Long API texts (explanations, alerts): Thai from the catalog; English always the API's own, current wording. */
+const thaiOr = (key: string, english: string) =>
+  getLocale() === 'th' && has(key) ? tr('analytics', key) : english;
 const fromEnglish = (english: string) => {
   const key = BY_ENGLISH.get(english);
   return key ? tr('analytics', key) : english;
@@ -118,6 +123,19 @@ function valueLabel(kind: ValueKind, raw: string, animalType: AnimalTypeLabel): 
   }
 }
 
+/** An alert in the reader's language, from its code and figures; unknown codes keep the API's wording. */
+const alertText = (a: DashboardAlert): string => {
+  const key = `alert.${a.code}`;
+  if (getLocale() !== 'th' || !has(key)) return a.message;
+  const p = a.params ?? {};
+  return tr('analytics', key, {
+    count: a.count,
+    ...(p['amountMinor'] !== undefined ? { amount: formatBaht(p['amountMinor']) } : {}),
+    ...(p['total'] !== undefined ? { total: p['total'] } : {}),
+    ...(p['percent'] !== undefined ? { percent: p['percent'] } : {}),
+  });
+};
+
 const columnLabel = (c: string) =>
   ANIMAL_STATUS_SET.has(c) ? fromCatalog('farms', `enum.status.${c}`, c) : fromEnglish(c);
 
@@ -159,19 +177,19 @@ function Definition({ d }: { d: MetricDefinition }) {
     <div className="an-def">
       <dt>{text(`metric.${d.key}`, d.label)}</dt>
       <dd>
-        <p>{d.definition}</p>
+        <p>{thaiOr(`def.${d.key}.definition`, d.definition)}</p>
         <p>
           <strong>{t('analytics.calculation')}</strong> {d.formula}
         </p>
         <p>
-          <strong>{t('analytics.counted')}</strong> {d.includes}
+          <strong>{t('analytics.counted')}</strong> {thaiOr(`def.${d.key}.includes`, d.includes)}
         </p>
         <p>
-          <strong>{t('analytics.leftOut')}</strong> {d.excludes}
+          <strong>{t('analytics.leftOut')}</strong> {thaiOr(`def.${d.key}.excludes`, d.excludes)}
         </p>
         {d.caveats && (
           <p>
-            <strong>{t('analytics.note')}</strong> {d.caveats}
+            <strong>{t('analytics.note')}</strong> {thaiOr(`def.${d.key}.caveats`, d.caveats)}
           </p>
         )}
         <p className="an-muted">
@@ -219,7 +237,7 @@ export function SectionView({
         <ul className="an-alerts">
           {section.alerts.map((a) => (
             <li key={a.code} className={`an-alert an-alert--${a.severity}`}>
-              <strong>{t(SEVERITY_LABEL[a.severity])}:</strong> {a.message}
+              <strong>{t(SEVERITY_LABEL[a.severity])}:</strong> {alertText(a)}
             </li>
           ))}
         </ul>

@@ -15,9 +15,12 @@ When you open "My farms", the farm's "Overview" opens.
 
 ## The overview
 
-- **Key figures**: animals on the farm, sales and weigh-ins
-- **Need a growth check**: animals not weighed for a while or outside the standard. Press "View all" to record.
-- **Animals by type**: how many animals of each type you have
+1. The heading names the farm you are in.
+   ![The overview heading with the farm name](img:1)
+2. **Key figures**: animals on the farm, sales and weigh-ins. When animals were not weighed for a while or are outside the standard, "Need a growth check" appears: press "View all" to record.
+   ![The farm's key figures](img:2)
+3. **Animals by type**: how many animals of each type you have.
+   ![The animals by type card](img:3)
 
 ## The farm menu
 
@@ -30,8 +33,8 @@ What you see depends on your role on the farm. On a phone, press the menu button
 
 ## Search and notifications
 
-- Press the search icon at the top and type an animal code or name.
-- The bell shows new notifications such as offers, orders and invitations.
+1. Press the search icon at the top and type an animal code or name. The bell next to it shows new notifications such as offers, orders and invitations.
+   ![The animal search button and the notification bell](img:4)
 
 :::note Several farms
 See every farm you own or help with in the [farm list](/farms/list).

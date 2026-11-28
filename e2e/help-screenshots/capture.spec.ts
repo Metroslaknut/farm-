@@ -834,6 +834,153 @@ const SCENES: Record<string, (c: Ctx) => Promise<void>> = {
     await expect(c.page).toHaveURL(/\/market\/offers\/[a-f0-9]{24}/);
     await c.shot('buy-animals', '4', c.page.getByRole('heading', { level: 2 }).first());
   },
+  async 'farm-staff'(c) {
+    const { farmId } = await ownerWithFarm(c, 'staff');
+    await c.page.goto(`/farms/${farmId}/staff`);
+    await expect(tour(c, 'staff-invite')).toBeVisible();
+    await c.shot('farm-staff', '1', c.page.getByRole('heading', { level: 1 }));
+    await c.shot('farm-staff', '2', tour(c, 'staff-invite'));
+    await c.shot('farm-staff', '3', tour(c, 'staff-invite-role'));
+    await c.shot('farm-staff', '4', tour(c, 'staff-join-link'));
+    await c.shot('farm-staff', '5', tour(c, 'staff-invitations'));
+  },
+
+  async 'farm-overview'(c) {
+    const { farmId, token, animals } = await ownerWithFarm(c, 'overview', { animals: 2 });
+    await c.request.post(`${API()}/api/v1/farms/${farmId}/weights`, {
+      headers: bearer(token),
+      data: { animalId: animals[0], weighedOn: '2026-11-01', weightKg: 31.5 },
+    });
+    await c.page.goto(`/farms/${farmId}`);
+    await expect(tour(c, 'farm-kpis')).toBeVisible();
+    await c.shot('farm-overview', '1', tour(c, 'farm-home-title'));
+    await c.shot('farm-overview', '2', tour(c, 'farm-kpis'));
+    await c.shot('farm-overview', '3', tour(c, 'farm-animal-types-card'));
+    await c.shot('farm-overview', '4', tour(c, 'farm-search'));
+  },
+
+  async 'sell-products'(c) {
+    await ownerWithFarm(c, 'shop-seller', { roles: ['farm_owner', 'seller'] });
+    await c.page.goto('/shop/sell');
+    const open = tour(c, 'shop-sell-farm');
+    await c.shot('sell-products', '1', open);
+    await open.click();
+    const create = c.page.getByRole('link', { name: c.L('สินค้าใหม่', 'New product') });
+    await c.shot('sell-products', '2', create);
+    await create.click();
+    const category = tour(c, 'shop-category');
+    await expect(category.locator('option').nth(1)).toBeAttached();
+    await category.selectOption({ index: 1 });
+    await tour(c, 'shop-name').fill(
+      c.L('[ตัวอย่าง] อาหารไก่ไข่ 30 กก.', '[Example] Layer feed 30 kg'),
+    );
+    await c.shot('sell-products', '3', category);
+    await tour(c, 'shop-price').fill('450');
+    const stock = tour(c, 'shop-stock');
+    if (await stock.count()) await stock.fill('20');
+    await c.shot('sell-products', '4', tour(c, 'shop-price-stock'));
+    await c.shot('sell-products', '5', tour(c, 'shop-save'));
+  },
+
+  async 'shop-cart'(c) {
+    const seller = await ownerWithFarm(c, 'cart-seller', {
+      roles: ['farm_owner', 'seller'],
+      signIn: false,
+    });
+    const created = await c.request.post(`${API()}/api/v1/farms/${seller.farmId}/products`, {
+      headers: bearer(seller.token),
+      data: {
+        categoryKey: 'feed',
+        title: c.L('[ตัวอย่าง] อาหารไก่ไข่ 30 กก.', '[Example] Layer feed 30 kg'),
+        description: c.L('อาหารสำหรับไก่ไข่', 'Feed for laying hens'),
+        unit: c.L('กระสอบ', 'bag'),
+        priceMinor: 45_000,
+        stock: 20,
+        photos: [{ url: 'https://files.example.com/feed.jpg' }],
+        deliveryOptions: ['pickup'],
+      },
+    });
+    expect(created.status(), await created.text()).toBe(201);
+    const productId = (await created.json()).product.id as string;
+    // A moderator's approval, as the admin review does.
+    await (
+      await db()
+    )
+      .collection('products')
+      .updateOne(
+        { _id: new mongoose.Types.ObjectId(productId) },
+        { $set: { status: 'ACTIVE', 'review.approvedAt': new Date() } },
+      );
+    const email = `cart-buyer.${c.locale}${c.width}@example.com`;
+    await verifiedUser(c.request, email, c.L('[ตัวอย่าง] สมหญิง', '[Example] Somying'));
+    await signIn(c.page, email, c.L);
+    await c.page.goto(`/shop/product/${productId}`);
+    const add = c.page.getByRole('form', { name: c.L('เพิ่มลงตะกร้า', 'Add to cart') });
+    await add.getByLabel(labelled(c.L('จำนวน', 'Quantity'))).fill('2');
+    await c.shot('shop-cart', '1', add);
+    await add.getByRole('button', { name: c.L('เพิ่มลงตะกร้า', 'Add to cart') }).click();
+    await expect(c.page.getByText(c.L('เพิ่มลงตะกร้าแล้ว', 'Added to your cart.'))).toBeVisible();
+    await c.page.goto('/shop/cart');
+    await c.shot('shop-cart', '2', c.page.getByRole('heading', { level: 1 }));
+    const receive = c.page.getByRole('radiogroup', { name: c.L('วิธีรับสินค้า', 'Receive') });
+    await receive
+      .getByLabel(c.L('ฉันไปรับสินค้าเองจากผู้ขาย', 'I collect it from the seller'))
+      .check();
+    await c.shot('shop-cart', '3', receive);
+    await c.shot(
+      'shop-cart',
+      '4',
+      c.page.getByRole('button', { name: c.L('สั่งซื้อ', 'Place order'), exact: true }),
+    );
+  },
+
+  async 'breeding-pedigree'(c) {
+    const { farmId, animals } = await ownerWithFarm(c, 'breeding', { animals: 2 });
+    await c.page.goto(`/farms/${farmId}/breeding`);
+    const add = tour(c, 'records-add');
+    await c.shot('breeding-pedigree', '1', add);
+    await add.click();
+    const dam = c.page.getByLabel(labelled(c.L('แม่พันธุ์ (แม่)', 'Dam (mother)')));
+    await expect(dam.locator(`option[value="${animals[0]}"]`)).toBeAttached();
+    await dam.selectOption(animals[0]!);
+    const sire = c.page.getByLabel(labelled(c.L('พ่อพันธุ์ในฟาร์มนี้', 'Sire on this farm')));
+    await sire.selectOption(animals[1]!);
+    await c.shot('breeding-pedigree', '2', sire);
+    const date = c.page.getByLabel(labelled(c.L('วันที่ผสมพันธุ์', 'Breeding date')));
+    await date.fill('2026-10-01');
+    await c.shot('breeding-pedigree', '3', date);
+    await c.page
+      .getByRole('button', { name: c.L('บันทึก', 'Save breeding record'), exact: true })
+      .click();
+    const outcome = c.page.getByRole('heading', {
+      name: c.L('บันทึกผลการผสม', 'Record what happened'),
+    });
+    await expect(outcome).toBeVisible();
+    await c.shot('breeding-pedigree', '4', outcome.locator('xpath=..'));
+  },
+
+  async 'community-videos-live'(c) {
+    const email = `social.${c.locale}${c.width}@example.com`;
+    const user = await verifiedUser(c.request, email, c.L('[ตัวอย่าง] สมชาย', '[Example] Somchai'));
+    await grant(user.id, ['farm_owner']);
+    await signIn(c.page, email, c.L);
+    await c.page.goto('/community');
+    const composer = tour(c, 'community-composer');
+    await composer
+      .getByRole('textbox')
+      .first()
+      .fill(c.L('[ตัวอย่าง] วันนี้ลูกแพะเกิด 2 ตัว', '[Example] Two kids were born today'));
+    await c.shot('community-videos-live', '1', composer);
+    await c.shot('community-videos-live', '2', tour(c, 'community-post'));
+    await c.page.goto('/videos/upload');
+    const title = tour(c, 'video-title');
+    await title.fill(c.L('[ตัวอย่าง] วิธีชั่งน้ำหนักแพะ', '[Example] Weighing a goat'));
+    await c.shot('community-videos-live', '3', title.locator('xpath=ancestor::form[1]'), true);
+    await c.page.goto('/live/host');
+    const live = tour(c, 'live-title');
+    await live.fill(c.L('[ตัวอย่าง] พาชมฟาร์ม', '[Example] Farm tour'));
+    await c.shot('community-videos-live', '4', live.locator('xpath=ancestor::form[1]'), true);
+  },
 };
 
 for (const [slug, scene] of Object.entries(SCENES))

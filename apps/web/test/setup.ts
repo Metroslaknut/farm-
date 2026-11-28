@@ -1,5 +1,6 @@
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
+import '../src/i18n/areaCatalogs'; // the app loads them with the area pages (main.tsx); tests render pages directly
 import { setLocale } from '../src/i18n/locale';
 import { forgetRecent } from '../src/lib/shared';
 

@@ -625,3 +625,16 @@
     padding-block: 48px 32px;
   }
 }
+
+/* Phones: every tap target at least --ds-touch-target (44px) tall (staging QA 2026-11-25). Desktop is unchanged. */
+@media (max-width: 767px) {
+  .site-topbar .ds-theme-toggle label {
+    min-height: var(--ds-touch-target);
+  }
+  .site-search button,
+  .site-action__icon,
+  .site-profile-menu__trigger {
+    min-height: var(--ds-touch-target);
+    min-width: var(--ds-touch-target);
+  }
+}

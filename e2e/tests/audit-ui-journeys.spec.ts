@@ -413,7 +413,8 @@ test('UI-I05 farm analytics: owner filters the dashboard by dates and downloads 
   const stranger = await register(request, 'Analytics Stranger');
   const s = await newSession(browser);
   await signIn(s.page, stranger, `/farms/${farmId}/dashboard`);
-  await expect(s.page.getByRole('heading', { name: 'Farm dashboard' })).toBeVisible();
+  // Not one of their farms: the API answers 404, so the page says the farm was not found (QA #19).
+  await expect(s.page.getByRole('heading', { name: 'Farm not found' })).toBeVisible();
   await expect(s.page.getByText('Download CSV:')).toHaveCount(0);
   for (const section of ['costs', 'animals', 'growth']) {
     const r = await request.get(

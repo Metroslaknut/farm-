@@ -27,6 +27,7 @@ import { useAsync } from '../../lib/useAsync';
 import { breedLabel, enumLabel, localizeErrors, typeName, useFarmsT } from './labels';
 import { MAX_PHOTOS, PhotoPicker, uploadPhotos, type PendingPhoto } from './PhotoPicker';
 import { useFarm } from './useFarmAccess';
+import { maxLengthOf } from '../../lib/schemaLimits';
 
 interface Draft {
   animalCode: string;
@@ -620,6 +621,7 @@ export default function AnimalFormPage() {
             <Textarea
               label={t('animalForm.notes')}
               rows={4}
+              maxLength={maxLengthOf(createAnimalSchema, 'notes')}
               error={field('notes')}
               {...text('notes')}
             />

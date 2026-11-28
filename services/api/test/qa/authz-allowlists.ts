@@ -47,6 +47,9 @@ export const SELF_SERVICE: Set<string> = new Set([
   'GET /api/v1/health',
   'GET /api/v1/ready',
   'GET /api/v1/auth/me',
+  // A new browser tab of the same person gets its own session (tab hand-off): the caller's own account only, same
+  // second-factor state, listed and revocable under /auth/sessions, audited, rate limited.
+  'POST /api/v1/auth/session/handoff',
   'GET /api/v1/auth/oauth/providers',
   'GET /api/v1/users/me',
   // The caller's own guided-tour progress (scoped to userId from the token; nothing about other people).

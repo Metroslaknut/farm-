@@ -359,6 +359,48 @@ describe('chicken breeding', () => {
     expect(hist.body.items.map((r: { id: string }) => r.id)).toEqual([id]);
   });
 
+  it('entering how many chicks hatched settles the breeding: some → delivered, none → failed (QA #22)', async () => {
+    const hen = await bird('female', 'lueang_hang_khao');
+    const rooster = await bird('male', 'pama_ma_lo');
+    const open = async () =>
+      (
+        await post('/breeding', f.worker, {
+          damId: hen.id,
+          sireId: rooster.id,
+          method: 'natural',
+          breedingDate: daysAgo(30),
+          clutch: { eggsLaid: 10 },
+        })
+      ).body.record.id as string;
+
+    const a = await open();
+    await post(`/breeding/${a}/clutch`, f.worker, { clutch: { eggsSet: 8 } }).then(
+      (r) => expect(r.body.record.status).toBe('bred'), // counts before hatching change nothing
+    );
+    const hatched = await post(`/breeding/${a}/clutch`, f.worker, { clutch: { chicksHatched: 6 } });
+    expect(hatched.status).toBe(200);
+    expect(hatched.body.record).toMatchObject({
+      status: 'delivered',
+      clutch: { eggsLaid: 10, eggsSet: 8, chicksHatched: 6 },
+    });
+    expect(hatched.body.record.delivery.date).toBeTruthy();
+    const history = (await get(`/breeding/${a}`)).body.record.history.at(-1).changes;
+    expect(history).toEqual(
+      expect.arrayContaining([
+        { field: 'clutch.chicksHatched', from: null, to: 6 },
+        { field: 'status', from: 'bred', to: 'delivered' },
+      ]),
+    );
+
+    // A later hen's breeding with nothing hatched is closed as failed (it can be voided or recorded again).
+    await post(`/breeding/${a}/void`, f.owner, { reason: 'test cleanup' });
+    const b = await open();
+    const none = await post(`/breeding/${b}/clutch`, f.worker, {
+      clutch: { eggsSet: 8, chicksHatched: 0 },
+    });
+    expect(none.body.record.status).toBe('failed');
+  });
+
   it('hatching registers the chicks linked to both parents, inheriting the rearing type (F1)', async () => {
     const sire = await bird('male', 'pama_ma_lo', { name: 'เจ้าสายฟ้า' });
     const dam = await bird('female', 'lueang_hang_khao', { name: 'แม่ทองดี' });

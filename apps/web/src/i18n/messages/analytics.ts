@@ -191,6 +191,453 @@ export default defineMessages({
     'reason.adminAlerts': 'การแจ้งเตือนด้านการเงินต้องมีสิทธิ์ด้านการชำระเงิน',
     'filter.animalType': 'ชนิดสัตว์',
     'filter.orderKind': 'ประเภทคำสั่งซื้อ',
+    'def.admin.alerts.alertCount.definition':
+      'จำนวนกฎการแจ้งเตือนที่กำลังแจ้งเตือนอยู่ตอนนี้ (ดูในรายการ)',
+    'def.admin.alerts.alertCount.includes':
+      'การแจ้งเตือนเรื่องการชำระเงิน การคืนเงิน และการโอนเงินให้ผู้ขาย',
+    'def.admin.alerts.alertCount.excludes': 'ไม่มี',
+    'def.admin.alerts.failedPaymentsLast24h.definition':
+      'การชำระเงินที่แจ้งว่าล้มเหลวใน 24 ชั่วโมงที่ผ่านมา ไม่ขึ้นกับช่วงวันที่เลือก',
+    'def.admin.alerts.failedPaymentsLast24h.includes': 'ตามที่อธิบายไว้',
+    'def.admin.alerts.failedPaymentsLast24h.excludes': 'รายการอื่น',
+    'def.admin.commissions.commissionBookedNetMinor.definition':
+      'ยอดเคลื่อนไหวสุทธิของบัญชีแพลตฟอร์มในบัญชีแยกประเภทในช่วงวันที่เลือก คือค่าธรรมเนียมที่บันทึกรับตอนชำระเงิน หักค่าธรรมเนียมที่ถูกหักกลับจากการคืนเงิน โดยนับตามวันที่บันทึกบัญชี',
+    'def.admin.commissions.commissionBookedNetMinor.includes':
+      'รายการบันทึกบัญชีของการเรียกเก็บเงินและการคืนเงิน',
+    'def.admin.commissions.commissionBookedNetMinor.excludes': 'ไม่มี',
+    'def.admin.commissions.commissionBookedNetMinor.caveats':
+      'จะเท่ากับค่าธรรมเนียมที่คิดตามคำสั่งซื้อ เมื่อการคืนเงินแต่ละรายการบันทึกบัญชีในช่วงวันที่เดียวกับการชำระเงิน ถ้าการคืนเงินบันทึกบัญชีในช่วงถัดไป จะไปลดตัวเลขของช่วงนั้นแทน',
+    'def.admin.commissions.commissionInProgressMinor.definition':
+      'ค่าธรรมเนียมจากคำสั่งซื้อที่ชำระแล้วแต่ยังไม่ส่งถึง (ยังอาจถูกหักกลับได้หากมีการคืนเงิน)',
+    'def.admin.commissions.commissionInProgressMinor.includes': 'ตามที่อธิบายไว้',
+    'def.admin.commissions.commissionInProgressMinor.excludes': 'คำสั่งซื้อที่ส่งถึงแล้ว',
+    'def.admin.commissions.commissionMinor.definition':
+      'ค่าธรรมเนียมที่ FARM+ เก็บจากคำสั่งซื้อที่ชำระแล้วและยังไม่ถูกยกเลิกหรือคืนเงิน (กำหนดตายตัวในแต่ละคำสั่งซื้อตอนสั่งซื้อ) นี่คือรายได้ของ FARM+ จากการขาย',
+    'def.admin.commissions.commissionMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.admin.commissions.commissionMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.admin.commissions.commissionMinor.caveats':
+      'ยังไม่หักต้นทุนของ FARM+ เองและค่าธรรมเนียมผู้ให้บริการ จึงไม่ใช่กำไร',
+    'def.admin.commissions.commissionReleasedMinor.definition':
+      'ส่วนของค่าธรรมเนียมจากคำสั่งซื้อที่ส่งถึงแล้ว (จะไม่มีการคืนเงินตามมาอีก)',
+    'def.admin.commissions.commissionReleasedMinor.includes':
+      'คำสั่งซื้อที่ชำระแล้วและถึงสถานะส่งถึงแล้ว (DELIVERED)',
+    'def.admin.commissions.commissionReleasedMinor.excludes': 'คำสั่งซื้อที่ยังดำเนินการอยู่',
+    'def.admin.farms.activeFarms.definition': 'ฟาร์มที่ไม่ได้เก็บเข้าคลัง',
+    'def.admin.farms.activeFarms.includes': 'ตามที่อธิบายไว้',
+    'def.admin.farms.activeFarms.excludes': 'ฟาร์มที่เก็บเข้าคลัง',
+    'def.admin.farms.farmsWithSalesInRange.definition':
+      'จำนวนฟาร์ม (ไม่นับซ้ำ) ที่มีคำสั่งซื้อที่ชำระแล้วและยังไม่ถูกยกเลิกหรือคืนเงินอย่างน้อยหนึ่งรายการในช่วงวันที่เลือก',
+    'def.admin.farms.farmsWithSalesInRange.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.admin.farms.farmsWithSalesInRange.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.admin.farms.newFarmsInRange.definition': 'ฟาร์มที่สร้างในช่วงวันที่เลือก',
+    'def.admin.farms.newFarmsInRange.includes': 'ทุกสถานะ',
+    'def.admin.farms.newFarmsInRange.excludes': 'ไม่มี',
+    'def.admin.listings.activeListings.definition':
+      'ประกาศขายสัตว์ที่เปิดขายอยู่ตอนนี้ ทั้งแพลตฟอร์ม',
+    'def.admin.listings.activeListings.includes': 'ทุกฟาร์ม',
+    'def.admin.listings.activeListings.excludes': 'สถานะอื่น',
+    'def.admin.listings.activeProducts.definition':
+      'สินค้าในร้านค้าที่เปิดขายอยู่ตอนนี้ ทั้งแพลตฟอร์ม',
+    'def.admin.listings.activeProducts.includes': 'ทุกฟาร์ม',
+    'def.admin.listings.activeProducts.excludes': 'สถานะอื่น',
+    'def.admin.listings.listingsCreatedInRange.definition':
+      'ประกาศขายสัตว์ที่สร้างในช่วงวันที่เลือก',
+    'def.admin.listings.listingsCreatedInRange.includes': 'ทุกสถานะ',
+    'def.admin.listings.listingsCreatedInRange.excludes': 'ไม่มี',
+    'def.admin.moderation.listingsPendingReview.definition': 'ประกาศขายสัตว์ที่รอผู้ดูแลตรวจสอบ',
+    'def.admin.moderation.listingsPendingReview.includes': 'ทุกฟาร์ม',
+    'def.admin.moderation.listingsPendingReview.excludes': 'สถานะอื่น',
+    'def.admin.moderation.oldestPendingHours.definition':
+      'ระยะเวลาที่รอของประกาศขายหรือสินค้าที่รอตรวจสอบนานที่สุด',
+    'def.admin.moderation.oldestPendingHours.includes': 'ประกาศขายและสินค้าที่รอตรวจสอบ',
+    'def.admin.moderation.oldestPendingHours.excludes': 'รายงานเนื้อหาและคำขอลงทะเบียน',
+    'def.admin.moderation.openContentReports.definition':
+      'รายงานเนื้อหาเกี่ยวกับโพสต์ ความคิดเห็น หรือวิดีโอ ที่ยังไม่ได้ดำเนินการหรือปิดทิ้ง',
+    'def.admin.moderation.openContentReports.includes': 'ทั้งหมด',
+    'def.admin.moderation.openContentReports.excludes': 'รายงานที่ปิดแล้ว',
+    'def.admin.moderation.productsPendingReview.definition': 'สินค้าในร้านค้าที่รอผู้ดูแลตรวจสอบ',
+    'def.admin.moderation.productsPendingReview.includes': 'ทุกฟาร์ม',
+    'def.admin.moderation.productsPendingReview.excludes': 'สถานะอื่น',
+    'def.admin.orders.buyerPaidTotalMinor.definition':
+      'เงินทั้งหมดที่ผู้ซื้อจ่ายในคำสั่งซื้อเหล่านั้น คือค่าสินค้ารวมค่าจัดส่ง',
+    'def.admin.orders.buyerPaidTotalMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.admin.orders.buyerPaidTotalMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.admin.orders.cancelledOrders.definition':
+      'คำสั่งซื้อที่สั่งในช่วงวันที่เลือกและถูกยกเลิกก่อนชำระเงิน',
+    'def.admin.orders.cancelledOrders.includes': 'ตามที่อธิบายไว้',
+    'def.admin.orders.cancelledOrders.excludes': 'คำสั่งซื้อที่คืนเงินแล้ว',
+    'def.admin.orders.gmvMinor.definition':
+      'ราคาสินค้าของคำสั่งซื้อที่ชำระแล้วและยังไม่ถูกยกเลิกหรือคืนเงิน ทั้งแพลตฟอร์ม (เงินที่ผู้ซื้อจ่ายค่าสินค้าและสัตว์) ไม่ใช่รายได้ของ FARM+',
+    'def.admin.orders.gmvMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.admin.orders.gmvMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว) และค่าจัดส่ง',
+    'def.admin.orders.gmvMinor.caveats': 'รายได้ของแพลตฟอร์มคือค่าธรรมเนียมแพลตฟอร์มเท่านั้น',
+    'def.admin.orders.ordersCreated.definition': 'คำสั่งซื้อที่สร้างในช่วงวันที่เลือก',
+    'def.admin.orders.ordersCreated.includes': 'ทุกสถานะ',
+    'def.admin.orders.ordersCreated.excludes': 'ไม่มี',
+    'def.admin.orders.ordersPaid.definition':
+      'คำสั่งซื้อที่ชำระในช่วงวันที่เลือก และยังไม่ถูกยกเลิกหรือคืนเงิน',
+    'def.admin.orders.ordersPaid.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.admin.orders.ordersPaid.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.admin.orders.refundedOrders.definition':
+      'คำสั่งซื้อที่ชำระในช่วงวันที่เลือก และตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED)',
+    'def.admin.orders.refundedOrders.includes': 'ตามที่อธิบายไว้',
+    'def.admin.orders.refundedOrders.excludes': 'รายการอื่น',
+    'def.admin.orders.shippingMinor.definition':
+      'ค่าจัดส่งของคำสั่งซื้อเหล่านั้น (เป็นเงินที่ส่งต่อ ไม่ใช่รายได้)',
+    'def.admin.orders.shippingMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.admin.orders.shippingMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.admin.payments.amountReceivedMinor.definition':
+      'ยอดเงินที่ผู้ให้บริการแจ้งว่าเรียกเก็บได้ จากการชำระเงินที่สำเร็จซึ่งสร้างในช่วงวันที่เลือก',
+    'def.admin.payments.amountReceivedMinor.includes': 'ตามที่อธิบายไว้',
+    'def.admin.payments.amountReceivedMinor.excludes': 'รายการที่ล้มเหลวและรอดำเนินการ',
+    'def.admin.payments.amountReceivedMinor.caveats':
+      'รวมเงินที่คืนภายหลัง และเงินที่ยังไม่ได้นำไปใช้กับคำสั่งซื้อ',
+    'def.admin.payments.paymentAttempts.definition': 'การชำระเงินที่เริ่มในช่วงวันที่เลือก',
+    'def.admin.payments.paymentAttempts.includes': 'ทุกสถานะ',
+    'def.admin.payments.paymentAttempts.excludes': 'ไม่มี',
+    'def.admin.payments.paymentSuccessRate.definition':
+      'สัดส่วนการชำระเงินที่สำเร็จ จากการชำระเงินที่มีผลสิ้นสุดแล้ว',
+    'def.admin.payments.paymentSuccessRate.includes': 'การชำระเงินที่มีผลสุดท้ายแล้ว',
+    'def.admin.payments.paymentSuccessRate.excludes':
+      'การชำระเงินที่ยังรอดำเนินการ ยกเลิก และหมดอายุ (เป็นการทิ้งกลางคัน ไม่ใช่ถูกปฏิเสธ)',
+    'def.admin.payments.paymentsFailed.definition':
+      'จากรายการเหล่านั้น การชำระเงินที่ผู้ให้บริการแจ้งว่าล้มเหลว',
+    'def.admin.payments.paymentsFailed.includes': 'ตามที่อธิบายไว้',
+    'def.admin.payments.paymentsFailed.excludes': 'รายการอื่น',
+    'def.admin.payments.paymentsSucceeded.definition':
+      'จากรายการเหล่านั้น การชำระเงินที่ผู้ให้บริการยืนยันแล้ว',
+    'def.admin.payments.paymentsSucceeded.includes':
+      'การชำระเงินที่คืนเงินแล้วด้วย เพราะเคยชำระสำเร็จมาก่อน',
+    'def.admin.payments.paymentsSucceeded.excludes': 'รอดำเนินการ ล้มเหลว ยกเลิก และหมดอายุ',
+    'def.admin.payments.unappliedPayments.definition':
+      'การชำระเงินที่สำเร็จแต่นำไปใช้กับคำสั่งซื้อไม่ได้ (คำสั่งซื้อถูกยกเลิก เปลี่ยนแปลง หรือยอดเงินไม่ตรง) เงินจะถูกพักไว้และเข้าคิวรอคืนเงิน',
+    'def.admin.payments.unappliedPayments.includes': 'ตามที่อธิบายไว้',
+    'def.admin.payments.unappliedPayments.excludes': 'การชำระเงินที่นำไปใช้กับคำสั่งซื้อแล้ว',
+    'def.admin.payouts.paidOutMinor.definition':
+      'เงินที่โอนให้ผู้ขายแล้ว คือการถอนเงินที่เสร็จสิ้นในช่วงวันที่เลือก',
+    'def.admin.payouts.paidOutMinor.includes': 'ตามที่อธิบายไว้',
+    'def.admin.payouts.paidOutMinor.excludes': 'รายการอื่น',
+    'def.admin.payouts.payoutsFailed.definition':
+      'การถอนเงินที่ผู้ให้บริการแจ้งว่าล้มเหลวในช่วงวันที่เลือก (เงินถูกคืนกลับให้ผู้ขายแล้ว)',
+    'def.admin.payouts.payoutsFailed.includes': 'ตามที่อธิบายไว้',
+    'def.admin.payouts.payoutsFailed.excludes': 'รายการอื่น',
+    'def.admin.payouts.payoutsPendingMinor.definition':
+      'การถอนเงินที่ขอแล้วแต่ยังไม่ได้โอน ไม่ถูกปฏิเสธ และไม่ถูกยกเลิก',
+    'def.admin.payouts.payoutsPendingMinor.includes': 'ทุกช่วงวันที่',
+    'def.admin.payouts.payoutsPendingMinor.excludes':
+      'รายการที่โอนแล้ว ล้มเหลว ถูกปฏิเสธ และยกเลิก',
+    'def.admin.payouts.sellerBalancesMinor.definition':
+      'ยอดรวมของยอดเงินรายได้ของผู้ขายทุกคน คือยอดรอรับ (ยังไม่ส่งถึง) รวมกับยอดที่ถอนได้',
+    'def.admin.payouts.sellerBalancesMinor.includes': 'ผู้ขายทุกคน',
+    'def.admin.payouts.sellerBalancesMinor.excludes': 'บัญชีของแพลตฟอร์ม',
+    'def.admin.payouts.sellerBalancesMinor.caveats':
+      'เป็นภาพรวมหนี้สิน ณ ขณะหนึ่ง จากข้อมูลที่สรุปจากบัญชีแยกประเภท',
+    'def.admin.payouts.withdrawalsRequested.definition':
+      'คำขอถอนเงินของผู้ขายที่สร้างในช่วงวันที่เลือก',
+    'def.admin.payouts.withdrawalsRequested.includes': 'ทุกสถานะ',
+    'def.admin.payouts.withdrawalsRequested.excludes': 'ไม่มี',
+    'def.admin.refunds.refundedMinor.definition':
+      'เงินที่คืนให้ผู้ซื้อแล้ว คือการคืนเงินที่ผู้ให้บริการทำสำเร็จในช่วงวันที่เลือก',
+    'def.admin.refunds.refundedMinor.includes': 'ตามที่อธิบายไว้',
+    'def.admin.refunds.refundedMinor.excludes':
+      'รายการที่ขอคืน อนุมัติแล้ว กำลังดำเนินการ และล้มเหลว',
+    'def.admin.refunds.refundsFailed.definition':
+      'การคืนเงินที่ผู้ให้บริการแจ้งว่าล้มเหลว และยังไม่ได้ลองใหม่จนสำเร็จ',
+    'def.admin.refunds.refundsFailed.includes': 'ทุกช่วงวันที่',
+    'def.admin.refunds.refundsFailed.excludes': 'รายการอื่น',
+    'def.admin.refunds.refundsOpenMinor.definition': 'ยอดเงินของการคืนเงินที่ยังไม่เสร็จสิ้น',
+    'def.admin.refunds.refundsOpenMinor.includes': 'ทุกช่วงวันที่',
+    'def.admin.refunds.refundsOpenMinor.excludes': 'รายการที่เสร็จสิ้นแล้ว',
+    'def.admin.refunds.refundsRequested.definition': 'คำขอคืนเงินที่สร้างในช่วงวันที่เลือก',
+    'def.admin.refunds.refundsRequested.includes': 'ทุกสถานะ',
+    'def.admin.refunds.refundsRequested.excludes': 'ไม่มี',
+    'def.admin.registrations.registrationsApproved.definition':
+      'คำขอลงทะเบียนที่ส่งในช่วงวันที่เลือก และตอนนี้อนุมัติแล้ว',
+    'def.admin.registrations.registrationsApproved.includes': 'ตามที่อธิบายไว้',
+    'def.admin.registrations.registrationsApproved.excludes': 'รายการอื่น',
+    'def.admin.registrations.registrationsApproved.caveats':
+      'เป็นผลลัพธ์ ณ วันนี้ ไม่ใช่ ณ วันสุดท้ายของช่วงวันที่เลือก',
+    'def.admin.registrations.registrationsPendingNow.definition':
+      'คำขอลงทะเบียนที่รอการพิจารณา ณ ตอนนี้',
+    'def.admin.registrations.registrationsPendingNow.includes': 'ทุกช่วงวันที่',
+    'def.admin.registrations.registrationsPendingNow.excludes': 'รายการที่พิจารณาแล้ว',
+    'def.admin.registrations.registrationsSubmitted.definition':
+      'คำขอลงทะเบียนยืนยันตัวตน เจ้าของฟาร์ม และผู้ขาย ที่ส่งในช่วงวันที่เลือก',
+    'def.admin.registrations.registrationsSubmitted.includes': 'ทุกสถานะ',
+    'def.admin.registrations.registrationsSubmitted.excludes': 'ไม่มี',
+    'def.admin.users.activeUsers.definition': 'บัญชีที่ตอนนี้อยู่ในสถานะใช้งาน',
+    'def.admin.users.activeUsers.includes': 'ตามที่อธิบายไว้',
+    'def.admin.users.activeUsers.excludes': 'บัญชีที่ถูกระงับ ปิดใช้งาน และรอยืนยันตัวตน',
+    'def.admin.users.activeUsers.caveats': 'เป็นสถานะของบัญชี ไม่ใช่การใช้งานล่าสุด',
+    'def.admin.users.newUsersInRange.definition': 'บัญชีที่ลงทะเบียนในช่วงวันที่เลือก',
+    'def.admin.users.newUsersInRange.includes': 'ทุกสถานะ',
+    'def.admin.users.newUsersInRange.excludes': 'ไม่มี',
+    'def.admin.users.suspendedUsers.definition': 'บัญชีที่ตอนนี้ถูกระงับ',
+    'def.admin.users.suspendedUsers.includes': 'ตามที่อธิบายไว้',
+    'def.admin.users.suspendedUsers.excludes': 'บัญชีอื่น',
+    'def.admin.users.totalUsers.definition': 'บัญชีทั้งหมดที่เคยลงทะเบียน (ไม่ว่าสถานะใด)',
+    'def.admin.users.totalUsers.includes': 'ทุกสถานะ',
+    'def.admin.users.totalUsers.excludes': 'ไม่มี',
+    'def.farm.animals.animalsOnFarm.definition':
+      'สัตว์ที่ตอนนี้บันทึกไว้ว่ากำลังเลี้ยงหรือประกาศขาย',
+    'def.farm.animals.animalsOnFarm.includes':
+      'สัตว์ที่กำลังเลี้ยงและสัตว์ที่ประกาศขาย (เลือกดูเฉพาะชนิดสัตว์ใดชนิดหนึ่งได้)',
+    'def.farm.animals.animalsOnFarm.excludes': 'สัตว์ที่ขายแล้ว ตาย ย้ายออก สูญหาย และเก็บเข้าคลัง',
+    'def.farm.animals.totalRecorded.definition':
+      'บันทึกสัตว์ทุกตัวที่ไม่ได้เก็บเข้าคลัง ไม่ว่าสถานะใด',
+    'def.farm.animals.totalRecorded.includes': 'ทุกสถานะ',
+    'def.farm.animals.totalRecorded.excludes': 'สัตว์ที่เก็บเข้าคลัง',
+    'def.farm.assessments.assessmentsAccepted.definition':
+      'การประเมินที่เจ้าของทำเครื่องหมายว่าตรวจดูแล้ว',
+    'def.farm.assessments.assessmentsAccepted.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.assessments.assessmentsAccepted.excludes': 'รายการอื่น',
+    'def.farm.assessments.assessmentsDismissed.definition': 'การประเมินที่เจ้าของปิดทิ้ง',
+    'def.farm.assessments.assessmentsDismissed.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.assessments.assessmentsDismissed.excludes': 'รายการอื่น',
+    'def.farm.assessments.assessmentsInRange.definition':
+      'การประเมินการขายที่สร้างให้สัตว์ของฟาร์มนี้ในช่วงวันที่เลือก',
+    'def.farm.assessments.assessmentsInRange.includes': 'ทั้งหมด',
+    'def.farm.assessments.assessmentsInRange.excludes': 'ไม่มี',
+    'def.farm.assessments.assessmentsInRange.caveats': 'ใช้ช่วยตัดสินใจ ไม่ใช่คำแนะนำ',
+    'def.farm.assessments.assessmentsPending.definition':
+      'การประเมินในช่วงวันที่เลือกที่เจ้าของยังไม่ได้ตรวจดูหรือปิดทิ้ง',
+    'def.farm.assessments.assessmentsPending.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.assessments.assessmentsPending.excludes': 'รายการที่ตรวจดูแล้ว/ปิดทิ้งแล้ว',
+    'def.farm.assessments.highConfidence.definition':
+      'การประเมินที่ตัวชี้วัดความครบถ้วนของข้อมูลอยู่ในระดับสูง',
+    'def.farm.assessments.highConfidence.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.assessments.highConfidence.excludes': 'รายการอื่น',
+    'def.farm.assessments.lowConfidence.definition':
+      'การประเมินที่ตัวชี้วัดความครบถ้วนของข้อมูลอยู่ในระดับต่ำ',
+    'def.farm.assessments.lowConfidence.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.assessments.lowConfidence.excludes': 'รายการอื่น',
+    'def.farm.assessments.lowConfidence.caveats':
+      'เป็นตัวชี้วัดความครบถ้วนของข้อมูล ไม่ใช่ความน่าจะเป็นทางสถิติ',
+    'def.farm.assessments.withPriceRange.definition':
+      'การประเมินที่มีข้อมูลตลาดที่ได้รับอนุญาตเพียงพอจะแนะนำช่วงราคาได้',
+    'def.farm.assessments.withPriceRange.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.assessments.withPriceRange.excludes': 'รายการอื่น',
+    'def.farm.costs.costAssignedToAnimalsMinor.definition':
+      'ส่วนของค่าใช้จ่ายที่บันทึกไว้ซึ่งระบุตัวสัตว์',
+    'def.farm.costs.costAssignedToAnimalsMinor.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.costs.costAssignedToAnimalsMinor.excludes': 'ค่าใช้จ่ายรวมของฟาร์ม',
+    'def.farm.costs.expenseRecords.definition':
+      'จำนวนรายการค่าใช้จ่ายที่ประกอบเป็นค่าใช้จ่ายที่บันทึกไว้',
+    'def.farm.costs.expenseRecords.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.costs.expenseRecords.excludes': 'รายการที่ยกเลิก',
+    'def.farm.costs.farmWideCostMinor.definition':
+      'ส่วนของค่าใช้จ่ายที่บันทึกไว้ซึ่งไม่ได้ระบุตัวสัตว์ (เช่น อาหารที่ใช้ร่วมกัน ค่าแรง อุปกรณ์)',
+    'def.farm.costs.farmWideCostMinor.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.costs.farmWideCostMinor.excludes': 'ค่าใช้จ่ายที่ระบุตัวสัตว์',
+    'def.farm.costs.farmWideCostMinor.caveats':
+      'ไม่ได้เฉลี่ยให้สัตว์แต่ละตัว FARM+ ไม่เดาสัดส่วนให้',
+    'def.farm.costs.recordedCostMinor.definition': 'ค่าใช้จ่ายที่บันทึกไว้ในช่วงวันที่เลือก',
+    'def.farm.costs.recordedCostMinor.includes':
+      'ค่าใช้จ่ายที่ระบุตัวสัตว์ และค่าใช้จ่ายรวมของฟาร์ม',
+    'def.farm.costs.recordedCostMinor.excludes':
+      'ค่าใช้จ่ายที่ยกเลิก และสิ่งที่ไม่ได้บันทึกใน FARM+',
+    'def.farm.costs.recordedCostMinor.caveats':
+      'เป็นเฉพาะค่าใช้จ่ายที่บันทึกไว้ ไม่ใช่ต้นทุนทั้งหมด ถ้าเลือกกรองชนิดสัตว์ จะนับเฉพาะค่าใช้จ่ายที่ระบุตัวสัตว์ชนิดนั้น',
+    'def.farm.feeding.animalsFed.definition':
+      'จำนวนสัตว์ (ไม่นับซ้ำ) ที่ระบุไว้ในบันทึกการให้อาหารในช่วงวันที่เลือก',
+    'def.farm.feeding.animalsFed.includes': 'บันทึกรายตัว',
+    'def.farm.feeding.animalsFed.excludes':
+      'บันทึกแบบกลุ่ม (ไม่ได้ระบุตัวสัตว์) และบันทึกที่ยกเลิก',
+    'def.farm.feeding.feedingLogsInRange.definition':
+      'บันทึกการให้อาหารที่ลงวันที่ในช่วงวันที่เลือก',
+    'def.farm.feeding.feedingLogsInRange.includes': 'บันทึกรายตัวและบันทึกแบบกลุ่ม',
+    'def.farm.feeding.feedingLogsInRange.excludes': 'ตารางการให้อาหาร (แผน) และบันทึกที่ยกเลิก',
+    'def.farm.feeding.groupFeedingLogs.definition':
+      'บันทึกการให้อาหารสำหรับกลุ่ม ไม่ได้ระบุตัวสัตว์',
+    'def.farm.feeding.groupFeedingLogs.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.feeding.groupFeedingLogs.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.growth.animalsWeighed.definition':
+      'จำนวนสัตว์ (ไม่นับซ้ำ) ที่มีการชั่งน้ำหนักอย่างน้อยหนึ่งครั้งในช่วงวันที่เลือก',
+    'def.farm.growth.animalsWeighed.includes': 'เหมือนกับการชั่งน้ำหนัก',
+    'def.farm.growth.animalsWeighed.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.growth.animalsWithGainEstimate.definition':
+      'สัตว์ที่ชั่งน้ำหนักอย่างน้อยสองครั้ง ห่างกันหนึ่งสัปดาห์ขึ้นไป ในช่วงวันที่เลือก',
+    'def.farm.growth.animalsWithGainEstimate.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.growth.animalsWithGainEstimate.excludes':
+      'สัตว์ที่ชั่งน้ำหนักครั้งเดียว หรือชั่งห่างกันไม่ถึง 7 วัน',
+    'def.farm.growth.animalsWithGainEstimate.caveats':
+      'การชั่งที่ห่างกันน้อยกว่านี้ ส่วนใหญ่เป็นความคลาดเคลื่อนจากการวัด',
+    'def.farm.growth.averageDailyGainG.definition':
+      'ค่าเฉลี่ยของอัตราโตเฉลี่ยต่อวันของสัตว์แต่ละตัวในช่วงวันที่เลือก',
+    'def.farm.growth.averageDailyGainG.includes': 'สัตว์ที่นับอยู่ใน “สัตว์ที่ประเมินอัตราโตได้”',
+    'def.farm.growth.averageDailyGainG.excludes':
+      'สัตว์ตัวอื่นทั้งหมด (ไม่นับเป็นศูนย์ แต่ไม่นำมาคิด)',
+    'def.farm.growth.averageDailyGainG.caveats':
+      'เป็นค่าเฉลี่ยรายตัวแบบไม่ถ่วงน้ำหนัก ไม่ใช่ค่าถ่วงตามทั้งฝูง และรวมน้ำหนักที่ประมาณด้วยสายวัด/ด้วยสายตาด้วย',
+    'def.farm.growth.estimatedWeightShare.definition':
+      'สัดส่วนการชั่งน้ำหนักที่เป็นการประมาณด้วยสายวัดหรือด้วยสายตา แทนการอ่านค่าจากตาชั่ง',
+    'def.farm.growth.estimatedWeightShare.includes': 'การชั่งน้ำหนักทั้งหมดในช่วงวันที่เลือก',
+    'def.farm.growth.estimatedWeightShare.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.growth.weighingsInRange.definition':
+      'บันทึกการชั่งน้ำหนักที่ลงวันที่ในช่วงวันที่เลือก',
+    'def.farm.growth.weighingsInRange.includes':
+      'น้ำหนักจากตาชั่ง จากการประมาณด้วยสายวัด และด้วยสายตา',
+    'def.farm.growth.weighingsInRange.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.health.animalsWithIllnessOrTreatment.definition':
+      'จำนวนสัตว์ (ไม่นับซ้ำ) ที่มีบันทึกเจ็บป่วยหรือการรักษาในช่วงวันที่เลือก',
+    'def.farm.health.animalsWithIllnessOrTreatment.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.health.animalsWithIllnessOrTreatment.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.health.healthRecordsInRange.definition': 'บันทึกสุขภาพที่ลงวันที่ในช่วงวันที่เลือก',
+    'def.farm.health.healthRecordsInRange.includes':
+      'เจ็บป่วย การรักษา วัคซีน การหายป่วย การตรวจสุขภาพ และอื่นๆ',
+    'def.farm.health.healthRecordsInRange.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.health.healthRecordsInRange.caveats':
+      'เป็นการนับสิ่งที่บันทึกไว้เท่านั้น FARM+ ไม่ได้แปลผลบันทึกสุขภาพ',
+    'def.farm.health.illnessRecords.definition': 'บันทึกสุขภาพประเภทเจ็บป่วยในช่วงวันที่เลือก',
+    'def.farm.health.illnessRecords.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.health.illnessRecords.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.health.treatmentRecords.definition': 'บันทึกสุขภาพประเภทการรักษาในช่วงวันที่เลือก',
+    'def.farm.health.treatmentRecords.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.health.treatmentRecords.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.health.vaccinationRecords.definition': 'บันทึกสุขภาพประเภทวัคซีนในช่วงวันที่เลือก',
+    'def.farm.health.vaccinationRecords.includes': 'ตามที่กล่าวข้างต้น',
+    'def.farm.health.vaccinationRecords.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.health.vaccinationsDueNext30Days.definition':
+      'จำนวนสัตว์ (ไม่นับซ้ำ) ที่วัน “ครบกำหนดครั้งถัดไป” ที่บันทึกไว้ อยู่ภายใน 30 วันข้างหน้า',
+    'def.farm.health.vaccinationsDueNext30Days.includes': 'บันทึกสุขภาพทั้งหมด',
+    'def.farm.health.vaccinationsDueNext30Days.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.health.vaccinationsDueNext30Days.caveats': 'นับเฉพาะวันครบกำหนดที่บันทึกไว้เท่านั้น',
+    'def.farm.health.withdrawalsRunning.definition':
+      'จำนวนสัตว์ (ไม่นับซ้ำ) ที่มีระยะหยุดยาที่บันทึกไว้และยังไม่สิ้นสุด',
+    'def.farm.health.withdrawalsRunning.includes': 'บันทึกสุขภาพทั้งหมด ไม่ว่าลงวันที่ใด',
+    'def.farm.health.withdrawalsRunning.excludes': 'บันทึกที่ยกเลิก',
+    'def.farm.health.withdrawalsRunning.caveats': 'นับเฉพาะระยะหยุดยาที่บันทึกไว้เท่านั้น',
+    'def.farm.listings.activeListings.definition': 'ประกาศขายสัตว์ที่กำลังเปิดขายอยู่ตอนนี้',
+    'def.farm.listings.activeListings.includes': 'ประกาศขายของฟาร์มนี้',
+    'def.farm.listings.activeListings.excludes':
+      'ฉบับร่าง รอตรวจสอบ ติดจอง หยุดชั่วคราว ขายแล้ว หมดอายุ และยกเลิก',
+    'def.farm.listings.listingsCreatedInRange.definition': 'ประกาศขายที่สร้างในช่วงวันที่เลือก',
+    'def.farm.listings.listingsCreatedInRange.includes': 'ทุกสถานะ',
+    'def.farm.listings.listingsCreatedInRange.excludes': 'ไม่มี',
+    'def.farm.listings.pendingReviewListings.definition': 'ประกาศขายที่ส่งแล้วและรอผู้ดูแลตรวจสอบ',
+    'def.farm.listings.pendingReviewListings.includes': 'ฟาร์มนี้',
+    'def.farm.listings.pendingReviewListings.excludes': 'สถานะอื่น',
+    'def.farm.listings.reservedListings.definition':
+      'ประกาศขายที่ตกลงซื้อขายแล้ว และรอการสั่งซื้อ/ชำระเงิน',
+    'def.farm.listings.reservedListings.includes': 'ฟาร์มนี้',
+    'def.farm.listings.reservedListings.excludes': 'สถานะอื่น',
+    'def.farm.products.activeProducts.definition': 'สินค้าในร้านค้าที่กำลังเปิดขายอยู่ตอนนี้',
+    'def.farm.products.activeProducts.includes': 'ฟาร์มนี้',
+    'def.farm.products.activeProducts.excludes': 'สถานะอื่น',
+    'def.farm.products.lowStockProducts.definition':
+      'สินค้าที่เปิดขายและยังมีของ แต่เหลือเท่ากับหรือต่ำกว่าระดับเตือนสต็อกต่ำที่ตั้งไว้ของสินค้านั้น',
+    'def.farm.products.lowStockProducts.includes': 'สินค้าที่ตั้งระดับเตือนไว้',
+    'def.farm.products.lowStockProducts.excludes': 'สินค้าที่ไม่ได้ตั้งระดับเตือน',
+    'def.farm.products.outOfStockProducts.definition': 'สินค้าที่เปิดขายแต่ไม่มีของให้สั่งซื้อ',
+    'def.farm.products.outOfStockProducts.includes': 'ฟาร์มนี้',
+    'def.farm.products.outOfStockProducts.excludes': 'สถานะอื่น',
+    'def.farm.products.pendingReviewProducts.definition': 'สินค้าที่ส่งแล้วและรอผู้ดูแลตรวจสอบ',
+    'def.farm.products.pendingReviewProducts.includes': 'ฟาร์มนี้',
+    'def.farm.products.pendingReviewProducts.excludes': 'สถานะอื่น',
+    'def.farm.products.productGrossSalesMinor.definition':
+      'ยอดขายรวมจากคำสั่งซื้อในร้านค้า (ส่วนของร้านค้าในยอดขายรวม)',
+    'def.farm.products.productGrossSalesMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก (เฉพาะคำสั่งซื้อจากร้านค้า)',
+    'def.farm.products.productGrossSalesMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.farm.products.productGrossSalesMinor.caveats':
+      'เท่ากับยอดขายรวม เมื่อกรองเฉพาะคำสั่งซื้อจากร้านค้า',
+    'def.farm.products.unitsSold.definition':
+      'จำนวนชิ้นในคำสั่งซื้อจากร้านค้าที่ชำระแล้วและยังไม่ถูกยกเลิกหรือคืนเงิน ในช่วงวันที่เลือก',
+    'def.farm.products.unitsSold.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก (เฉพาะคำสั่งซื้อจากร้านค้า)',
+    'def.farm.products.unitsSold.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.farm.sales.averageOrderValueMinor.definition':
+      'ยอดขายรวมต่อคำสั่งซื้อที่ชำระแล้วหนึ่งรายการ',
+    'def.farm.sales.averageOrderValueMinor.includes': 'เหมือนยอดขายรวม',
+    'def.farm.sales.averageOrderValueMinor.excludes': 'เหมือนยอดขายรวม',
+    'def.farm.sales.cancelledOrders.definition':
+      'คำสั่งซื้อที่สั่งในช่วงวันที่เลือกและถูกยกเลิก (ไม่เคยชำระเงิน หรือหมดอายุ)',
+    'def.farm.sales.cancelledOrders.includes': 'ตามที่อธิบายไว้',
+    'def.farm.sales.cancelledOrders.excludes': 'คำสั่งซื้อที่คืนเงินแล้ว',
+    'def.farm.sales.estimatedNetProceedsMinor.definition':
+      'ยอดขายรวมหักค่าธรรมเนียมแพลตฟอร์ม คือเงินที่คาดว่าฟาร์มจะได้รับจากยอดขายนี้',
+    'def.farm.sales.estimatedNetProceedsMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.farm.sales.estimatedNetProceedsMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.farm.sales.estimatedNetProceedsMinor.caveats':
+      'เป็นค่าประมาณ ยังไม่หักค่าจัดส่งของผู้ขาย ค่าธรรมเนียมผู้ให้บริการชำระเงิน ภาษี และต้นทุนนอก FARM+ ไม่ใช่กำไร',
+    'def.farm.sales.grossSalesMinor.definition':
+      'ราคาสินค้าของคำสั่งซื้อที่ชำระแล้วและยังไม่ถูกยกเลิกหรือคืนเงิน ไม่รวมค่าจัดส่ง',
+    'def.farm.sales.grossSalesMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.farm.sales.grossSalesMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.farm.sales.grossSalesMinor.caveats':
+      'ไม่ใช่กำไร และไม่ใช่รายรับหลังหักค่าธรรมเนียม ดูที่ รายรับสุทธิโดยประมาณ',
+    'def.farm.sales.netProceedsOverRecordedCostMinor.definition':
+      'รายรับสุทธิโดยประมาณ หักค่าใช้จ่ายที่บันทึกไว้ในช่วงวันที่เดียวกัน เป็นตัวชี้วัดคร่าวๆ แสดงเฉพาะเมื่อคุณมีสิทธิ์ดูค่าใช้จ่าย',
+    'def.farm.sales.netProceedsOverRecordedCostMinor.includes': 'ทั้งสองค่าตามที่นิยามไว้ข้างต้น',
+    'def.farm.sales.netProceedsOverRecordedCostMinor.excludes':
+      'ค่าใช้จ่ายที่ไม่ได้บันทึก และความต่างของช่วงเวลา (ค่าใช้จ่ายของสัตว์หนึ่งตัวกินเวลาหลายเดือน)',
+    'def.farm.sales.netProceedsOverRecordedCostMinor.caveats':
+      'ไม่ใช่กำไร เพราะไม่รวมค่าใช้จ่ายที่ไม่ได้บันทึก ค่าจัดส่ง ภาษี และค่าธรรมเนียม และค่าใช้จ่ายกับยอดขายของสัตว์ต่างตัวกันอาจอยู่คนละช่วงเวลา',
+    'def.farm.sales.netProceedsPendingMinor.definition':
+      'ส่วนของรายรับสุทธิโดยประมาณจากคำสั่งซื้อที่ชำระแล้วแต่ยังไม่ส่งถึง (พักไว้จนกว่าจะส่งถึง)',
+    'def.farm.sales.netProceedsPendingMinor.includes': 'คำสั่งซื้อที่ชำระแล้วและยังดำเนินการอยู่',
+    'def.farm.sales.netProceedsPendingMinor.excludes': 'คำสั่งซื้อที่ส่งถึงแล้ว',
+    'def.farm.sales.netProceedsReleasedMinor.definition':
+      'ส่วนของรายรับสุทธิโดยประมาณจากคำสั่งซื้อที่ส่งถึงแล้ว คือรายได้ที่ถอนเงินได้แล้ว',
+    'def.farm.sales.netProceedsReleasedMinor.includes':
+      'คำสั่งซื้อที่ชำระแล้วและถึงสถานะส่งถึงแล้ว (DELIVERED)',
+    'def.farm.sales.netProceedsReleasedMinor.excludes': 'คำสั่งซื้อที่ยังดำเนินการอยู่',
+    'def.farm.sales.ordersCreated.definition': 'คำสั่งซื้อของฟาร์มนี้ที่สร้างในช่วงวันที่เลือก',
+    'def.farm.sales.ordersCreated.includes': 'ทุกสถานะ',
+    'def.farm.sales.ordersCreated.excludes': 'ไม่มี',
+    'def.farm.sales.ordersCreated.caveats': 'รวมคำสั่งซื้อที่ไม่เคยชำระเงินด้วย',
+    'def.farm.sales.ordersPaid.definition':
+      'คำสั่งซื้อที่ยืนยันการชำระเงินในช่วงวันที่เลือก และยังไม่ถูกยกเลิกหรือคืนเงิน',
+    'def.farm.sales.ordersPaid.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.farm.sales.ordersPaid.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.farm.sales.platformCommissionMinor.definition':
+      'ค่าธรรมเนียมที่ FARM+ เก็บจากยอดขายเหล่านั้น ตามที่กำหนดไว้ในแต่ละคำสั่งซื้อตอนสั่งซื้อ',
+    'def.farm.sales.platformCommissionMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.farm.sales.platformCommissionMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'def.farm.sales.platformCommissionMinor.caveats':
+      'ถ้ามีการเปลี่ยนกฎค่าธรรมเนียมภายหลัง ค่านี้จะไม่เปลี่ยนตาม',
+    'def.farm.sales.refundedGrossMinor.definition':
+      'ราคาสินค้าของคำสั่งซื้อที่ชำระในช่วงวันที่เลือก และตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) ไม่นับรวมในยอดขายรวม',
+    'def.farm.sales.refundedGrossMinor.includes': 'ตามที่อธิบายไว้',
+    'def.farm.sales.refundedGrossMinor.excludes': 'รายการอื่นทั้งหมด',
+    'def.farm.sales.shippingCollectedMinor.definition':
+      'ค่าจัดส่งที่ผู้ซื้อจ่ายในคำสั่งซื้อเหล่านั้น แยกไว้ต่างหากจากยอดขาย เพราะเป็นเงินที่ส่งต่อ ไม่ใช่รายได้จากสินค้า',
+    'def.farm.sales.shippingCollectedMinor.includes':
+      'คำสั่งซื้อที่มีสถานะชำระแล้ว (PAID), กำลังดำเนินการ (PROCESSING), จัดส่งแล้ว (SHIPPED) หรือส่งถึงแล้ว (DELIVERED) และยืนยันการชำระเงิน (paidAt) ในช่วงวันที่เลือก',
+    'def.farm.sales.shippingCollectedMinor.excludes':
+      'คำสั่งซื้อที่ถูกยกเลิกก่อนชำระเงิน และคำสั่งซื้อที่ชำระแล้วแต่ตอนนี้อยู่ในสถานะรอคืนเงิน (REFUND_PENDING) หรือคืนเงินแล้ว (REFUNDED) (แสดงแยกไว้เป็นรายการที่ไม่นับ/คืนเงินแล้ว)',
+    'alert.unapplied_payments':
+      'รับเงินแล้ว {count} รายการแต่ผูกกับคำสั่งซื้อไม่ได้ (พักไว้ {amount} ต้องคืนเงิน)',
+    'alert.failed_refunds': 'คืนเงินไม่สำเร็จที่ผู้ให้บริการ {count} รายการ ต้องลองใหม่',
+    'alert.failed_payouts':
+      'โอนเงินให้ผู้ขายไม่สำเร็จ {count} รายการใน 7 วันที่ผ่านมา (เงินคืนเข้าบัญชีผู้ขายแล้ว)',
+    'alert.stale_withdrawals': 'มีคำขอถอนเงิน {count} รายการที่รอพิจารณาเกิน 3 วัน',
+    'alert.payment_failure_rate':
+      'ชำระเงินไม่สำเร็จ {count} จาก {total} รายการใน 24 ชั่วโมงที่ผ่านมา ({percent}%)',
+    'alert.stale_payment_attempts':
+      'มีการชำระเงิน {count} รายการที่เลยเวลาแล้วแต่ยังไม่หมดอายุ (ระบบงานเบื้องหลังจะจัดการให้)',
   },
   en: {
     'metric.farm.animals.animalsOnFarm': 'Animals on the farm',
@@ -378,5 +825,447 @@ export default defineMessages({
     'reason.adminAlerts': 'Financial alerts need the payments permission.',
     'filter.animalType': 'Animal type',
     'filter.orderKind': 'Order type',
+    'def.admin.alerts.alertCount.definition':
+      'Number of alert rules currently raised (see the list).',
+    'def.admin.alerts.alertCount.includes': 'Payment, refund and payout alerts.',
+    'def.admin.alerts.alertCount.excludes': 'None.',
+    'def.admin.alerts.failedPaymentsLast24h.definition':
+      'Payments reported as failed in the last 24 hours, regardless of the selected dates.',
+    'def.admin.alerts.failedPaymentsLast24h.includes': 'As described.',
+    'def.admin.alerts.failedPaymentsLast24h.excludes': 'Others.',
+    'def.admin.commissions.commissionBookedNetMinor.definition':
+      'Net movement of the platform account in the ledger inside the dates: commission credited at payment minus commission reversed by refunds, by the date it was booked.',
+    'def.admin.commissions.commissionBookedNetMinor.includes': 'Capture and refund journals.',
+    'def.admin.commissions.commissionBookedNetMinor.excludes': 'None.',
+    'def.admin.commissions.commissionBookedNetMinor.caveats':
+      'Equals the order-based commission when each refund is booked in the same dates as its payment; a refund booked in a later period lowers that period’s figure instead.',
+    'def.admin.commissions.commissionInProgressMinor.definition':
+      'Commission from paid orders not yet delivered (a refund could still reverse it).',
+    'def.admin.commissions.commissionInProgressMinor.includes': 'As described.',
+    'def.admin.commissions.commissionInProgressMinor.excludes': 'Delivered.',
+    'def.admin.commissions.commissionMinor.definition':
+      'The fee FARM+ keeps from paid, standing orders (frozen on each order at checkout). This is FARM+’s revenue from sales.',
+    'def.admin.commissions.commissionMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.admin.commissions.commissionMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.admin.commissions.commissionMinor.caveats':
+      'Before FARM+’s own costs and provider fees: not profit.',
+    'def.admin.commissions.commissionReleasedMinor.definition':
+      'Part of the commission from orders already delivered (no refund can follow).',
+    'def.admin.commissions.commissionReleasedMinor.includes': 'Paid orders that reached DELIVERED.',
+    'def.admin.commissions.commissionReleasedMinor.excludes': 'In progress.',
+    'def.admin.farms.activeFarms.definition': 'Farms that are not archived.',
+    'def.admin.farms.activeFarms.includes': 'As described.',
+    'def.admin.farms.activeFarms.excludes': 'Archived farms.',
+    'def.admin.farms.farmsWithSalesInRange.definition':
+      'Different farms with at least one paid, standing order in the dates.',
+    'def.admin.farms.farmsWithSalesInRange.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.admin.farms.farmsWithSalesInRange.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.admin.farms.newFarmsInRange.definition': 'Farms created inside the dates.',
+    'def.admin.farms.newFarmsInRange.includes': 'Any status.',
+    'def.admin.farms.newFarmsInRange.excludes': 'None.',
+    'def.admin.listings.activeListings.definition': 'Animal listings on sale now, platform-wide.',
+    'def.admin.listings.activeListings.includes': 'All farms.',
+    'def.admin.listings.activeListings.excludes': 'Other statuses.',
+    'def.admin.listings.activeProducts.definition': 'Shop products on sale now, platform-wide.',
+    'def.admin.listings.activeProducts.includes': 'All farms.',
+    'def.admin.listings.activeProducts.excludes': 'Other statuses.',
+    'def.admin.listings.listingsCreatedInRange.definition':
+      'Animal listings created inside the dates.',
+    'def.admin.listings.listingsCreatedInRange.includes': 'Every status.',
+    'def.admin.listings.listingsCreatedInRange.excludes': 'None.',
+    'def.admin.moderation.listingsPendingReview.definition':
+      'Animal listings waiting for a moderator.',
+    'def.admin.moderation.listingsPendingReview.includes': 'All farms.',
+    'def.admin.moderation.listingsPendingReview.excludes': 'Others.',
+    'def.admin.moderation.oldestPendingHours.definition':
+      'Age of the oldest listing or product still awaiting review.',
+    'def.admin.moderation.oldestPendingHours.includes': 'Listings and products awaiting review.',
+    'def.admin.moderation.oldestPendingHours.excludes': 'Reports and registrations.',
+    'def.admin.moderation.openContentReports.definition':
+      'Reports of posts, comments or videos not yet actioned or dismissed.',
+    'def.admin.moderation.openContentReports.includes': 'All.',
+    'def.admin.moderation.openContentReports.excludes': 'Closed.',
+    'def.admin.moderation.productsPendingReview.definition':
+      'Shop products waiting for a moderator.',
+    'def.admin.moderation.productsPendingReview.includes': 'All farms.',
+    'def.admin.moderation.productsPendingReview.excludes': 'Others.',
+    'def.admin.orders.buyerPaidTotalMinor.definition':
+      'Everything buyers paid on those orders: items plus shipping.',
+    'def.admin.orders.buyerPaidTotalMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.admin.orders.buyerPaidTotalMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.admin.orders.cancelledOrders.definition':
+      'Orders placed in the dates and cancelled before payment.',
+    'def.admin.orders.cancelledOrders.includes': 'As described.',
+    'def.admin.orders.cancelledOrders.excludes': 'Refunded orders.',
+    'def.admin.orders.gmvMinor.definition':
+      'Item price of paid, standing orders across the platform (what buyers paid for goods and animals). It is NOT FARM+’s revenue.',
+    'def.admin.orders.gmvMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.admin.orders.gmvMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded); shipping',
+    'def.admin.orders.gmvMinor.caveats': 'Platform revenue is the commission only.',
+    'def.admin.orders.ordersCreated.definition': 'Orders created inside the dates.',
+    'def.admin.orders.ordersCreated.includes': 'Every status.',
+    'def.admin.orders.ordersCreated.excludes': 'None.',
+    'def.admin.orders.ordersPaid.definition': 'Orders paid inside the dates that still stand.',
+    'def.admin.orders.ordersPaid.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.admin.orders.ordersPaid.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.admin.orders.refundedOrders.definition':
+      'Orders paid in the dates that are now REFUND_PENDING or REFUNDED.',
+    'def.admin.orders.refundedOrders.includes': 'As described.',
+    'def.admin.orders.refundedOrders.excludes': 'Others.',
+    'def.admin.orders.shippingMinor.definition':
+      'Delivery charges on those orders (passed on, not revenue).',
+    'def.admin.orders.shippingMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.admin.orders.shippingMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.admin.payments.amountReceivedMinor.definition':
+      'What the provider reports having captured on succeeded payments created in the dates.',
+    'def.admin.payments.amountReceivedMinor.includes': 'As described.',
+    'def.admin.payments.amountReceivedMinor.excludes': 'Failed and pending.',
+    'def.admin.payments.amountReceivedMinor.caveats':
+      'Includes money later refunded and money not applied to an order.',
+    'def.admin.payments.paymentAttempts.definition': 'Payments started inside the dates.',
+    'def.admin.payments.paymentAttempts.includes': 'Every status.',
+    'def.admin.payments.paymentAttempts.excludes': 'None.',
+    'def.admin.payments.paymentSuccessRate.definition':
+      'Share of finished attempts that succeeded.',
+    'def.admin.payments.paymentSuccessRate.includes': 'Attempts with a final outcome.',
+    'def.admin.payments.paymentSuccessRate.excludes':
+      'Still pending, cancelled and expired attempts (abandoned, not declined).',
+    'def.admin.payments.paymentsFailed.definition':
+      'Of those, payments the provider reported as failed.',
+    'def.admin.payments.paymentsFailed.includes': 'As described.',
+    'def.admin.payments.paymentsFailed.excludes': 'Others.',
+    'def.admin.payments.paymentsSucceeded.definition': 'Of those, payments the provider confirmed.',
+    'def.admin.payments.paymentsSucceeded.includes':
+      'Refunded payments were successful payments first.',
+    'def.admin.payments.paymentsSucceeded.excludes': 'Pending, failed, cancelled, expired.',
+    'def.admin.payments.unappliedPayments.definition':
+      'Payments that succeeded but could not be applied to their order (cancelled, changed, wrong amount); the money is parked and queued for refund.',
+    'def.admin.payments.unappliedPayments.includes': 'As described.',
+    'def.admin.payments.unappliedPayments.excludes': 'Applied payments.',
+    'def.admin.payouts.paidOutMinor.definition':
+      'Money paid to sellers: withdrawals completed inside the dates.',
+    'def.admin.payouts.paidOutMinor.includes': 'As described.',
+    'def.admin.payouts.paidOutMinor.excludes': 'Others.',
+    'def.admin.payouts.payoutsFailed.definition':
+      'Withdrawals the provider reported as failed in the dates (funds were returned to the seller).',
+    'def.admin.payouts.payoutsFailed.includes': 'As described.',
+    'def.admin.payouts.payoutsFailed.excludes': 'Others.',
+    'def.admin.payouts.payoutsPendingMinor.definition':
+      'Withdrawals requested but not yet paid, rejected or cancelled.',
+    'def.admin.payouts.payoutsPendingMinor.includes': 'All dates.',
+    'def.admin.payouts.payoutsPendingMinor.excludes': 'Paid, failed, rejected, cancelled.',
+    'def.admin.payouts.sellerBalancesMinor.definition':
+      'Total of all seller earnings balances: pending (not yet delivered) plus available.',
+    'def.admin.payouts.sellerBalancesMinor.includes': 'All sellers.',
+    'def.admin.payouts.sellerBalancesMinor.excludes': 'Platform accounts.',
+    'def.admin.payouts.sellerBalancesMinor.caveats':
+      'A liability snapshot from the ledger projection.',
+    'def.admin.payouts.withdrawalsRequested.definition':
+      'Seller withdrawal requests created inside the dates.',
+    'def.admin.payouts.withdrawalsRequested.includes': 'Every status.',
+    'def.admin.payouts.withdrawalsRequested.excludes': 'None.',
+    'def.admin.refunds.refundedMinor.definition':
+      'Money returned to buyers: refunds the provider completed inside the dates.',
+    'def.admin.refunds.refundedMinor.includes': 'As described.',
+    'def.admin.refunds.refundedMinor.excludes': 'Requested, approved, processing, failed.',
+    'def.admin.refunds.refundsFailed.definition':
+      'Refunds the provider reported as failed and not yet retried to success.',
+    'def.admin.refunds.refundsFailed.includes': 'All dates.',
+    'def.admin.refunds.refundsFailed.excludes': 'Others.',
+    'def.admin.refunds.refundsOpenMinor.definition': 'Amount of refunds not yet completed.',
+    'def.admin.refunds.refundsOpenMinor.includes': 'All dates.',
+    'def.admin.refunds.refundsOpenMinor.excludes': 'Completed.',
+    'def.admin.refunds.refundsRequested.definition': 'Refund requests created inside the dates.',
+    'def.admin.refunds.refundsRequested.includes': 'Every status.',
+    'def.admin.refunds.refundsRequested.excludes': 'None.',
+    'def.admin.registrations.registrationsApproved.definition':
+      'Registrations submitted in the dates that are now approved.',
+    'def.admin.registrations.registrationsApproved.includes': 'As described.',
+    'def.admin.registrations.registrationsApproved.excludes': 'Others.',
+    'def.admin.registrations.registrationsApproved.caveats':
+      'Outcome today, not at the end of the dates.',
+    'def.admin.registrations.registrationsPendingNow.definition':
+      'Registrations awaiting a decision at this moment.',
+    'def.admin.registrations.registrationsPendingNow.includes': 'All dates.',
+    'def.admin.registrations.registrationsPendingNow.excludes': 'Decided.',
+    'def.admin.registrations.registrationsSubmitted.definition':
+      'Identity, farm-owner and seller registrations submitted inside the dates.',
+    'def.admin.registrations.registrationsSubmitted.includes': 'Every status.',
+    'def.admin.registrations.registrationsSubmitted.excludes': 'None.',
+    'def.admin.users.activeUsers.definition': 'Accounts currently in status active.',
+    'def.admin.users.activeUsers.includes': 'As described.',
+    'def.admin.users.activeUsers.excludes': 'Suspended, deactivated, pending verification.',
+    'def.admin.users.activeUsers.caveats': 'Status, not recent activity.',
+    'def.admin.users.newUsersInRange.definition': 'Accounts registered inside the dates.',
+    'def.admin.users.newUsersInRange.includes': 'Every status.',
+    'def.admin.users.newUsersInRange.excludes': 'None.',
+    'def.admin.users.suspendedUsers.definition': 'Accounts currently suspended.',
+    'def.admin.users.suspendedUsers.includes': 'As described.',
+    'def.admin.users.suspendedUsers.excludes': 'Others.',
+    'def.admin.users.totalUsers.definition':
+      'All accounts ever registered (whatever their status).',
+    'def.admin.users.totalUsers.includes': 'Every status.',
+    'def.admin.users.totalUsers.excludes': 'None.',
+    'def.farm.animals.animalsOnFarm.definition':
+      'Animals currently recorded as active or for sale.',
+    'def.farm.animals.animalsOnFarm.includes':
+      'Active and for-sale animals (optionally of one animal type).',
+    'def.farm.animals.animalsOnFarm.excludes':
+      'Sold, deceased, transferred, lost and archived animals.',
+    'def.farm.animals.totalRecorded.definition':
+      'Every non-archived animal record whatever its status.',
+    'def.farm.animals.totalRecorded.includes': 'All statuses.',
+    'def.farm.animals.totalRecorded.excludes': 'Archived animals.',
+    'def.farm.assessments.assessmentsAccepted.definition':
+      'Assessments marked reviewed by the owner.',
+    'def.farm.assessments.assessmentsAccepted.includes': 'As above.',
+    'def.farm.assessments.assessmentsAccepted.excludes': 'Others.',
+    'def.farm.assessments.assessmentsDismissed.definition': 'Assessments dismissed by the owner.',
+    'def.farm.assessments.assessmentsDismissed.includes': 'As above.',
+    'def.farm.assessments.assessmentsDismissed.excludes': 'Others.',
+    'def.farm.assessments.assessmentsInRange.definition':
+      'Sale assessments created for this farm’s animals in the dates.',
+    'def.farm.assessments.assessmentsInRange.includes': 'All.',
+    'def.farm.assessments.assessmentsInRange.excludes': 'None.',
+    'def.farm.assessments.assessmentsInRange.caveats': 'Decision support, not advice.',
+    'def.farm.assessments.assessmentsPending.definition':
+      'Assessments in the dates that the owner has not reviewed or dismissed.',
+    'def.farm.assessments.assessmentsPending.includes': 'As above.',
+    'def.farm.assessments.assessmentsPending.excludes': 'Reviewed/dismissed.',
+    'def.farm.assessments.highConfidence.definition':
+      'Assessments whose data-completeness indicator is high.',
+    'def.farm.assessments.highConfidence.includes': 'As above.',
+    'def.farm.assessments.highConfidence.excludes': 'Others.',
+    'def.farm.assessments.lowConfidence.definition':
+      'Assessments whose data-completeness indicator is low.',
+    'def.farm.assessments.lowConfidence.includes': 'As above.',
+    'def.farm.assessments.lowConfidence.excludes': 'Others.',
+    'def.farm.assessments.lowConfidence.caveats':
+      'A completeness indicator, not a statistical probability.',
+    'def.farm.assessments.withPriceRange.definition':
+      'Assessments for which enough authorised market data existed to suggest a range.',
+    'def.farm.assessments.withPriceRange.includes': 'As above.',
+    'def.farm.assessments.withPriceRange.excludes': 'Others.',
+    'def.farm.costs.costAssignedToAnimalsMinor.definition':
+      'Part of the recorded costs that names an animal.',
+    'def.farm.costs.costAssignedToAnimalsMinor.includes': 'As above.',
+    'def.farm.costs.costAssignedToAnimalsMinor.excludes': 'Farm-wide costs.',
+    'def.farm.costs.expenseRecords.definition':
+      'Number of expense records behind the recorded costs.',
+    'def.farm.costs.expenseRecords.includes': 'As above.',
+    'def.farm.costs.expenseRecords.excludes': 'Voided.',
+    'def.farm.costs.farmWideCostMinor.definition':
+      'Part of the recorded costs not assigned to any animal (shared feed, labour, equipment).',
+    'def.farm.costs.farmWideCostMinor.includes': 'As above.',
+    'def.farm.costs.farmWideCostMinor.excludes': 'Costs assigned to an animal.',
+    'def.farm.costs.farmWideCostMinor.caveats':
+      'Not allocated to animals: FARM+ does not guess shares.',
+    'def.farm.costs.recordedCostMinor.definition': 'Expenses recorded inside the selected days.',
+    'def.farm.costs.recordedCostMinor.includes': 'Costs assigned to an animal and farm-wide costs.',
+    'def.farm.costs.recordedCostMinor.excludes': 'Voided expenses. Anything not recorded in FARM+.',
+    'def.farm.costs.recordedCostMinor.caveats':
+      'Recorded costs only — not total cost. With an animal-type filter only costs assigned to animals of that type are counted.',
+    'def.farm.feeding.animalsFed.definition':
+      'Different animals named in a feeding log in the dates.',
+    'def.farm.feeding.animalsFed.includes': 'Per-animal logs.',
+    'def.farm.feeding.animalsFed.excludes': 'Group logs (no animal named) and voided records.',
+    'def.farm.feeding.feedingLogsInRange.definition':
+      'Feeding log entries dated inside the selected days.',
+    'def.farm.feeding.feedingLogsInRange.includes': 'Per-animal and group logs.',
+    'def.farm.feeding.feedingLogsInRange.excludes': 'Schedules (plans) and voided records.',
+    'def.farm.feeding.groupFeedingLogs.definition':
+      'Feeding logs for a group rather than a named animal.',
+    'def.farm.feeding.groupFeedingLogs.includes': 'As above.',
+    'def.farm.feeding.groupFeedingLogs.excludes': 'Voided.',
+    'def.farm.growth.animalsWeighed.definition':
+      'Different animals with at least one weighing in the dates.',
+    'def.farm.growth.animalsWeighed.includes': 'Same as weighings.',
+    'def.farm.growth.animalsWeighed.excludes': 'Voided records.',
+    'def.farm.growth.animalsWithGainEstimate.definition':
+      'Animals weighed at least twice, a week or more apart, inside the dates.',
+    'def.farm.growth.animalsWithGainEstimate.includes': 'As above.',
+    'def.farm.growth.animalsWithGainEstimate.excludes':
+      'Animals with a single weighing or weighings closer than 7 days.',
+    'def.farm.growth.animalsWithGainEstimate.caveats':
+      'Closer readings are mostly measurement noise.',
+    'def.farm.growth.averageDailyGainG.definition':
+      'Mean of each animal’s average daily weight gain across the dates.',
+    'def.farm.growth.averageDailyGainG.includes':
+      'Animals counted in “Animals with a gain estimate”.',
+    'def.farm.growth.averageDailyGainG.excludes':
+      'All other animals (not zero: they are left out).',
+    'def.farm.growth.averageDailyGainG.caveats':
+      'Unweighted mean of animals, not herd-weighted. Includes tape/visual estimates.',
+    'def.farm.growth.estimatedWeightShare.definition':
+      'Share of weighings that were tape or visual estimates rather than a scale reading.',
+    'def.farm.growth.estimatedWeightShare.includes': 'All weighings in the dates.',
+    'def.farm.growth.estimatedWeightShare.excludes': 'Voided records.',
+    'def.farm.growth.weighingsInRange.definition': 'Weight records dated inside the selected days.',
+    'def.farm.growth.weighingsInRange.includes': 'Scale, tape and visual weights.',
+    'def.farm.growth.weighingsInRange.excludes': 'Voided records.',
+    'def.farm.health.animalsWithIllnessOrTreatment.definition':
+      'Different animals that have an illness or treatment record in the dates.',
+    'def.farm.health.animalsWithIllnessOrTreatment.includes': 'As above.',
+    'def.farm.health.animalsWithIllnessOrTreatment.excludes': 'Voided.',
+    'def.farm.health.healthRecordsInRange.definition':
+      'Health records dated inside the selected days.',
+    'def.farm.health.healthRecordsInRange.includes':
+      'Illness, treatment, vaccination, recovery, checkup, other.',
+    'def.farm.health.healthRecordsInRange.excludes': 'Voided records.',
+    'def.farm.health.healthRecordsInRange.caveats':
+      'Counts of what was recorded. FARM+ does not interpret health records.',
+    'def.farm.health.illnessRecords.definition': 'Health records of type illness in the dates.',
+    'def.farm.health.illnessRecords.includes': 'As above.',
+    'def.farm.health.illnessRecords.excludes': 'Voided.',
+    'def.farm.health.treatmentRecords.definition': 'Health records of type treatment in the dates.',
+    'def.farm.health.treatmentRecords.includes': 'As above.',
+    'def.farm.health.treatmentRecords.excludes': 'Voided.',
+    'def.farm.health.vaccinationRecords.definition':
+      'Health records of type vaccination in the dates.',
+    'def.farm.health.vaccinationRecords.includes': 'As above.',
+    'def.farm.health.vaccinationRecords.excludes': 'Voided.',
+    'def.farm.health.vaccinationsDueNext30Days.definition':
+      'Different animals whose recorded “next due” date falls within the next 30 days.',
+    'def.farm.health.vaccinationsDueNext30Days.includes': 'All health records.',
+    'def.farm.health.vaccinationsDueNext30Days.excludes': 'Voided records.',
+    'def.farm.health.vaccinationsDueNext30Days.caveats': 'Only due dates that were recorded.',
+    'def.farm.health.withdrawalsRunning.definition':
+      'Different animals with a recorded medicine withdrawal period that has not ended yet.',
+    'def.farm.health.withdrawalsRunning.includes': 'All health records, whatever their date.',
+    'def.farm.health.withdrawalsRunning.excludes': 'Voided records.',
+    'def.farm.health.withdrawalsRunning.caveats': 'Only periods that were recorded.',
+    'def.farm.listings.activeListings.definition': 'Animal listings currently on sale.',
+    'def.farm.listings.activeListings.includes': 'Listings of this farm.',
+    'def.farm.listings.activeListings.excludes':
+      'Draft, pending, reserved, paused, sold, expired, cancelled.',
+    'def.farm.listings.listingsCreatedInRange.definition':
+      'Listings created inside the selected days.',
+    'def.farm.listings.listingsCreatedInRange.includes': 'Any status.',
+    'def.farm.listings.listingsCreatedInRange.excludes': 'None.',
+    'def.farm.listings.pendingReviewListings.definition':
+      'Listings submitted and waiting for a moderator.',
+    'def.farm.listings.pendingReviewListings.includes': 'This farm.',
+    'def.farm.listings.pendingReviewListings.excludes': 'Others.',
+    'def.farm.listings.reservedListings.definition':
+      'Listings with an accepted deal waiting for checkout/payment.',
+    'def.farm.listings.reservedListings.includes': 'This farm.',
+    'def.farm.listings.reservedListings.excludes': 'Others.',
+    'def.farm.products.activeProducts.definition': 'Shop products currently on sale.',
+    'def.farm.products.activeProducts.includes': 'This farm.',
+    'def.farm.products.activeProducts.excludes': 'Other statuses.',
+    'def.farm.products.lowStockProducts.definition':
+      'Active products with something available but at or below their own low-stock warning level.',
+    'def.farm.products.lowStockProducts.includes': 'Products that have a warning level.',
+    'def.farm.products.lowStockProducts.excludes': 'Products without one.',
+    'def.farm.products.outOfStockProducts.definition':
+      'Active products with nothing available to order.',
+    'def.farm.products.outOfStockProducts.includes': 'This farm.',
+    'def.farm.products.outOfStockProducts.excludes': 'Other statuses.',
+    'def.farm.products.pendingReviewProducts.definition':
+      'Products submitted and waiting for a moderator.',
+    'def.farm.products.pendingReviewProducts.includes': 'This farm.',
+    'def.farm.products.pendingReviewProducts.excludes': 'Others.',
+    'def.farm.products.productGrossSalesMinor.definition':
+      'Gross sales from shop orders (the shop part of Gross sales).',
+    'def.farm.products.productGrossSalesMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates (shop orders)',
+    'def.farm.products.productGrossSalesMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.farm.products.productGrossSalesMinor.caveats':
+      'Equals Gross sales when filtered to shop orders.',
+    'def.farm.products.unitsSold.definition': 'Units on paid, standing shop orders in the dates.',
+    'def.farm.products.unitsSold.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates (shop orders)',
+    'def.farm.products.unitsSold.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.farm.sales.averageOrderValueMinor.definition': 'Gross sales per paid order.',
+    'def.farm.sales.averageOrderValueMinor.includes': 'As gross sales.',
+    'def.farm.sales.averageOrderValueMinor.excludes': 'As gross sales.',
+    'def.farm.sales.cancelledOrders.definition':
+      'Orders placed inside the dates and cancelled (never paid, or expired).',
+    'def.farm.sales.cancelledOrders.includes': 'As described.',
+    'def.farm.sales.cancelledOrders.excludes': 'Refunded orders.',
+    'def.farm.sales.estimatedNetProceedsMinor.definition':
+      'Gross sales minus platform commission: what the sales are expected to pay out to the farm.',
+    'def.farm.sales.estimatedNetProceedsMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.farm.sales.estimatedNetProceedsMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.farm.sales.estimatedNetProceedsMinor.caveats':
+      'ESTIMATED: before the seller’s shipping costs, payment-provider fees, taxes and costs outside FARM+. Not profit.',
+    'def.farm.sales.grossSalesMinor.definition':
+      'Item price of paid, standing orders. Shipping is not part of it.',
+    'def.farm.sales.grossSalesMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.farm.sales.grossSalesMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.farm.sales.grossSalesMinor.caveats':
+      'Not profit, not revenue after fees: see Estimated net proceeds.',
+    'def.farm.sales.netProceedsOverRecordedCostMinor.definition':
+      'Estimated net proceeds minus recorded costs in the same dates. A rough indicator, shown only if you may see costs.',
+    'def.farm.sales.netProceedsOverRecordedCostMinor.includes': 'Both as defined above.',
+    'def.farm.sales.netProceedsOverRecordedCostMinor.excludes':
+      'Costs that were not recorded; timing differences (an animal’s costs span many months).',
+    'def.farm.sales.netProceedsOverRecordedCostMinor.caveats':
+      'NOT PROFIT: unrecorded costs, shipping costs, taxes and fees are not in it, and costs and sales of different animals fall in different periods.',
+    'def.farm.sales.netProceedsPendingMinor.definition':
+      'Part of the estimated net proceeds from orders paid but not yet delivered (held until delivery).',
+    'def.farm.sales.netProceedsPendingMinor.includes': 'Paid orders in progress.',
+    'def.farm.sales.netProceedsPendingMinor.excludes': 'Delivered orders.',
+    'def.farm.sales.netProceedsReleasedMinor.definition':
+      'Part of the estimated net proceeds from orders already delivered: earnings that became withdrawable.',
+    'def.farm.sales.netProceedsReleasedMinor.includes': 'Paid orders that reached DELIVERED.',
+    'def.farm.sales.netProceedsReleasedMinor.excludes': 'Orders still in progress.',
+    'def.farm.sales.ordersCreated.definition': 'Orders created for this farm inside the dates.',
+    'def.farm.sales.ordersCreated.includes': 'Every status.',
+    'def.farm.sales.ordersCreated.excludes': 'None.',
+    'def.farm.sales.ordersCreated.caveats': 'Includes orders never paid.',
+    'def.farm.sales.ordersPaid.definition':
+      'Orders whose payment was confirmed inside the dates and that still stand.',
+    'def.farm.sales.ordersPaid.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.farm.sales.ordersPaid.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.farm.sales.platformCommissionMinor.definition':
+      'The fee FARM+ keeps from those sales, as fixed on each order at checkout.',
+    'def.farm.sales.platformCommissionMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.farm.sales.platformCommissionMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'def.farm.sales.platformCommissionMinor.caveats':
+      'Later changes to commission rules never alter it.',
+    'def.farm.sales.refundedGrossMinor.definition':
+      'Item price of orders paid inside the dates that are now REFUND_PENDING or REFUNDED. Excluded from gross sales.',
+    'def.farm.sales.refundedGrossMinor.includes': 'As described.',
+    'def.farm.sales.refundedGrossMinor.excludes': 'Everything else.',
+    'def.farm.sales.shippingCollectedMinor.definition':
+      'Delivery charges buyers paid on those orders. Kept apart from sales: it is passed on, not income from the goods.',
+    'def.farm.sales.shippingCollectedMinor.includes':
+      'orders in status PAID, PROCESSING, SHIPPED or DELIVERED whose payment was confirmed (paidAt) inside the dates',
+    'def.farm.sales.shippingCollectedMinor.excludes':
+      'orders that were cancelled before payment, and paid orders now REFUND_PENDING or REFUNDED (they are shown separately as excluded/refunded)',
+    'alert.unapplied_payments':
+      '{count} payment(s) were received but could not be applied to an order ({amount} parked, refund needed).',
+    'alert.failed_refunds': '{count} refund(s) failed at the provider and need a retry.',
+    'alert.failed_payouts':
+      '{count} payout(s) failed in the last 7 days (funds were returned to the sellers).',
+    'alert.stale_withdrawals':
+      '{count} withdrawal request(s) have waited more than 3 days for a decision.',
+    'alert.payment_failure_rate':
+      '{count} of {total} payments failed in the last 24 hours ({percent}%).',
+    'alert.stale_payment_attempts':
+      '{count} payment attempt(s) are past their window and not yet expired (the cleanup job handles them).',
   },
 });

@@ -15,14 +15,19 @@ Only the farm owner can manage staff. Staff need a FARM+ account first.
 ## Invite staff
 
 1. In the farm menu, open "Farm staff".
+   ![The farm staff page](img:1)
 2. Under "Invite staff", find the user by their exact e-mail or phone number.
+   ![The invite staff section](img:2)
 3. Choose the "Role": manager, worker or viewer. To pick permissions yourself, tick "Choose permissions".
+   ![The role field and Choose permissions](img:3)
 4. Press "Send invitation". They get access after accepting it under "My invitations".
 
 ## Let staff ask to join
 
 1. Share the "Join link" with your team.
+   ![The join link](img:4)
 2. Requests appear under "Invitations and join requests". Press "Approve" or "Decline".
+   ![Invitations and join requests](img:5)
 
 ## Change or revoke access
 

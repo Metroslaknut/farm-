@@ -507,7 +507,7 @@ function Shell() {
   const segment = match?.params.farmId;
   const urlFarmId = segment && !RESERVED.has(segment) ? segment : undefined;
   const farmId = urlFarmId ?? setup.data?.farms[0]?.id;
-  const { farm } = useFarm(farmId);
+  const { farm, missing } = useFarm(farmId);
   // One toggle: on wide screens it hides the sidebar, on narrow screens it opens the drawer.
   const [toggled, setToggled] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -571,7 +571,19 @@ function Shell() {
         </header>
         <main id="main" tabIndex={-1} className="fd-main">
           <RouteErrorBoundary>
-            <Outlet />
+            {missing && urlFarmId ? (
+              // A farm that does not exist (or is not the user's): say so, instead of a page with filters and a
+              // "try again" that can never work (staging QA #19).
+              <div className="ds-card" role="alert">
+                <h1>{t('farmMissing.title')}</h1>
+                <p>{t('farmMissing.body')}</p>
+                <p>
+                  <Link to="/farms/list">{t('farmMissing.list')}</Link>
+                </p>
+              </div>
+            ) : (
+              <Outlet />
+            )}
           </RouteErrorBoundary>
         </main>
         <footer className="fd-footer">

@@ -18,7 +18,7 @@ export function authRouter(ctx: AppContext, auth: AuthService): Router {
   });
 
   router.post('/register', limit.register, c.register);
-  router.post('/login', limit.login, c.login);
+  router.post('/login', limit.loginAddress, limit.login, c.login);
   router.post('/mfa/verify', limit.mfa, c.mfaVerify);
   router.post('/refresh', limit.refresh, c.refresh);
 
@@ -32,6 +32,8 @@ export function authRouter(ctx: AppContext, auth: AuthService): Router {
   router.get('/me', c.me);
   router.post('/logout', c.logout);
   router.post('/logout-all', c.logoutAll);
+  // A new browser tab asks an open, signed-in tab for a session (web tab hand-off, QA #14).
+  router.post('/session/handoff', limit.refresh, c.sessionHandoff);
   router.get('/sessions', c.sessions);
   router.delete('/sessions/:id', c.revokeSession);
   router.post('/password/change', limit.sensitive, c.changePassword);

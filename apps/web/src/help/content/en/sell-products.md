@@ -16,10 +16,15 @@ You need to be an [approved seller](help:verify-identity-seller) and the owner o
 ## Steps
 
 1. Open the "Shop", press "Sell products", then "Open products" on your farm.
+   ![The Open products button of a farm](img:1)
 2. Press "New product".
+   ![The New product button](img:2)
 3. Choose the "Category" and enter a "Title" that says what it is, e.g. Layer feed 30 kg.
+   ![The category and title fields](img:3)
 4. Enter the "Price per unit (฿)" and the "Units in stock".
+   ![The price and stock section](img:4)
 5. Add photos, then press "Create product".
+   ![The Create product button](img:5)
 6. A moderator reviews the product before it goes live. Follow its status under "My products".
 
 :::note Categories not open yet
