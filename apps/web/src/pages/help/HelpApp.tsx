@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
 import { formatDate } from '@farmplus/i18n';
 import { publicApi } from '../../api';
@@ -17,6 +17,9 @@ import { search } from '../../help/search';
 import { useTours } from '../../tours/TourProvider';
 import NotFoundPage from '../NotFoundPage';
 import './help.css';
+
+/** The assistant panel loads on its own (docs/architecture/assistant.md). */
+const AssistantPanel = lazy(() => import('../../components/assistant/AssistantPanel'));
 
 /** `/help` (public): the help centre. Article content: `src/help/content/{th,en}/<slug>.md`. */
 export default function HelpApp() {
@@ -87,6 +90,10 @@ function HelpIndexPage() {
           </button>
         </section>
       )}
+
+      <Suspense fallback={null}>
+        <AssistantPanel />
+      </Suspense>
 
       {byCategory(locale).map(({ category, items }) => (
         <section

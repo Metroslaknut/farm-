@@ -18,3 +18,4 @@ export * from './chat';
 export * from './dates';
 export * from './help';
 export * from './tours';
+export * from './assistant';

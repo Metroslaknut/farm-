@@ -10,6 +10,25 @@ export default defineMessages({
     'index.results': 'ผลการค้นหา',
     'index.noResults': 'ไม่พบบทความที่ตรงกับ "{q}" ลองใช้คำอื่น หรือดูหมวดด้านล่าง',
     'index.clear': 'ล้างการค้นหา',
+    'assistant.title': 'ถามผู้ช่วย FARM+',
+    'assistant.label': 'คำถามเรื่องการใช้งาน FARM+',
+    'assistant.placeholder': 'เช่น เพิ่มไก่ยังไง, ทำไมสร้างฟาร์มไม่ได้',
+    'assistant.privacy': 'ไม่ต้องใส่ข้อมูลส่วนตัว เช่น เบอร์โทร เลขบัตรประชาชน หรือเลขบัญชี',
+    'assistant.ask': 'ถาม',
+    'assistant.asking': 'กำลังหาคำตอบ…',
+    'assistant.error': 'ถามไม่สำเร็จ ลองใหม่อีกครั้ง',
+    'assistant.aiNote': 'คำตอบนี้มาจาก AI และอาจไม่ถูกต้องทั้งหมด โปรดตรวจสอบกับบทความที่อ้างถึง',
+    'assistant.sources': 'จากบทความ',
+    'assistant.articles': 'บทความที่เกี่ยวข้อง',
+    'assistant.pages': 'ไปที่หน้า',
+    'assistant.tour': 'เริ่มคำแนะนำ: {name}',
+    'assistant.none': 'ไม่พบบทความที่ตรงกับคำถาม ลองใช้คำอื่น หรือดูหมวดด้านล่าง',
+    'assistant.reason.guest': 'เข้าสู่ระบบเพื่อรับคำตอบจากผู้ช่วย AI ตอนนี้แสดงบทความที่เกี่ยวข้อง',
+    'assistant.reason.disabled': 'คำตอบจากผู้ช่วย AI ยังไม่เปิดใช้ ตอนนี้แสดงบทความที่เกี่ยวข้อง',
+    'assistant.reason.limit':
+      'คุณใช้คำตอบจาก AI ครบจำนวนของวันนี้แล้ว ตอนนี้แสดงบทความที่เกี่ยวข้อง',
+    'assistant.reason.unavailable': 'ผู้ช่วย AI ตอบไม่ได้ในขณะนี้ ตอนนี้แสดงบทความที่เกี่ยวข้อง',
+    'assistant.reason.unchecked': 'ผู้ช่วย AI ตอบไม่ได้ในขณะนี้ ตอนนี้แสดงบทความที่เกี่ยวข้อง',
     'category.getting-started': 'เริ่มต้นใช้งาน',
     'category.account': 'บัญชีและความปลอดภัย',
     'category.farm': 'ฟาร์มและสัตว์',
@@ -45,6 +64,32 @@ export default defineMessages({
     'index.results': 'Search results',
     'index.noResults': 'No article matches "{q}". Try other words, or browse the sections below.',
     'index.clear': 'Clear search',
+    'assistant.title': 'Ask the FARM+ assistant',
+    'assistant.label': 'Your question about using FARM+',
+    'assistant.placeholder': 'e.g. how do I add an animal, why can I not create a farm',
+    'assistant.privacy':
+      'No personal details needed, such as phone, ID card or bank account numbers.',
+    'assistant.ask': 'Ask',
+    'assistant.asking': 'Finding an answer…',
+    'assistant.error': 'Could not ask. Please try again.',
+    'assistant.aiNote':
+      'This answer comes from AI and may not be fully correct. Check the cited articles.',
+    'assistant.sources': 'From the articles',
+    'assistant.articles': 'Related articles',
+    'assistant.pages': 'Go to',
+    'assistant.tour': 'Start the tips: {name}',
+    'assistant.none':
+      'No article matches your question. Try other words, or browse the sections below.',
+    'assistant.reason.guest':
+      'Sign in to get answers from the AI assistant. Related articles are shown for now.',
+    'assistant.reason.disabled':
+      'AI answers are not switched on yet. Related articles are shown for now.',
+    'assistant.reason.limit':
+      "You have used today's AI answers. Related articles are shown for now.",
+    'assistant.reason.unavailable':
+      'The AI assistant cannot answer right now. Related articles are shown for now.',
+    'assistant.reason.unchecked':
+      'The AI assistant cannot answer right now. Related articles are shown for now.',
     'category.getting-started': 'Getting started',
     'category.account': 'Account and security',
     'category.farm': 'Farms and animals',

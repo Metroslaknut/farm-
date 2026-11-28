@@ -151,11 +151,14 @@ export class MockAiProvider implements AiProvider {
   failWith: AiErrorCode | null = null;
   calls = 0;
   lastRequest: AiRequest | null = null;
+  /** Tests: the exact text to return for the next assistant questions (null = a grounded answer). */
+  assistantReply: string | null = null;
 
   async complete(req: AiRequest): Promise<AiResponse> {
     this.calls++;
     this.lastRequest = req;
     if (this.failWith) throw new AiProviderError(this.failWith, 'simulated');
+    if (req.system.startsWith('You are the FARM+ help assistant')) return this.assistant(req);
     const facts = req.user;
     const base = {
       summary: 'This is a plain-language reading of the recorded facts only.',
@@ -185,6 +188,30 @@ export class MockAiProvider implements AiProvider {
       model: this.model,
     };
   }
+
+  private assistant(req: AiRequest): AiResponse {
+    const text = this.assistantReply ?? mockAssistantReply(req);
+    return {
+      text,
+      inputTokens: Math.ceil((req.system.length + req.user.length) / 4),
+      outputTokens: Math.ceil(text.length / 4),
+      model: this.model,
+    };
+  }
+}
+
+/** The mock's assistant reply: cites the first article it was handed and offers the help centre. */
+function mockAssistantReply(req: AiRequest): string {
+  const slug = /<chunk slug="([^"]+)"/.exec(req.user)?.[1];
+  const thai = req.user.includes('<locale>th</locale>');
+  return JSON.stringify({
+    answer: thai
+      ? '[คำตอบทดสอบ] ทำตามขั้นตอนในบทความช่วยเหลือที่อ้างถึงด้านล่าง'
+      : '[Test answer] Follow the steps in the help article cited below.',
+    citations: slug ? [slug] : [],
+    links: ['help'],
+    tours: ['help-centre'],
+  });
 }
 
 export function createAiProvider(env: ApiEnv): AiProvider | null {

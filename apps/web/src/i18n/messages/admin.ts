@@ -892,6 +892,11 @@ export default defineMessages({
       'ราคาต่อหนึ่งล้านโทเคนขาออก หน่วยหนึ่งในล้านบาท (ใช้ติดตามค่าใช้จ่ายเท่านั้น 0 = ยังไม่ได้ตั้งค่า)',
     'setting.ai.blockedNarrativeTerms':
       'รากคำที่ห้ามปรากฏในคำอธิบายของ AI คั่นด้วยจุลภาค ("treat" บล็อก "treatment" ด้วย คำภาษาไทยจะจับได้ทุกตำแหน่งในข้อความ): ห้ามวินิจฉัย การรักษา การอ้างสถานะสุขภาพ หรือการรับประกัน เป็นรายการเริ่มต้นที่เพิ่มเติมได้',
+    'setting.assistant.enabled':
+      'ให้ผู้ใช้ที่เข้าสู่ระบบได้รับคำตอบจาก AI ในผู้ช่วย FARM+ (ถาม-ตอบวิธีใช้) เมื่อปิด ทุกคนจะได้เฉพาะผลค้นหาบทความช่วยเหลือ โดยไม่เรียก AI',
+    'setting.assistant.dailyLimit':
+      'จำนวนคำตอบ AI ของผู้ช่วยสูงสุดที่ทั้งแพลตฟอร์มขอได้ต่อวัน (เพื่อคุมค่าใช้จ่าย) เกินจากนี้จะได้เฉพาะผลค้นหาบทความ',
+    'setting.assistant.perUserDaily': 'จำนวนคำตอบ AI ของผู้ช่วยสูงสุดที่ผู้ใช้หนึ่งคนขอได้ต่อวัน',
     'setting.analytics.cacheSeconds':
       'ระยะเวลาที่ใช้รายงานแดชบอร์ดซ้ำก่อนคำนวณใหม่ (วินาที, 0 = ไม่แคช) ตัวเลขอาจเก่าได้เท่านี้ และปุ่มรีเฟรชจะคำนวณใหม่ทันที',
     'setting.platform.maintenanceMode':
@@ -1868,6 +1873,12 @@ export default defineMessages({
       'Your price per million OUTPUT tokens, in millionths of a baht (for cost monitoring only; 0 = not configured).',
     'setting.ai.blockedNarrativeTerms':
       'Comma-separated word STEMS an AI explanation may not contain ("treat" also blocks "treatment"; Thai terms match anywhere in the text): no diagnosis, treatment, health-status claims or guarantees. A starter list: extend it for your needs.',
+    'setting.assistant.enabled':
+      'Let signed-in users get AI answers from the FARM+ assistant (help Q&A). Off: everyone gets help-article search only, with no AI call.',
+    'setting.assistant.dailyLimit':
+      'Most AI answers from the assistant the whole platform may request per day (a cost guard). Past it, people get help-article search only.',
+    'setting.assistant.perUserDaily':
+      'Most AI answers from the assistant one user may request per day.',
     'setting.analytics.cacheSeconds':
       'How long a dashboard report is reused before it is recalculated (seconds, 0 = never cache). Figures can be this old; a refresh option recalculates immediately.',
     'setting.platform.maintenanceMode':

@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:thai-night": "node test/support/thai-night.mjs",
     "admin:create": "tsx src/scripts/create-super-admin.ts",
+    "assistant:index": "tsx src/scripts/assistant-index.ts",
     "media:cleanup": "tsx src/scripts/cleanup-media.ts",
     "db": "tsx src/scripts/db.ts",
     "db:prod": "node dist/scripts/db.js",
