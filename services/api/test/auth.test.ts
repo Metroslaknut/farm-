@@ -207,6 +207,43 @@ describe('refresh tokens & sessions', () => {
     expect((await api().get('/api/v1/auth/me').set(b.auth)).status).toBe(401);
   });
 
+  it('a signed-in tab can hand a separate session to a new tab (QA #14)', async () => {
+    const a = await createUser(h.app);
+    expect((await api().post('/api/v1/auth/session/handoff')).status).toBe(401);
+    const res = await api().post('/api/v1/auth/session/handoff').set(a.auth);
+    expect(res.status).toBe(201);
+    const tab2 = res.body.tokens as { accessToken: string; refreshToken: string };
+    expect(tab2.refreshToken).not.toBe(a.refreshToken);
+    // Two sessions now; each tab rotates its own refresh token without touching the other.
+    expect((await api().get('/api/v1/auth/sessions').set(a.auth)).body.sessions).toHaveLength(2);
+    expect(
+      (await api().post('/api/v1/auth/refresh').send({ refreshToken: tab2.refreshToken })).status,
+    ).toBe(200);
+    expect(
+      (await api().post('/api/v1/auth/refresh').send({ refreshToken: a.refreshToken })).status,
+    ).toBe(200);
+    expect(
+      (await api().get('/api/v1/auth/me').set('Authorization', `Bearer ${tab2.accessToken}`))
+        .status,
+    ).toBe(200);
+    // Signing out the new tab ends only its own session.
+    await api()
+      .post('/api/v1/auth/logout')
+      .set('Authorization', `Bearer ${tab2.accessToken}`)
+      .expect(204);
+    expect((await api().get('/api/v1/auth/me').set(a.auth)).status).toBe(200);
+  });
+
+  it('the handed-off session keeps the second-factor state of the tab that gave it', async () => {
+    const a = await createUser(h.app);
+    await Session.updateMany({ userId: a.id }, { $set: { mfaVerified: true } });
+    const res = await api().post('/api/v1/auth/session/handoff').set(a.auth).expect(201);
+    const sessions = await Session.find({ userId: a.id });
+    expect(sessions.every((x) => x.mfaVerified)).toBe(true);
+    expect(sessions).toHaveLength(2);
+    expect(res.body.tokens.tokenType).toBe('Bearer');
+  });
+
   it('lists own sessions and cannot revoke someone else’s', async () => {
     const a = await createUser(h.app);
     const b = await createUser(h.app);

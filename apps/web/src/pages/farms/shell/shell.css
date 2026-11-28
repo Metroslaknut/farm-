@@ -1035,3 +1035,18 @@
   height: 1px;
   opacity: 0;
 }
+
+/* Phones: every tap target at least --ds-touch-target (44px) tall (staging QA 2026-11-25). Desktop is unchanged. */
+@media (max-width: 767px) {
+  .fd-icon-btn {
+    width: var(--ds-touch-target);
+    height: var(--ds-touch-target);
+  }
+  .fd-select,
+  .fd-tabs button,
+  .fd-filters .ds-input,
+  .fd-filters .ds-select,
+  .fd-filters__actions .ds-btn {
+    min-height: var(--ds-touch-target);
+  }
+}

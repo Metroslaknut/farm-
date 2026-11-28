@@ -34,14 +34,14 @@ export function oauthRouter(
   router.get('/providers', (_req, res) => {
     res.json({ providers: service.enabled() });
   });
-  router.get('/:provider/start', limits.login, async (req, res) => {
+  router.get('/:provider/start', limits.oauth, async (req, res) => {
     const target = await service.start(
       String(req.params['provider']),
       parse(oauthStartQuerySchema, req.query),
     );
     res.redirect(302, target);
   });
-  router.get('/:provider/callback', limits.login, async (req, res) => {
+  router.get('/:provider/callback', limits.oauth, async (req, res) => {
     const target = await service.callback(
       String(req.params['provider']),
       parse(oauthCallbackQuerySchema, req.query),
@@ -49,7 +49,7 @@ export function oauthRouter(
     );
     res.redirect(302, target);
   });
-  router.post('/exchange', limits.login, async (req, res) => {
+  router.post('/exchange', limits.oauth, async (req, res) => {
     res.json(await service.exchange(parse(oauthExchangeSchema, req.body), requestMeta(req)));
   });
   return router;

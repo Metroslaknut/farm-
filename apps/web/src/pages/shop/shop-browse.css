@@ -189,3 +189,18 @@
     grid-row: auto;
   }
 }
+
+/* Phones: every tap target at least --ds-touch-target (44px) tall (staging QA 2026-11-25). Desktop is unchanged. */
+@media (max-width: 767px) {
+  /* The track stays 6px: the slider's own box (what a finger hits) is 44px tall. */
+  .shop-range {
+    height: var(--ds-touch-target);
+    border-radius: 0;
+    background: linear-gradient(
+        to right,
+        var(--ds-primary) 0 var(--fill),
+        var(--ds-border) var(--fill) 100%
+      )
+      center / 100% 6px no-repeat;
+  }
+}
