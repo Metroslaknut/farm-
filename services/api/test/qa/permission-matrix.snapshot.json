@@ -10,7 +10,8 @@
     "GET /api/v1/admin/finance/payments",
     "GET /api/v1/admin/finance/refunds",
     "GET /api/v1/admin/finance/wallet-transactions",
-    "GET /api/v1/admin/finance/withdrawals"
+    "GET /api/v1/admin/finance/withdrawals",
+    "GET /api/v1/admin/orders"
   ],
   "payments.verify": [
     "GET /api/v1/admin/finance/audit-logs/verify",

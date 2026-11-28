@@ -92,4 +92,10 @@ export const rateLimits = (env: ApiEnv) => ({
   /** Finance (Part 13): starting payments and withdrawals, and staff money actions. */
   payment: limiter(env, { windowMs: 60 * MINUTE, limit: 30 }),
   money: limiter(env, { windowMs: 60 * MINUTE, limit: 60 }),
+  /** Admin orders: revealing a buyer's delivery contact (audited), per staff account. */
+  orderContact: limiter(env, {
+    windowMs: 60 * MINUTE,
+    limit: 30,
+    key: (req) => req.actor?.userId ?? ipKeyGenerator(req.ip ?? ''),
+  }),
 });

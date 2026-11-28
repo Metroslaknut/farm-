@@ -15,6 +15,7 @@ import AdminLogin from './login';
 import MessageReportsPage from './message-reports';
 import ModerationPage from './moderation';
 import OrdersPage from './orders';
+import OrderDetail from './orders/OrderDetail';
 import PaymentsPage from './payments';
 import PermissionsPage from './permissions';
 import ProductsPage from './products';
@@ -88,6 +89,7 @@ export default function AdminApp() {
           />
           <Route path="products" element={guarded('products', <ProductsPage />)} />
           <Route path="orders" element={guarded('orders', <OrdersPage />)} />
+          <Route path="orders/:id" element={guarded('orders', <OrderDetail />)} />
           <Route path="analytics" element={guarded('analytics', <AnalyticsPage />)} />
           <Route path="reports" element={guarded('reports', <ReportsPage />)} />
           <Route path="audit-logs" element={guarded('audit-logs', <AuditLogsPage />)} />

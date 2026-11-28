@@ -34,6 +34,8 @@ GET /api/v1/admin/finance/refunds
 GET /api/v1/admin/finance/refunds/:id
 GET /api/v1/admin/finance/wallet-transactions
 GET /api/v1/admin/finance/withdrawals
+GET /api/v1/admin/orders
+GET /api/v1/admin/orders/:id
 GET /api/v1/admin/permissions
 GET /api/v1/admin/registrations
 GET /api/v1/admin/registrations/:id
@@ -177,6 +179,7 @@ POST /api/v1/admin/finance/refunds/:id/retry
 POST /api/v1/admin/finance/withdrawals/:id/approve
 POST /api/v1/admin/finance/withdrawals/:id/reject
 POST /api/v1/admin/finance/withdrawals/:id/retry
+POST /api/v1/admin/orders/:id/contact
 POST /api/v1/admin/registrations/:id/approve
 POST /api/v1/admin/registrations/:id/reinstate
 POST /api/v1/admin/registrations/:id/reject

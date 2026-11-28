@@ -189,6 +189,8 @@ schema.index({ buyerId: 1, createdAt: -1, _id: -1 });
 schema.index({ farmId: 1, status: 1, createdAt: -1, _id: -1 });
 // The seller's order list without a status filter (the index above only serves it when a status is given).
 schema.index({ farmId: 1, createdAt: -1, _id: -1 });
+// Admin orders list: by status (or every status, merge-sorted), newest first.
+schema.index({ status: 1, createdAt: -1, _id: -1 });
 schema.index({ status: 1, paymentDueAt: 1 });
 schema.index({ status: 1, autoConfirmAt: 1 });
 // Analytics: sales are counted by the day payment was confirmed, per farm and platform-wide.

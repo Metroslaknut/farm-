@@ -78,6 +78,9 @@ const ENDPOINTS: {
     body: { key: 'zz_probe', name: 'Probe' },
   },
   { method: 'patch', path: `/admin/roles/${ID}`, permission: 'roles.manage', body: { name: 'x' } },
+  { method: 'get', path: '/admin/orders', permission: 'payments.read' },
+  { method: 'get', path: `/admin/orders/${ID}`, permission: 'payments.read' },
+  { method: 'post', path: `/admin/orders/${ID}/contact`, permission: 'payments.read' },
   { method: 'get', path: '/admin/permissions', permission: 'roles.read' },
   { method: 'get', path: '/admin/audit-logs', permission: 'audit_logs.read' },
   { method: 'get', path: '/admin/settings', permission: 'settings.read' },
@@ -132,7 +135,7 @@ describe('every admin endpoint is protected server-side', () => {
     }
   }, 120_000);
 
-  it('does not expose financial or other not-yet-built modules as admin endpoints', async () => {
+  it('does not expose financial or other not-yet-built modules as admin endpoints (orders: read-only, see admin-orders.test.ts)', async () => {
     for (const path of [
       'payments',
       'refunds',
@@ -141,7 +144,6 @@ describe('every admin endpoint is protected server-side', () => {
       'commissions',
       'farms',
       'listings',
-      'orders',
       'products',
     ]) {
       expect((await request(h.app).get(`/api/v1/admin/${path}`).set(root.auth)).status, path).toBe(

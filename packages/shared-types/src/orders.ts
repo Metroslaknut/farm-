@@ -3,6 +3,7 @@
  * separate numbers; nothing here is a carrier rate unless the seller (or a configured provider) stated it.
  */
 import type { PublicAuthor } from './community';
+import type { FeeSnapshot, PaymentDTO, PaymentStatus, RefundDTO } from './finance';
 import type { Currency, ListingAnimalSnapshot } from './marketplace';
 
 export const ORDER_STATUSES = [
@@ -250,4 +251,67 @@ export interface OrderDTO {
   };
   createdAt: string;
   updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Admin orders (read-only backoffice view, guarded by `payments.read`)
+// ---------------------------------------------------------------------------
+export const ORDER_KINDS = ['animal', 'product'] as const;
+export type OrderKind = (typeof ORDER_KINDS)[number];
+
+/** One row of `GET /admin/orders`. Lists never include the delivery address. */
+export interface AdminOrderSummary {
+  id: string;
+  orderNo: string;
+  kind: OrderKind;
+  status: OrderStatus;
+  currency: Currency;
+  buyer: PublicAuthor;
+  farm: { id: string; name: string };
+  grandTotalMinor: number;
+  /** Status of the order's latest payment attempt; null when none was started. */
+  paymentStatus: PaymentStatus | null;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+/** The delivery contact as staff see it by default: region and the last 4 digits of the phone only. */
+export interface AdminOrderMaskedContact {
+  /** False for pickup orders and orders without a stored address: nothing to reveal. */
+  hasAddress: boolean;
+  province: string | null;
+  district: string | null;
+  phoneLast4: string | null;
+}
+
+/** `GET /admin/orders/:id`: the order with its payments, refunds, shipments and status timeline. */
+export interface AdminOrderDetail extends AdminOrderSummary {
+  seller: PublicAuthor;
+  items: OrderItemDTO[];
+  totals: OrderTotals;
+  feeSnapshot: FeeSnapshot | null;
+  fulfillment: FulfillmentMethod;
+  shipping?:
+    | {
+        label: string;
+        source: string;
+        isEstimate: boolean;
+        estimatedDays?: { min: number; max: number } | undefined;
+        requirements: TransportRequirement[];
+      }
+    | undefined;
+  contact: AdminOrderMaskedContact;
+  paymentDueAt: string | null;
+  deliveredAt: string | null;
+  cancelReason: string | null;
+  history: OrderHistoryDTO[];
+  shipments: ShipmentDTO[];
+  payments: PaymentDTO[];
+  refunds: RefundDTO[];
+  updatedAt: string;
+}
+
+/** `POST /admin/orders/:id/contact`: the unmasked delivery contact (audited as `admin.order.contact_viewed`). */
+export interface AdminOrderContactResponse {
+  address: DeliveryAddress | null;
 }

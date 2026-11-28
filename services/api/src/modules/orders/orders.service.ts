@@ -99,7 +99,20 @@ const SELLER_MAY_SEE_ADDRESS: OrderStatus[] = [
   'REFUND_PENDING',
 ];
 
-function shipmentDTO(s: ShipmentDoc): ShipmentDTO {
+/** The frozen checkout snapshot with ids as strings (animal and product items). */
+export const orderItemsDTO = (order: OrderDoc): OrderDTO['items'] =>
+  (order.items as unknown as Record<string, unknown>[]).map(
+    (i) =>
+      (i['type'] === 'product'
+        ? { ...i, productId: String(i['productId']) }
+        : {
+            ...i,
+            listingId: String(i['listingId']),
+            animalId: String(i['animalId']),
+          }) as unknown as OrderDTO['items'][number],
+  );
+
+export function shipmentDTO(s: ShipmentDoc): ShipmentDTO {
   return {
     id: String(s._id),
     attempt: s.attempt,
@@ -177,16 +190,7 @@ export async function toOrderDTO(
     buyer: authorOf(people, order.buyerId),
     seller: authorOf(people, order.sellerId),
     farmName: order.farmName,
-    items: (order.items as unknown as Record<string, unknown>[]).map(
-      (i) =>
-        (i['type'] === 'product'
-          ? { ...i, productId: String(i['productId']) }
-          : {
-              ...i,
-              listingId: String(i['listingId']),
-              animalId: String(i['animalId']),
-            }) as unknown as OrderDTO['items'][number],
-    ),
+    items: orderItemsDTO(order),
     totals: {
       itemsMinor: order.itemsMinor,
       shippingMinor: order.shippingMinor,

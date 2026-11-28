@@ -41,7 +41,7 @@ Shipment statuses: pending → in_transit → out_for_delivery → delivered; fa
 
 ## Data protection
 
-- Delivery addresses are encrypted at rest with AES-256-GCM using a key derived (HKDF) from the server secret; plaintext is returned only to the buyer, and to the seller once the order is PAID or later. Lists never include the address; audit logs never contain it.
+- Delivery addresses are encrypted at rest with AES-256-GCM using a key derived (HKDF) from the server secret; plaintext is returned only to the buyer, to the seller once the order is PAID or later, and to `payments.read` staff through the audited, rate-limited `POST /admin/orders/:id/contact` (masked otherwise). Lists never include the address; audit logs never contain it.
 - Item/price details are frozen in `order.items` at checkout; later listing edits do not change the order.
 - Order APIs return 404 (not 403) for orders you are not a party to.
 
@@ -51,6 +51,6 @@ Shipment statuses: pending → in_transit → out_for_delivery → delivered; fa
 
 ## Limitations
 
-- No product cart, no real carrier integration (mock only), no admin orders UI, no partial refunds, no dispute workflow.
+- No product cart, no real carrier integration (mock only), admin orders are read-only (see admin-farms-orders-reports.md §3), no partial refunds, no dispute workflow.
 - Mobile has buyer screens only (orders list/detail, checkout); sellers ship from the web.
 - Backstop: the unique `negotiationId` index makes the duplicate-order check redundant with the explicit guard.

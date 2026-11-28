@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import {
   IDENTITY_VERIFICATION_STATUSES,
+  ORDER_KINDS,
+  ORDER_STATUSES,
   PERMISSION_KEYS,
   REGISTRATION_STATUSES,
   REGISTRATION_TYPES,
@@ -52,6 +54,34 @@ export const adminUserListQuerySchema = listQuerySchema.extend({
   sortBy: z.enum(['createdAt', 'displayName', 'lastLoginAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('desc'),
 });
+
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
+
+/**
+ * `GET /admin/orders`. `orderNo` is an exact match (case-insensitive input); `buyer` is a name or e-mail that is
+ * resolved to at most 50 accounts first. `from`/`to` are Thai calendar days of the creation date, both inclusive.
+ */
+export const adminOrderListQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).max(10_000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(20),
+    status: z.enum(ORDER_STATUSES).optional(),
+    kind: z.enum(ORDER_KINDS).optional(),
+    orderNo: z
+      .string()
+      .trim()
+      .max(40)
+      .transform((v) => v.toUpperCase())
+      .optional(),
+    buyer: z.string().trim().min(2).max(100).optional(),
+    from: day.optional(),
+    to: day.optional(),
+  })
+  .strict()
+  .refine((q) => !q.from || !q.to || q.from <= q.to, {
+    message: 'The start date is after the end date',
+    path: ['from'],
+  });
 
 export const createRoleSchema = z
   .object({

@@ -1,6 +1,7 @@
 # Plan: admin Farms, Orders and Reports pages
 
-**Status: proposal — not implemented.** Needs approval of the decisions in [§6](#6-decisions-needed) before any code.
+**Status:** decisions D2 and D3 approved on 28 Nov 2026. **Orders (§3) is built** (read-only list + detail + audited
+contact reveal). Farms (§2), Reports (§4) and D1/D4 are still proposals.
 
 The three admin sections `/admin/farms`, `/admin/orders` and `/admin/reports` are placeholders today
 (`ModuleUnavailable`, see `docs/architecture/admin.md` → "Frontend"). This plan sets out what each page does, which API it
@@ -47,6 +48,25 @@ through `farm_members` (`role: 'owner'`).
 
 ## 3. Orders (`/admin/orders`, `/admin/orders/:id`)
 
+> **Built (28 Nov 2026).** As planned below, with these details:
+>
+> - Code: `services/api/src/modules/admin/admin-orders.service.ts` (mounted in `admin.routes.ts`), query schema
+>   `adminOrderListQuerySchema` (`packages/validation/src/admin.ts`), DTOs `AdminOrderSummary` / `AdminOrderDetail` /
+>   `AdminOrderContactResponse` (`packages/shared-types/src/orders.ts`), pages `apps/web/src/pages/admin/orders/`.
+> - **Pagination** follows the other admin lists (`page`/`pageSize`/`total`, page size ≤ 50), not a cursor; the order is
+>   always `createdAt desc, _id desc`.
+> - **Filters**: `status`, `kind` (`animal` also matches older orders without `kind`), `orderNo` (exact, upper-cased),
+>   `buyer` (contains `@` → exact e-mail, otherwise a display-name regex; capped at 50 accounts), `from`/`to` (Thai
+>   calendar days of the creation date, inclusive). Farm and paid-date filters were not built.
+> - Every list query constrains `status` (all statuses when no filter is chosen) so the new
+>   `{ status: 1, createdAt: -1, _id: -1 }` index serves "newest first" by merge sort; query-plan cases are in
+>   `test/qa/query-plans.test.ts`.
+> - **Contact (D3)**: the detail shows `contact = { hasAddress, province, district, phoneLast4 }`.
+>   `POST /admin/orders/:id/contact` returns the decrypted address, writes `admin.order.contact_viewed`
+>   (actor, order id, `metadata.orderNo`; never the address) and is limited to 30 per hour per staff account
+>   (`rateLimits.orderContact`). A pickup order returns `{ address: null }` and nothing is audited.
+> - No order or money actions; the detail links to the existing Payments and Refunds pages.
+
 **List**: order number, status, kind (animal/shop), farm, buyer (name or email), created/paid date range; sort by
 created date (newest first); cursor pagination like the buyer list. Columns: order no., created, buyer (display name),
 farm, kind, total, payment status, order status.
@@ -64,7 +84,7 @@ is a separate request that is audited (`admin.order.contact_viewed`, D3). Lists 
 | -------------------------------- | --------------- | -------------------------------------------------------------------------------------------- |
 | `GET /admin/orders`              | `payments.read` | New. Zod query schema; `orderNo` exact match; buyer resolved to ids first; max page size 50. |
 | `GET /admin/orders/:id`          | `payments.read` | New. Masked contact data.                                                                    |
-| `POST /admin/orders/:id/contact` | `payments.read` | Only if D3 = yes. Returns unmasked address/phone, audited, rate-limited.                     |
+| `POST /admin/orders/:id/contact` | `payments.read` | D3 approved. Returns unmasked address/phone, audited, rate-limited.                          |
 
 Permission choice (D2): reuse `payments.read` (what the nav already uses; finance_admin needs orders to work refunds)
 rather than adding `orders.read`.
@@ -113,7 +133,7 @@ Each list query gets a `test/qa/query-plans.test.ts` case (IXSCAN, no COLLSCAN),
 
 ## 7. Order of work (one PR each)
 
-1. **Orders read-only** — `GET /admin/orders`, `/admin/orders/:id`, the order index, page + tests (API, query plans,
+1. **Orders read-only** (done, includes 5. contact reveal) — `GET /admin/orders`, `/admin/orders/:id`, the order index, page + tests (API, query plans,
    authz/permission snapshots, web unit tests, e2e: finance admin finds an order by number).
 2. **Farms read-only** — `GET /admin/farms`, `/admin/farms/:farmId`, province index, pages + tests.
 3. **Reports catalogue** — web only, on the existing export API.

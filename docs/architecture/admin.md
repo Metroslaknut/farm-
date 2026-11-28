@@ -47,9 +47,11 @@ when they do they must expose their own audited workflows and be mounted in `adm
   Admin styles are namespaced `adm-` and loaded only with the admin chunk.
 - Auth: `auth/` (in-memory access token, refresh token in `sessionStorage`, single-flight refresh, retry once on 401).
   `/admin/login` supports the MFA step; `/admin/account/security` enrols TOTP.
+- `/admin/orders` and `/admin/orders/:id` are read-only (`payments.read`); the delivery contact is masked until
+  "Show contact" (audited, rate limited). See [admin-farms-orders-reports.md](admin-farms-orders-reports.md) §3.
 - List state (search/filter/sort/page) lives in the URL. Native `<dialog>` for confirmations; sensitive actions require a reason.
 - Sections whose backend does not exist (payments, refunds, withdrawals, wallet transactions, commissions, farms,
-  listings, products, orders, reports) render an honest "not available yet" page behind the same permission guard — no fake data, no actions.
+  listings, products, reports) render an honest "not available yet" page behind the same permission guard — no fake data, no actions.
 
 ## Limitations
 

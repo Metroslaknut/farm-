@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Types } from 'mongoose';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { ORDER_STATUSES } from '@farmplus/shared-types';
 import {
   Animal,
   AuditLog,
@@ -234,6 +235,69 @@ const HOT: [string, () => Promise<unknown>][] = [
         .sort({ breedingDate: -1, _id: -1 })
         .limit(20)
         .explain('queryPlanner'),
+  ],
+  // Admin orders (read-only, payments.read): every list query filters status ($in of all statuses when unfiltered)
+  [
+    'admin orders: all, newest first',
+    () =>
+      Order.find({ status: { $in: [...ORDER_STATUSES] } })
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(20)
+        .explain('queryPlanner'),
+  ],
+  [
+    'admin orders: all, count',
+    () =>
+      Order.countDocuments({ status: { $in: [...ORDER_STATUSES] } }).explain(
+        'queryPlanner' as never,
+      ) as never,
+  ],
+  [
+    'admin orders: by status, newest first',
+    () =>
+      Order.find({ status: 'PAID' })
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(20)
+        .explain('queryPlanner'),
+  ],
+  [
+    'admin orders: created date range and kind',
+    () =>
+      Order.find({
+        status: { $in: [...ORDER_STATUSES] },
+        kind: 'product',
+        createdAt: { $gte: new Date('2026-01-01'), $lt: new Date('2026-02-01') },
+      })
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(20)
+        .explain('queryPlanner'),
+  ],
+  [
+    'admin orders: by order number',
+    () =>
+      Order.find({ status: { $in: [...ORDER_STATUSES] }, orderNo: 'FP-260101-ABCD1234' })
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(20)
+        .explain('queryPlanner'),
+  ],
+  [
+    'admin orders: by buyers',
+    () =>
+      Order.find({ status: { $in: [...ORDER_STATUSES] }, buyerId: { $in: [id(), id()] } })
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(20)
+        .explain('queryPlanner'),
+  ],
+  [
+    'admin orders: latest payment of each order on a page',
+    () =>
+      Payment.find({ orderId: { $in: [id(), id()] } })
+        .sort({ createdAt: 1 })
+        .explain('queryPlanner'),
+  ],
+  [
+    'admin orders: refunds of an order',
+    () => Refund.find({ orderId: id() }).sort({ requestedAt: 1 }).explain('queryPlanner'),
   ],
 ];
 
