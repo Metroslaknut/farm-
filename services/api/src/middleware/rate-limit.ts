@@ -1,16 +1,23 @@
-import type { RequestHandler } from 'express';
-import { rateLimit } from 'express-rate-limit';
+import type { Request, RequestHandler } from 'express';
+import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
 import type { ApiEnv } from '@farmplus/config/server';
 import { HttpError } from '../lib/errors';
 
 const passthrough: RequestHandler = (_req, _res, next) => next();
 
-/** Per-client-IP fixed-window limiter. In-memory store: use a shared store (Redis) when running multiple API instances. */
-export function limiter(env: ApiEnv, options: { windowMs: number; limit: number }): RequestHandler {
+/**
+ * Fixed-window limiter, per client IP unless `key` says otherwise. In-memory store: use a shared store (Redis) when
+ * running multiple API instances.
+ */
+export function limiter(
+  env: ApiEnv,
+  options: { windowMs: number; limit: number; key?: (req: Request) => string },
+): RequestHandler {
   if (!env.RATE_LIMIT_ENABLED) return passthrough;
   return rateLimit({
     windowMs: options.windowMs,
     limit: options.limit,
+    ...(options.key ? { keyGenerator: options.key } : {}),
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     handler: (_req, _res, next) =>
@@ -19,9 +26,26 @@ export function limiter(env: ApiEnv, options: { windowMs: number; limit: number 
 }
 
 const MINUTE = 60_000;
+
+/** Client address + the account being signed in to: one person's mistakes do not lock others on the same network. */
+const ipAndAccount = (req: Request): string => {
+  const identifier = (req.body as { identifier?: unknown } | undefined)?.identifier;
+  const account =
+    typeof identifier === 'string' ? identifier.trim().toLowerCase().slice(0, 254) : '';
+  return `${ipKeyGenerator(req.ip ?? '')}|${account}`;
+};
+
 export const rateLimits = (env: ApiEnv) => ({
   register: limiter(env, { windowMs: 60 * MINUTE, limit: 10 }),
-  login: limiter(env, { windowMs: 15 * MINUTE, limit: 10 }),
+  /** Password sign-in: 10 tries per account per client address… */
+  login: limiter(env, { windowMs: 15 * MINUTE, limit: 10, key: ipAndAccount }),
+  /** …and a ceiling per address, so one client cannot try many accounts (shared offices and carrier NAT fit under it). */
+  loginAddress: limiter(env, { windowMs: 15 * MINUTE, limit: 100 }),
+  /**
+   * Google/Facebook sign-in, its own budget (one sign-in is three requests: start, callback, exchange): 20 sign-ins per
+   * address per 15 minutes, never spent by password attempts.
+   */
+  oauth: limiter(env, { windowMs: 15 * MINUTE, limit: 60 }),
   mfa: limiter(env, { windowMs: 15 * MINUTE, limit: 10 }),
   refresh: limiter(env, { windowMs: 15 * MINUTE, limit: 60 }),
   sensitive: limiter(env, { windowMs: 60 * MINUTE, limit: 10 }),

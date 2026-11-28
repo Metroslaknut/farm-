@@ -319,7 +319,8 @@ export function SiteHeader() {
               </div>
             ) : (
               <>
-                <Link to="/farms/sign-in" className="site-action">
+                {/* On phones the text is hidden (display: none), so the link is named here. */}
+                <Link to="/farms/sign-in" className="site-action" aria-label={t('header.signIn')}>
                   <span className="site-action__icon">
                     <Icon name="user" />
                   </span>
