@@ -69,14 +69,29 @@ set the variables listed in `.env.example` / [environments](../ops/environments.
 
 ## Abuse protection
 
-Per-IP rate limits (login/MFA 10 per 15 min, register/reset/verify 10 per hour, refresh 60 per 15 min),
+Rate limits: password sign-in 10 per 15 min **per client address + account** (so one person's mistakes on a shared
+network do not lock others out) plus 100 per 15 min per address (one client cannot try account after account);
+Google/Facebook sign-in has its own budget, 60 requests (20 sign-ins) per 15 min per address, never spent by password
+attempts; MFA 10 per 15 min, register/reset/verify 10 per hour, refresh and tab hand-off 60 per 15 min per address;
 account lock for 15 min after 10 failed attempts, constant-ish login timing for unknown accounts, generic
 `INVALID_CREDENTIALS`, `forgot`/`resend` always 202, `Cache-Control: no-store` on auth routes.
+
+## New tabs (tab hand-off)
+
+The web keeps the refresh token in each tab's `sessionStorage`, so a link opened in a new tab used to land on the
+sign-in page. A new tab without a session now asks the other FARM+ tabs of the same browser on a same-origin
+`BroadcastChannel` (`apps/web/src/auth/tabHandoff.ts`): one signed-in tab offers, the new tab takes that offer, and
+the signed-in tab calls `POST /auth/session/handoff`, which creates a **separate session** for the same person with the
+same second-factor state (refresh tokens are single-use, so a tab never passes on its own). The new session is listed
+and revocable under `/auth/sessions` and audited (`auth.session_handoff`). Signing out one tab ends only its session.
+No token is written to `localStorage` or cookies; a `farmplus.signedInTab` hint (no secret) only lets a guest's first
+page skip waiting (400 ms) for an answer that will not come. Anything that could read `sessionStorage` (same-origin
+script) could already use the session, so the channel adds no new exposure.
 
 ## Audit
 
 `audit_logs` records registration, login/failed login/lock, logout, password reset/change, MFA enable/disable,
-refresh-token reuse, role assign/revoke, role-permission changes (with diff), status changes (with reason),
+refresh-token reuse, tab hand-off, role assign/revoke, role-permission changes (with diff), status changes (with reason),
 admin profile edits and super-admin bootstrap.
 
 ## Bootstrapping the first super admin

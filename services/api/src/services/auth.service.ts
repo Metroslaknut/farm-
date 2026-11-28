@@ -314,6 +314,26 @@ export class AuthService {
     });
   }
 
+  /**
+   * A separate session for another browser tab of the same person (the tab hand-off, QA #14). Refresh tokens are
+   * single-use, so a tab cannot share its own: the new tab gets a new session with the same second-factor state, which
+   * can be listed and revoked like any other.
+   */
+  async handoffSession(actor: Actor, meta: RequestMeta): Promise<AuthTokens> {
+    const user = await User.findById(actor.userId);
+    if (!user || user.status !== 'active') throw unauthorized('Account is not active');
+    const tokens = await this.createSession(user._id, actor.mfaVerified, meta);
+    await recordAudit({
+      actorId: actor.userId,
+      action: 'auth.session_handoff',
+      targetType: 'session',
+      targetId: actor.sessionId,
+      ip: meta.ip,
+      metadata: { mfa: actor.mfaVerified },
+    });
+    return tokens;
+  }
+
   async logoutAll(actor: Actor): Promise<void> {
     await revokeAllSessions(actor.userId, 'logout_all');
     await recordAudit({
